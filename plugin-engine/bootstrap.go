@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"plugin-engine/constants"
 	"plugin-engine/requesttype"
+	"plugin-engine/utils"
 	"time"
 )
 
@@ -16,7 +16,10 @@ func main() {
 	file, err := os.OpenFile("pluginEngine.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
+
 		log.Fatal(err)
+
+		return
 	}
 
 	defer file.Close()
@@ -41,7 +44,19 @@ func main() {
 
 	if err != nil {
 
-		log.Fatal("Unable to convert string to json map: ", err)
+		errMap := make(map[string]interface{})
+
+		errMap[constants.ERROR] = err
+
+		errMap[constants.ERROR_CODE] = "JSON01"
+
+		errMap[constants.ERROR_MSG] = "Unable to convert JSON string to map"
+
+		context[constants.ERROR] = errMap
+
+		utils.SendResponse(context)
+
+		log.Fatal("Unable to convert JSON string to map: ", err)
 
 		return
 
@@ -60,15 +75,5 @@ func main() {
 
 	log.Println(time.Now(), context)
 
-	jsonOutput, err := json.Marshal(context)
-
-	if err != nil {
-
-		log.Fatal("json marshal error: ", err)
-
-	}
-
-	encodedString := base64.StdEncoding.EncodeToString(jsonOutput)
-
-	fmt.Println(encodedString)
+	utils.SendResponse(context)
 }

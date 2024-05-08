@@ -33,7 +33,7 @@ public class Bootstrap
 
         try
         {
-            ProcessBuilder processBuilder = new ProcessBuilder("/home/yash/GolandProjects/nmslite/nmslite", encodedString);
+            ProcessBuilder processBuilder = new ProcessBuilder("/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine", encodedString);
 
             processBuilder.redirectErrorStream(true);
 

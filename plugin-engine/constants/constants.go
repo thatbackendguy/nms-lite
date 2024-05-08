@@ -19,4 +19,5 @@ const (
 	FAILED             = "failed"
 	ERROR              = "error"
 	ERROR_MSG          = "error.message"
+	ERROR_CODE         = "error.code"
 )

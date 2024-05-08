@@ -1,0 +1,420 @@
+[2024-05-08 17:35:41.426] [DEBUG] [main] [InternalLoggerFactory.java:63] Using SLF4J as the default logging framework
+[2024-05-08 17:35:41.430] [DEBUG] [main] [ResourceLeakDetector.java:129] -Dio.netty.leakDetection.level: simple
+[2024-05-08 17:35:41.431] [DEBUG] [main] [ResourceLeakDetector.java:130] -Dio.netty.leakDetection.targetRecords: 4
+[2024-05-08 17:35:41.446] [DEBUG] [main] [PlatformDependent0.java:515] -Dio.netty.noUnsafe: false
+[2024-05-08 17:35:41.447] [DEBUG] [main] [PlatformDependent0.java:1026] Java version: 17
+[2024-05-08 17:35:41.448] [DEBUG] [main] [PlatformDependent0.java:140] sun.misc.Unsafe.theUnsafe: available
+[2024-05-08 17:35:41.448] [DEBUG] [main] [PlatformDependent0.java:164] sun.misc.Unsafe.copyMemory: available
+[2024-05-08 17:35:41.449] [DEBUG] [main] [PlatformDependent0.java:196] sun.misc.Unsafe.storeFence: available
+[2024-05-08 17:35:41.449] [DEBUG] [main] [PlatformDependent0.java:239] java.nio.Buffer.address: available
+[2024-05-08 17:35:41.449] [DEBUG] [main] [PlatformDependent0.java:322] direct buffer constructor: unavailable
+java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled
+	at io.netty.util.internal.ReflectionUtil.trySetAccessible(ReflectionUtil.java:31)
+	at io.netty.util.internal.PlatformDependent0$5.run(PlatformDependent0.java:293)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:286)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 17:35:41.451] [DEBUG] [main] [PlatformDependent0.java:403] java.nio.Bits.unaligned: available, true
+[2024-05-08 17:35:41.452] [DEBUG] [main] [PlatformDependent0.java:468] jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable
+java.lang.IllegalAccessException: class io.netty.util.internal.PlatformDependent0$7 cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to unnamed module @517cd4b
+	at java.base/jdk.internal.reflect.Reflection.newIllegalAccessException(Reflection.java:392)
+	at java.base/java.lang.reflect.AccessibleObject.checkAccess(AccessibleObject.java:674)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:560)
+	at io.netty.util.internal.PlatformDependent0$7.run(PlatformDependent0.java:429)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:420)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 17:35:41.453] [DEBUG] [main] [PlatformDependent0.java:501] java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable
+[2024-05-08 17:35:41.453] [DEBUG] [main] [PlatformDependent.java:1160] sun.misc.Unsafe: available
+[2024-05-08 17:35:41.453] [DEBUG] [main] [PlatformDependent.java:1306] -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+[2024-05-08 17:35:41.454] [DEBUG] [main] [PlatformDependent.java:1385] -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[2024-05-08 17:35:41.456] [DEBUG] [main] [PlatformDependent.java:176] -Dio.netty.maxDirectMemory: -1 bytes
+[2024-05-08 17:35:41.456] [DEBUG] [main] [PlatformDependent.java:183] -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[2024-05-08 17:35:41.456] [DEBUG] [main] [CleanerJava9.java:71] java.nio.ByteBuffer.cleaner(): available
+[2024-05-08 17:35:41.457] [DEBUG] [main] [PlatformDependent.java:203] -Dio.netty.noPreferDirect: false
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:157] -Dio.netty.allocator.numHeapArenas: 16
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:158] -Dio.netty.allocator.numDirectArenas: 16
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:160] -Dio.netty.allocator.pageSize: 8192
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:165] -Dio.netty.allocator.maxOrder: 9
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:169] -Dio.netty.allocator.chunkSize: 4194304
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:170] -Dio.netty.allocator.smallCacheSize: 256
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:171] -Dio.netty.allocator.normalCacheSize: 64
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:172] -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+[2024-05-08 17:35:41.458] [DEBUG] [main] [PooledByteBufAllocator.java:173] -Dio.netty.allocator.cacheTrimInterval: 8192
+[2024-05-08 17:35:41.459] [DEBUG] [main] [PooledByteBufAllocator.java:174] -Dio.netty.allocator.cacheTrimIntervalMillis: 0
+[2024-05-08 17:35:41.459] [DEBUG] [main] [PooledByteBufAllocator.java:175] -Dio.netty.allocator.useCacheForAllThreads: false
+[2024-05-08 17:35:41.459] [DEBUG] [main] [PooledByteBufAllocator.java:176] -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023
+[2024-05-08 17:35:41.463] [DEBUG] [main] [InternalThreadLocalMap.java:100] -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[2024-05-08 17:35:41.463] [DEBUG] [main] [InternalThreadLocalMap.java:101] -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[2024-05-08 17:35:41.476] [DEBUG] [main] [AbstractByteBuf.java:63] -Dio.netty.buffer.checkAccessible: true
+[2024-05-08 17:35:41.476] [DEBUG] [main] [AbstractByteBuf.java:64] -Dio.netty.buffer.checkBounds: true
+[2024-05-08 17:35:41.477] [DEBUG] [main] [ResourceLeakDetectorFactory.java:196] Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@409bf450
+[2024-05-08 17:35:41.481] [DEBUG] [main] [ByteBufUtil.java:89] -Dio.netty.allocator.type: pooled
+[2024-05-08 17:35:41.482] [DEBUG] [main] [ByteBufUtil.java:98] -Dio.netty.threadLocalDirectBufferSize: 0
+[2024-05-08 17:35:41.482] [DEBUG] [main] [ByteBufUtil.java:101] -Dio.netty.maxThreadLocalCharBufferSize: 16384
+[2024-05-08 18:05:19.674] [DEBUG] [main] [InternalLoggerFactory.java:63] Using SLF4J as the default logging framework
+[2024-05-08 18:05:19.678] [DEBUG] [main] [ResourceLeakDetector.java:129] -Dio.netty.leakDetection.level: simple
+[2024-05-08 18:05:19.678] [DEBUG] [main] [ResourceLeakDetector.java:130] -Dio.netty.leakDetection.targetRecords: 4
+[2024-05-08 18:05:19.694] [DEBUG] [main] [PlatformDependent0.java:515] -Dio.netty.noUnsafe: false
+[2024-05-08 18:05:19.694] [DEBUG] [main] [PlatformDependent0.java:1026] Java version: 17
+[2024-05-08 18:05:19.695] [DEBUG] [main] [PlatformDependent0.java:140] sun.misc.Unsafe.theUnsafe: available
+[2024-05-08 18:05:19.696] [DEBUG] [main] [PlatformDependent0.java:164] sun.misc.Unsafe.copyMemory: available
+[2024-05-08 18:05:19.696] [DEBUG] [main] [PlatformDependent0.java:196] sun.misc.Unsafe.storeFence: available
+[2024-05-08 18:05:19.697] [DEBUG] [main] [PlatformDependent0.java:239] java.nio.Buffer.address: available
+[2024-05-08 18:05:19.697] [DEBUG] [main] [PlatformDependent0.java:322] direct buffer constructor: unavailable
+java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled
+	at io.netty.util.internal.ReflectionUtil.trySetAccessible(ReflectionUtil.java:31)
+	at io.netty.util.internal.PlatformDependent0$5.run(PlatformDependent0.java:293)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:286)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:05:19.699] [DEBUG] [main] [PlatformDependent0.java:403] java.nio.Bits.unaligned: available, true
+[2024-05-08 18:05:19.700] [DEBUG] [main] [PlatformDependent0.java:468] jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable
+java.lang.IllegalAccessException: class io.netty.util.internal.PlatformDependent0$7 cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to unnamed module @6cc7b4de
+	at java.base/jdk.internal.reflect.Reflection.newIllegalAccessException(Reflection.java:392)
+	at java.base/java.lang.reflect.AccessibleObject.checkAccess(AccessibleObject.java:674)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:560)
+	at io.netty.util.internal.PlatformDependent0$7.run(PlatformDependent0.java:429)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:420)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:05:19.701] [DEBUG] [main] [PlatformDependent0.java:501] java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable
+[2024-05-08 18:05:19.701] [DEBUG] [main] [PlatformDependent.java:1160] sun.misc.Unsafe: available
+[2024-05-08 18:05:19.702] [DEBUG] [main] [PlatformDependent.java:1306] -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+[2024-05-08 18:05:19.702] [DEBUG] [main] [PlatformDependent.java:1385] -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[2024-05-08 18:05:19.704] [DEBUG] [main] [PlatformDependent.java:176] -Dio.netty.maxDirectMemory: -1 bytes
+[2024-05-08 18:05:19.704] [DEBUG] [main] [PlatformDependent.java:183] -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[2024-05-08 18:05:19.705] [DEBUG] [main] [CleanerJava9.java:71] java.nio.ByteBuffer.cleaner(): available
+[2024-05-08 18:05:19.705] [DEBUG] [main] [PlatformDependent.java:203] -Dio.netty.noPreferDirect: false
+[2024-05-08 18:05:19.707] [DEBUG] [main] [PooledByteBufAllocator.java:157] -Dio.netty.allocator.numHeapArenas: 16
+[2024-05-08 18:05:19.707] [DEBUG] [main] [PooledByteBufAllocator.java:158] -Dio.netty.allocator.numDirectArenas: 16
+[2024-05-08 18:05:19.707] [DEBUG] [main] [PooledByteBufAllocator.java:160] -Dio.netty.allocator.pageSize: 8192
+[2024-05-08 18:05:19.707] [DEBUG] [main] [PooledByteBufAllocator.java:165] -Dio.netty.allocator.maxOrder: 9
+[2024-05-08 18:05:19.707] [DEBUG] [main] [PooledByteBufAllocator.java:169] -Dio.netty.allocator.chunkSize: 4194304
+[2024-05-08 18:05:19.707] [DEBUG] [main] [PooledByteBufAllocator.java:170] -Dio.netty.allocator.smallCacheSize: 256
+[2024-05-08 18:05:19.707] [DEBUG] [main] [PooledByteBufAllocator.java:171] -Dio.netty.allocator.normalCacheSize: 64
+[2024-05-08 18:05:19.708] [DEBUG] [main] [PooledByteBufAllocator.java:172] -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+[2024-05-08 18:05:19.708] [DEBUG] [main] [PooledByteBufAllocator.java:173] -Dio.netty.allocator.cacheTrimInterval: 8192
+[2024-05-08 18:05:19.708] [DEBUG] [main] [PooledByteBufAllocator.java:174] -Dio.netty.allocator.cacheTrimIntervalMillis: 0
+[2024-05-08 18:05:19.708] [DEBUG] [main] [PooledByteBufAllocator.java:175] -Dio.netty.allocator.useCacheForAllThreads: false
+[2024-05-08 18:05:19.708] [DEBUG] [main] [PooledByteBufAllocator.java:176] -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023
+[2024-05-08 18:05:19.713] [DEBUG] [main] [InternalThreadLocalMap.java:100] -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[2024-05-08 18:05:19.713] [DEBUG] [main] [InternalThreadLocalMap.java:101] -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[2024-05-08 18:05:19.727] [DEBUG] [main] [AbstractByteBuf.java:63] -Dio.netty.buffer.checkAccessible: true
+[2024-05-08 18:05:19.727] [DEBUG] [main] [AbstractByteBuf.java:64] -Dio.netty.buffer.checkBounds: true
+[2024-05-08 18:05:19.728] [DEBUG] [main] [ResourceLeakDetectorFactory.java:196] Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@38d8f54a
+[2024-05-08 18:05:19.731] [DEBUG] [main] [ByteBufUtil.java:89] -Dio.netty.allocator.type: pooled
+[2024-05-08 18:05:19.731] [DEBUG] [main] [ByteBufUtil.java:98] -Dio.netty.threadLocalDirectBufferSize: 0
+[2024-05-08 18:05:19.731] [DEBUG] [main] [ByteBufUtil.java:101] -Dio.netty.maxThreadLocalCharBufferSize: 16384
+[2024-05-08 18:05:32.219] [DEBUG] [main] [InternalLoggerFactory.java:63] Using SLF4J as the default logging framework
+[2024-05-08 18:05:32.224] [DEBUG] [main] [ResourceLeakDetector.java:129] -Dio.netty.leakDetection.level: simple
+[2024-05-08 18:05:32.224] [DEBUG] [main] [ResourceLeakDetector.java:130] -Dio.netty.leakDetection.targetRecords: 4
+[2024-05-08 18:05:32.245] [DEBUG] [main] [PlatformDependent0.java:515] -Dio.netty.noUnsafe: false
+[2024-05-08 18:05:32.246] [DEBUG] [main] [PlatformDependent0.java:1026] Java version: 17
+[2024-05-08 18:05:32.247] [DEBUG] [main] [PlatformDependent0.java:140] sun.misc.Unsafe.theUnsafe: available
+[2024-05-08 18:05:32.248] [DEBUG] [main] [PlatformDependent0.java:164] sun.misc.Unsafe.copyMemory: available
+[2024-05-08 18:05:32.249] [DEBUG] [main] [PlatformDependent0.java:196] sun.misc.Unsafe.storeFence: available
+[2024-05-08 18:05:32.250] [DEBUG] [main] [PlatformDependent0.java:239] java.nio.Buffer.address: available
+[2024-05-08 18:05:32.250] [DEBUG] [main] [PlatformDependent0.java:322] direct buffer constructor: unavailable
+java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled
+	at io.netty.util.internal.ReflectionUtil.trySetAccessible(ReflectionUtil.java:31)
+	at io.netty.util.internal.PlatformDependent0$5.run(PlatformDependent0.java:293)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:286)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:05:32.253] [DEBUG] [main] [PlatformDependent0.java:403] java.nio.Bits.unaligned: available, true
+[2024-05-08 18:05:32.254] [DEBUG] [main] [PlatformDependent0.java:468] jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable
+java.lang.IllegalAccessException: class io.netty.util.internal.PlatformDependent0$7 cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to unnamed module @6cc7b4de
+	at java.base/jdk.internal.reflect.Reflection.newIllegalAccessException(Reflection.java:392)
+	at java.base/java.lang.reflect.AccessibleObject.checkAccess(AccessibleObject.java:674)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:560)
+	at io.netty.util.internal.PlatformDependent0$7.run(PlatformDependent0.java:429)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:420)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:05:32.256] [DEBUG] [main] [PlatformDependent0.java:501] java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable
+[2024-05-08 18:05:32.256] [DEBUG] [main] [PlatformDependent.java:1160] sun.misc.Unsafe: available
+[2024-05-08 18:05:32.256] [DEBUG] [main] [PlatformDependent.java:1306] -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+[2024-05-08 18:05:32.256] [DEBUG] [main] [PlatformDependent.java:1385] -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[2024-05-08 18:05:32.258] [DEBUG] [main] [PlatformDependent.java:176] -Dio.netty.maxDirectMemory: -1 bytes
+[2024-05-08 18:05:32.259] [DEBUG] [main] [PlatformDependent.java:183] -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[2024-05-08 18:05:32.260] [DEBUG] [main] [CleanerJava9.java:71] java.nio.ByteBuffer.cleaner(): available
+[2024-05-08 18:05:32.260] [DEBUG] [main] [PlatformDependent.java:203] -Dio.netty.noPreferDirect: false
+[2024-05-08 18:05:32.262] [DEBUG] [main] [PooledByteBufAllocator.java:157] -Dio.netty.allocator.numHeapArenas: 16
+[2024-05-08 18:05:32.262] [DEBUG] [main] [PooledByteBufAllocator.java:158] -Dio.netty.allocator.numDirectArenas: 16
+[2024-05-08 18:05:32.262] [DEBUG] [main] [PooledByteBufAllocator.java:160] -Dio.netty.allocator.pageSize: 8192
+[2024-05-08 18:05:32.262] [DEBUG] [main] [PooledByteBufAllocator.java:165] -Dio.netty.allocator.maxOrder: 9
+[2024-05-08 18:05:32.262] [DEBUG] [main] [PooledByteBufAllocator.java:169] -Dio.netty.allocator.chunkSize: 4194304
+[2024-05-08 18:05:32.263] [DEBUG] [main] [PooledByteBufAllocator.java:170] -Dio.netty.allocator.smallCacheSize: 256
+[2024-05-08 18:05:32.263] [DEBUG] [main] [PooledByteBufAllocator.java:171] -Dio.netty.allocator.normalCacheSize: 64
+[2024-05-08 18:05:32.263] [DEBUG] [main] [PooledByteBufAllocator.java:172] -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+[2024-05-08 18:05:32.263] [DEBUG] [main] [PooledByteBufAllocator.java:173] -Dio.netty.allocator.cacheTrimInterval: 8192
+[2024-05-08 18:05:32.263] [DEBUG] [main] [PooledByteBufAllocator.java:174] -Dio.netty.allocator.cacheTrimIntervalMillis: 0
+[2024-05-08 18:05:32.263] [DEBUG] [main] [PooledByteBufAllocator.java:175] -Dio.netty.allocator.useCacheForAllThreads: false
+[2024-05-08 18:05:32.263] [DEBUG] [main] [PooledByteBufAllocator.java:176] -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023
+[2024-05-08 18:05:32.269] [DEBUG] [main] [InternalThreadLocalMap.java:100] -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[2024-05-08 18:05:32.270] [DEBUG] [main] [InternalThreadLocalMap.java:101] -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[2024-05-08 18:05:32.287] [DEBUG] [main] [AbstractByteBuf.java:63] -Dio.netty.buffer.checkAccessible: true
+[2024-05-08 18:05:32.287] [DEBUG] [main] [AbstractByteBuf.java:64] -Dio.netty.buffer.checkBounds: true
+[2024-05-08 18:05:32.288] [DEBUG] [main] [ResourceLeakDetectorFactory.java:196] Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@38d8f54a
+[2024-05-08 18:05:32.293] [DEBUG] [main] [ByteBufUtil.java:89] -Dio.netty.allocator.type: pooled
+[2024-05-08 18:05:32.293] [DEBUG] [main] [ByteBufUtil.java:98] -Dio.netty.threadLocalDirectBufferSize: 0
+[2024-05-08 18:05:32.293] [DEBUG] [main] [ByteBufUtil.java:101] -Dio.netty.maxThreadLocalCharBufferSize: 16384
+[2024-05-08 18:08:23.306] [DEBUG] [main] [InternalLoggerFactory.java:63] Using SLF4J as the default logging framework
+[2024-05-08 18:08:23.310] [DEBUG] [main] [ResourceLeakDetector.java:129] -Dio.netty.leakDetection.level: simple
+[2024-05-08 18:08:23.310] [DEBUG] [main] [ResourceLeakDetector.java:130] -Dio.netty.leakDetection.targetRecords: 4
+[2024-05-08 18:08:23.325] [DEBUG] [main] [PlatformDependent0.java:515] -Dio.netty.noUnsafe: false
+[2024-05-08 18:08:23.326] [DEBUG] [main] [PlatformDependent0.java:1026] Java version: 17
+[2024-05-08 18:08:23.327] [DEBUG] [main] [PlatformDependent0.java:140] sun.misc.Unsafe.theUnsafe: available
+[2024-05-08 18:08:23.327] [DEBUG] [main] [PlatformDependent0.java:164] sun.misc.Unsafe.copyMemory: available
+[2024-05-08 18:08:23.328] [DEBUG] [main] [PlatformDependent0.java:196] sun.misc.Unsafe.storeFence: available
+[2024-05-08 18:08:23.328] [DEBUG] [main] [PlatformDependent0.java:239] java.nio.Buffer.address: available
+[2024-05-08 18:08:23.329] [DEBUG] [main] [PlatformDependent0.java:322] direct buffer constructor: unavailable
+java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled
+	at io.netty.util.internal.ReflectionUtil.trySetAccessible(ReflectionUtil.java:31)
+	at io.netty.util.internal.PlatformDependent0$5.run(PlatformDependent0.java:293)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:286)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:08:23.330] [DEBUG] [main] [PlatformDependent0.java:403] java.nio.Bits.unaligned: available, true
+[2024-05-08 18:08:23.331] [DEBUG] [main] [PlatformDependent0.java:468] jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable
+java.lang.IllegalAccessException: class io.netty.util.internal.PlatformDependent0$7 cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to unnamed module @517cd4b
+	at java.base/jdk.internal.reflect.Reflection.newIllegalAccessException(Reflection.java:392)
+	at java.base/java.lang.reflect.AccessibleObject.checkAccess(AccessibleObject.java:674)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:560)
+	at io.netty.util.internal.PlatformDependent0$7.run(PlatformDependent0.java:429)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:420)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:08:23.332] [DEBUG] [main] [PlatformDependent0.java:501] java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable
+[2024-05-08 18:08:23.333] [DEBUG] [main] [PlatformDependent.java:1160] sun.misc.Unsafe: available
+[2024-05-08 18:08:23.333] [DEBUG] [main] [PlatformDependent.java:1306] -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+[2024-05-08 18:08:23.333] [DEBUG] [main] [PlatformDependent.java:1385] -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[2024-05-08 18:08:23.335] [DEBUG] [main] [PlatformDependent.java:176] -Dio.netty.maxDirectMemory: -1 bytes
+[2024-05-08 18:08:23.335] [DEBUG] [main] [PlatformDependent.java:183] -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[2024-05-08 18:08:23.336] [DEBUG] [main] [CleanerJava9.java:71] java.nio.ByteBuffer.cleaner(): available
+[2024-05-08 18:08:23.336] [DEBUG] [main] [PlatformDependent.java:203] -Dio.netty.noPreferDirect: false
+[2024-05-08 18:08:23.337] [DEBUG] [main] [PooledByteBufAllocator.java:157] -Dio.netty.allocator.numHeapArenas: 16
+[2024-05-08 18:08:23.337] [DEBUG] [main] [PooledByteBufAllocator.java:158] -Dio.netty.allocator.numDirectArenas: 16
+[2024-05-08 18:08:23.337] [DEBUG] [main] [PooledByteBufAllocator.java:160] -Dio.netty.allocator.pageSize: 8192
+[2024-05-08 18:08:23.337] [DEBUG] [main] [PooledByteBufAllocator.java:165] -Dio.netty.allocator.maxOrder: 9
+[2024-05-08 18:08:23.338] [DEBUG] [main] [PooledByteBufAllocator.java:169] -Dio.netty.allocator.chunkSize: 4194304
+[2024-05-08 18:08:23.338] [DEBUG] [main] [PooledByteBufAllocator.java:170] -Dio.netty.allocator.smallCacheSize: 256
+[2024-05-08 18:08:23.338] [DEBUG] [main] [PooledByteBufAllocator.java:171] -Dio.netty.allocator.normalCacheSize: 64
+[2024-05-08 18:08:23.338] [DEBUG] [main] [PooledByteBufAllocator.java:172] -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+[2024-05-08 18:08:23.338] [DEBUG] [main] [PooledByteBufAllocator.java:173] -Dio.netty.allocator.cacheTrimInterval: 8192
+[2024-05-08 18:08:23.338] [DEBUG] [main] [PooledByteBufAllocator.java:174] -Dio.netty.allocator.cacheTrimIntervalMillis: 0
+[2024-05-08 18:08:23.338] [DEBUG] [main] [PooledByteBufAllocator.java:175] -Dio.netty.allocator.useCacheForAllThreads: false
+[2024-05-08 18:08:23.338] [DEBUG] [main] [PooledByteBufAllocator.java:176] -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023
+[2024-05-08 18:08:23.343] [DEBUG] [main] [InternalThreadLocalMap.java:100] -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[2024-05-08 18:08:23.343] [DEBUG] [main] [InternalThreadLocalMap.java:101] -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[2024-05-08 18:08:23.356] [DEBUG] [main] [AbstractByteBuf.java:63] -Dio.netty.buffer.checkAccessible: true
+[2024-05-08 18:08:23.357] [DEBUG] [main] [AbstractByteBuf.java:64] -Dio.netty.buffer.checkBounds: true
+[2024-05-08 18:08:23.357] [DEBUG] [main] [ResourceLeakDetectorFactory.java:196] Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@409bf450
+[2024-05-08 18:08:23.360] [DEBUG] [main] [ByteBufUtil.java:89] -Dio.netty.allocator.type: pooled
+[2024-05-08 18:08:23.361] [DEBUG] [main] [ByteBufUtil.java:98] -Dio.netty.threadLocalDirectBufferSize: 0
+[2024-05-08 18:08:23.361] [DEBUG] [main] [ByteBufUtil.java:101] -Dio.netty.maxThreadLocalCharBufferSize: 16384
+[2024-05-08 18:08:41.636] [DEBUG] [main] [InternalLoggerFactory.java:63] Using SLF4J as the default logging framework
+[2024-05-08 18:08:41.641] [DEBUG] [main] [ResourceLeakDetector.java:129] -Dio.netty.leakDetection.level: simple
+[2024-05-08 18:08:41.642] [DEBUG] [main] [ResourceLeakDetector.java:130] -Dio.netty.leakDetection.targetRecords: 4
+[2024-05-08 18:08:41.663] [DEBUG] [main] [PlatformDependent0.java:515] -Dio.netty.noUnsafe: false
+[2024-05-08 18:08:41.664] [DEBUG] [main] [PlatformDependent0.java:1026] Java version: 17
+[2024-05-08 18:08:41.666] [DEBUG] [main] [PlatformDependent0.java:140] sun.misc.Unsafe.theUnsafe: available
+[2024-05-08 18:08:41.667] [DEBUG] [main] [PlatformDependent0.java:164] sun.misc.Unsafe.copyMemory: available
+[2024-05-08 18:08:41.667] [DEBUG] [main] [PlatformDependent0.java:196] sun.misc.Unsafe.storeFence: available
+[2024-05-08 18:08:41.668] [DEBUG] [main] [PlatformDependent0.java:239] java.nio.Buffer.address: available
+[2024-05-08 18:08:41.669] [DEBUG] [main] [PlatformDependent0.java:322] direct buffer constructor: unavailable
+java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled
+	at io.netty.util.internal.ReflectionUtil.trySetAccessible(ReflectionUtil.java:31)
+	at io.netty.util.internal.PlatformDependent0$5.run(PlatformDependent0.java:293)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:286)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:08:41.671] [DEBUG] [main] [PlatformDependent0.java:403] java.nio.Bits.unaligned: available, true
+[2024-05-08 18:08:41.673] [DEBUG] [main] [PlatformDependent0.java:468] jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable
+java.lang.IllegalAccessException: class io.netty.util.internal.PlatformDependent0$7 cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to unnamed module @517cd4b
+	at java.base/jdk.internal.reflect.Reflection.newIllegalAccessException(Reflection.java:392)
+	at java.base/java.lang.reflect.AccessibleObject.checkAccess(AccessibleObject.java:674)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:560)
+	at io.netty.util.internal.PlatformDependent0$7.run(PlatformDependent0.java:429)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:420)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:08:41.674] [DEBUG] [main] [PlatformDependent0.java:501] java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable
+[2024-05-08 18:08:41.675] [DEBUG] [main] [PlatformDependent.java:1160] sun.misc.Unsafe: available
+[2024-05-08 18:08:41.675] [DEBUG] [main] [PlatformDependent.java:1306] -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+[2024-05-08 18:08:41.675] [DEBUG] [main] [PlatformDependent.java:1385] -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[2024-05-08 18:08:41.677] [DEBUG] [main] [PlatformDependent.java:176] -Dio.netty.maxDirectMemory: -1 bytes
+[2024-05-08 18:08:41.677] [DEBUG] [main] [PlatformDependent.java:183] -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[2024-05-08 18:08:41.678] [DEBUG] [main] [CleanerJava9.java:71] java.nio.ByteBuffer.cleaner(): available
+[2024-05-08 18:08:41.679] [DEBUG] [main] [PlatformDependent.java:203] -Dio.netty.noPreferDirect: false
+[2024-05-08 18:08:41.680] [DEBUG] [main] [PooledByteBufAllocator.java:157] -Dio.netty.allocator.numHeapArenas: 16
+[2024-05-08 18:08:41.681] [DEBUG] [main] [PooledByteBufAllocator.java:158] -Dio.netty.allocator.numDirectArenas: 16
+[2024-05-08 18:08:41.681] [DEBUG] [main] [PooledByteBufAllocator.java:160] -Dio.netty.allocator.pageSize: 8192
+[2024-05-08 18:08:41.681] [DEBUG] [main] [PooledByteBufAllocator.java:165] -Dio.netty.allocator.maxOrder: 9
+[2024-05-08 18:08:41.681] [DEBUG] [main] [PooledByteBufAllocator.java:169] -Dio.netty.allocator.chunkSize: 4194304
+[2024-05-08 18:08:41.681] [DEBUG] [main] [PooledByteBufAllocator.java:170] -Dio.netty.allocator.smallCacheSize: 256
+[2024-05-08 18:08:41.682] [DEBUG] [main] [PooledByteBufAllocator.java:171] -Dio.netty.allocator.normalCacheSize: 64
+[2024-05-08 18:08:41.682] [DEBUG] [main] [PooledByteBufAllocator.java:172] -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+[2024-05-08 18:08:41.682] [DEBUG] [main] [PooledByteBufAllocator.java:173] -Dio.netty.allocator.cacheTrimInterval: 8192
+[2024-05-08 18:08:41.682] [DEBUG] [main] [PooledByteBufAllocator.java:174] -Dio.netty.allocator.cacheTrimIntervalMillis: 0
+[2024-05-08 18:08:41.682] [DEBUG] [main] [PooledByteBufAllocator.java:175] -Dio.netty.allocator.useCacheForAllThreads: false
+[2024-05-08 18:08:41.682] [DEBUG] [main] [PooledByteBufAllocator.java:176] -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023
+[2024-05-08 18:08:41.688] [DEBUG] [main] [InternalThreadLocalMap.java:100] -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[2024-05-08 18:08:41.688] [DEBUG] [main] [InternalThreadLocalMap.java:101] -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[2024-05-08 18:08:41.706] [DEBUG] [main] [AbstractByteBuf.java:63] -Dio.netty.buffer.checkAccessible: true
+[2024-05-08 18:08:41.706] [DEBUG] [main] [AbstractByteBuf.java:64] -Dio.netty.buffer.checkBounds: true
+[2024-05-08 18:08:41.707] [DEBUG] [main] [ResourceLeakDetectorFactory.java:196] Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@409bf450
+[2024-05-08 18:09:11.377] [DEBUG] [main] [ByteBufUtil.java:89] -Dio.netty.allocator.type: pooled
+[2024-05-08 18:09:11.378] [DEBUG] [main] [ByteBufUtil.java:98] -Dio.netty.threadLocalDirectBufferSize: 0
+[2024-05-08 18:09:11.378] [DEBUG] [main] [ByteBufUtil.java:101] -Dio.netty.maxThreadLocalCharBufferSize: 16384
+[2024-05-08 18:10:47.456] [DEBUG] [main] [InternalLoggerFactory.java:63] Using SLF4J as the default logging framework
+[2024-05-08 18:10:47.461] [DEBUG] [main] [ResourceLeakDetector.java:129] -Dio.netty.leakDetection.level: simple
+[2024-05-08 18:10:47.461] [DEBUG] [main] [ResourceLeakDetector.java:130] -Dio.netty.leakDetection.targetRecords: 4
+[2024-05-08 18:10:47.488] [DEBUG] [main] [PlatformDependent0.java:515] -Dio.netty.noUnsafe: false
+[2024-05-08 18:10:47.488] [DEBUG] [main] [PlatformDependent0.java:1026] Java version: 17
+[2024-05-08 18:10:47.490] [DEBUG] [main] [PlatformDependent0.java:140] sun.misc.Unsafe.theUnsafe: available
+[2024-05-08 18:10:47.491] [DEBUG] [main] [PlatformDependent0.java:164] sun.misc.Unsafe.copyMemory: available
+[2024-05-08 18:10:47.492] [DEBUG] [main] [PlatformDependent0.java:196] sun.misc.Unsafe.storeFence: available
+[2024-05-08 18:10:47.493] [DEBUG] [main] [PlatformDependent0.java:239] java.nio.Buffer.address: available
+[2024-05-08 18:10:47.493] [DEBUG] [main] [PlatformDependent0.java:322] direct buffer constructor: unavailable
+java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled
+	at io.netty.util.internal.ReflectionUtil.trySetAccessible(ReflectionUtil.java:31)
+	at io.netty.util.internal.PlatformDependent0$5.run(PlatformDependent0.java:293)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:286)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:10:47.496] [DEBUG] [main] [PlatformDependent0.java:403] java.nio.Bits.unaligned: available, true
+[2024-05-08 18:10:47.497] [DEBUG] [main] [PlatformDependent0.java:468] jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable
+java.lang.IllegalAccessException: class io.netty.util.internal.PlatformDependent0$7 cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to unnamed module @517cd4b
+	at java.base/jdk.internal.reflect.Reflection.newIllegalAccessException(Reflection.java:392)
+	at java.base/java.lang.reflect.AccessibleObject.checkAccess(AccessibleObject.java:674)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:560)
+	at io.netty.util.internal.PlatformDependent0$7.run(PlatformDependent0.java:429)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:420)
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:331)
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:86)
+	at io.netty.buffer.PooledByteBufAllocator.<clinit>(PooledByteBufAllocator.java:116)
+	at io.vertx.core.buffer.impl.VertxByteBufAllocator.<clinit>(VertxByteBufAllocator.java:25)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:72)
+	at io.vertx.core.buffer.impl.BufferImpl.<init>(BufferImpl.java:68)
+	at io.vertx.core.buffer.impl.BufferImpl.buffer(BufferImpl.java:46)
+	at io.vertx.core.buffer.Buffer.buffer(Buffer.java:49)
+	at com.motadata.Bootstrap.main(Bootstrap.java:47)
+[2024-05-08 18:10:47.499] [DEBUG] [main] [PlatformDependent0.java:501] java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable
+[2024-05-08 18:10:47.499] [DEBUG] [main] [PlatformDependent.java:1160] sun.misc.Unsafe: available
+[2024-05-08 18:10:47.500] [DEBUG] [main] [PlatformDependent.java:1306] -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+[2024-05-08 18:10:47.500] [DEBUG] [main] [PlatformDependent.java:1385] -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[2024-05-08 18:10:47.502] [DEBUG] [main] [PlatformDependent.java:176] -Dio.netty.maxDirectMemory: -1 bytes
+[2024-05-08 18:10:47.502] [DEBUG] [main] [PlatformDependent.java:183] -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[2024-05-08 18:10:47.503] [DEBUG] [main] [CleanerJava9.java:71] java.nio.ByteBuffer.cleaner(): available
+[2024-05-08 18:10:47.504] [DEBUG] [main] [PlatformDependent.java:203] -Dio.netty.noPreferDirect: false
+[2024-05-08 18:10:47.505] [DEBUG] [main] [PooledByteBufAllocator.java:157] -Dio.netty.allocator.numHeapArenas: 16
+[2024-05-08 18:10:47.506] [DEBUG] [main] [PooledByteBufAllocator.java:158] -Dio.netty.allocator.numDirectArenas: 16
+[2024-05-08 18:10:47.506] [DEBUG] [main] [PooledByteBufAllocator.java:160] -Dio.netty.allocator.pageSize: 8192
+[2024-05-08 18:10:47.506] [DEBUG] [main] [PooledByteBufAllocator.java:165] -Dio.netty.allocator.maxOrder: 9
+[2024-05-08 18:10:47.506] [DEBUG] [main] [PooledByteBufAllocator.java:169] -Dio.netty.allocator.chunkSize: 4194304
+[2024-05-08 18:10:47.506] [DEBUG] [main] [PooledByteBufAllocator.java:170] -Dio.netty.allocator.smallCacheSize: 256
+[2024-05-08 18:10:47.506] [DEBUG] [main] [PooledByteBufAllocator.java:171] -Dio.netty.allocator.normalCacheSize: 64
+[2024-05-08 18:10:47.506] [DEBUG] [main] [PooledByteBufAllocator.java:172] -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+[2024-05-08 18:10:47.507] [DEBUG] [main] [PooledByteBufAllocator.java:173] -Dio.netty.allocator.cacheTrimInterval: 8192
+[2024-05-08 18:10:47.507] [DEBUG] [main] [PooledByteBufAllocator.java:174] -Dio.netty.allocator.cacheTrimIntervalMillis: 0
+[2024-05-08 18:10:47.507] [DEBUG] [main] [PooledByteBufAllocator.java:175] -Dio.netty.allocator.useCacheForAllThreads: false
+[2024-05-08 18:10:47.507] [DEBUG] [main] [PooledByteBufAllocator.java:176] -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023
+[2024-05-08 18:10:47.513] [DEBUG] [main] [InternalThreadLocalMap.java:100] -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[2024-05-08 18:10:47.513] [DEBUG] [main] [InternalThreadLocalMap.java:101] -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[2024-05-08 18:10:47.531] [DEBUG] [main] [AbstractByteBuf.java:63] -Dio.netty.buffer.checkAccessible: true
+[2024-05-08 18:10:47.531] [DEBUG] [main] [AbstractByteBuf.java:64] -Dio.netty.buffer.checkBounds: true
+[2024-05-08 18:10:47.532] [DEBUG] [main] [ResourceLeakDetectorFactory.java:196] Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@409bf450
+[2024-05-08 18:10:47.537] [DEBUG] [main] [ByteBufUtil.java:89] -Dio.netty.allocator.type: pooled
+[2024-05-08 18:10:47.538] [DEBUG] [main] [ByteBufUtil.java:98] -Dio.netty.threadLocalDirectBufferSize: 0
+[2024-05-08 18:10:47.538] [DEBUG] [main] [ByteBufUtil.java:101] -Dio.netty.maxThreadLocalCharBufferSize: 16384

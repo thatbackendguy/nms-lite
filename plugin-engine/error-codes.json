@@ -1,0 +1,10 @@
+{
+  "JSON01": "json parsing error",
+  "SNMP01": "Error connecting to SNMP agent",
+  "DISC01": "Error getting system name",
+  "DISC02": "Error getting system description",
+  "DISC03": "Error getting system location",
+  "DISC04": "Error getting system objectId",
+  "DISC05": "Error getting system uptime",
+  "DISC06": "Error getting system interfaces"
+}
