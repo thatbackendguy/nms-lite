@@ -43,6 +43,7 @@ func main() {
 	err = json.Unmarshal(decodedBytes, &context)
 
 	if err != nil {
+		context[constants.STATUS] = constants.FAILED
 
 		errMap := make(map[string]interface{})
 
@@ -62,15 +63,32 @@ func main() {
 
 	}
 
-	switch context[constants.REQUEST_TYPE].(string) {
+	if len(context[constants.REQUEST_TYPE].(string)) > 0 && len(context[constants.OBJECT_IP].(string)) > 0 && context[constants.SNMP_PORT].(float64) > 0 && len(context[constants.COMMUNITY].(string)) > 0 {
+		switch context[constants.REQUEST_TYPE].(string) {
 
-	case constants.DISCOVERY:
+		case constants.DISCOVERY:
 
-		requesttype.Discovery(context)
+			requesttype.Discovery(context)
 
-	case constants.COLLECT:
+		case constants.COLLECT:
 
-		requesttype.Collect(context)
+			requesttype.Collect(context)
+		}
+	} else {
+
+		context[constants.STATUS] = constants.FAILED
+
+		errMap := make(map[string]interface{})
+
+		errMap[constants.ERROR_CODE] = "JSON02"
+
+		errMap[constants.ERROR_MSG] = "Details incomplete"
+
+		context[constants.ERROR] = errMap
+
+		utils.SendResponse(context)
+
+		log.Fatal("Unable to convert JSON string to map: ", err)
 	}
 
 	log.Println(time.Now(), context)
