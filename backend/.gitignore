@@ -38,3 +38,5 @@ build/
 .DS_Store
 
 *.log
+Backend.log
+pluginEngine.log
