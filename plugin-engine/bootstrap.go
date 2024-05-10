@@ -3,95 +3,91 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
-	"plugin-engine/constants"
-	"plugin-engine/requesttype"
+	"plugin-engine/plugins/snmp"
 	"plugin-engine/utils"
-	"time"
+	"strings"
+	"sync"
+)
+
+const (
+	RequestType   = "request.type"
+	Discovery     = "Discovery"
+	DeviceType    = "device.type"
+	NetworkDevice = "Network"
 )
 
 func main() {
 
-	file, err := os.OpenFile("pluginEngine.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	var wg sync.WaitGroup
 
-	if err != nil {
+	utils.LoggerInit()
 
-		log.Fatal(err)
-
-		return
-	}
-
-	defer file.Close()
-
-	// Set the output of the logger to the file
-
-	log.SetOutput(file)
+	utils.Loggers["pluginEngine"].Info("Starting Plugin Engine")
 
 	decodedBytes, err := base64.StdEncoding.DecodeString(os.Args[1])
 
 	if err != nil {
 
-		log.Fatal("Base64 decoding error: ", err)
+		utils.Loggers["pluginEngine"].Error(fmt.Sprintf("Base64 decoding error: %s", err.Error()))
 
 		return
 
 	}
 
-	var context map[string]interface{}
+	context := make([]map[string]interface{}, 0)
 
 	err = json.Unmarshal(decodedBytes, &context)
 
 	if err != nil {
-		context[constants.STATUS] = constants.FAILED
-
-		errMap := make(map[string]interface{})
-
-		errMap[constants.ERROR] = err
-
-		errMap[constants.ERROR_CODE] = "JSON01"
-
-		errMap[constants.ERROR_MSG] = "Unable to convert JSON string to map"
-
-		context[constants.ERROR] = errMap
-
-		utils.SendResponse(context)
-
-		log.Fatal("Unable to convert JSON string to map: ", err)
+		utils.Loggers["pluginEngine"].Error(fmt.Sprintf("Unable to convert JSON string to map: %s", err.Error()))
 
 		return
+	}
+
+	wg.Add(len(context))
+
+	for _, device := range context {
+
+		go func(device map[string]interface{}) {
+
+			errors := make([]map[string]interface{}, 0)
+
+			switch device[DeviceType].(string) {
+
+			case NetworkDevice:
+
+				requestType := device[RequestType].(string)
+
+				if strings.EqualFold(requestType, Discovery) {
+
+					snmp.Discovery(device, &errors)
+
+				} else {
+
+					snmp.Collect(device, &errors)
+
+				}
+
+			default:
+
+				utils.Loggers["pluginEngine"].Error("Unsupported device type!")
+			}
+
+			if len(errors) > 0 {
+				device[utils.Status] = utils.Failed
+
+				device[utils.Error] = errors
+			} else {
+				device[utils.Status] = utils.Success
+			}
+
+			wg.Done()
+		}(device)
 
 	}
 
-	if len(context[constants.REQUEST_TYPE].(string)) > 0 && len(context[constants.OBJECT_IP].(string)) > 0 && context[constants.SNMP_PORT].(float64) > 0 && len(context[constants.COMMUNITY].(string)) > 0 {
-		switch context[constants.REQUEST_TYPE].(string) {
-
-		case constants.DISCOVERY:
-
-			requesttype.Discovery(context)
-
-		case constants.COLLECT:
-
-			requesttype.Collect(context)
-		}
-	} else {
-
-		context[constants.STATUS] = constants.FAILED
-
-		errMap := make(map[string]interface{})
-
-		errMap[constants.ERROR_CODE] = "JSON02"
-
-		errMap[constants.ERROR_MSG] = "Details incomplete"
-
-		context[constants.ERROR] = errMap
-
-		utils.SendResponse(context)
-
-		log.Fatal("Unable to convert JSON string to map: ", err)
-	}
-
-	log.Println(time.Now(), context)
-
+	wg.Wait()
 	utils.SendResponse(context)
 }

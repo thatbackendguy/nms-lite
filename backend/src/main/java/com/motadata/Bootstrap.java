@@ -4,6 +4,7 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,9 +46,10 @@ public class Bootstrap
 //
 //        json.put(SNMP_PORT, 161);
 //
-//        json.put(COMMUNITY, "public");
+//        json.put(SNMP_COMMUNITY, "public");
+//        var jsonArray = new JsonArray().add(json);
 //
-//        String encodedString = Base64.getEncoder().encodeToString(json.toString().getBytes());
+//        String encodedString = Base64.getEncoder().encodeToString(jsonArray.toString().getBytes());
 //
 //        System.out.println(encodedString);
 //
