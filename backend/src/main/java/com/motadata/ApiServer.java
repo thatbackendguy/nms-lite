@@ -44,7 +44,7 @@ public class ApiServer extends AbstractVerticle
         mainRouter.route("/discovery/*").subRouter(discoveryRouter);
 
         // CREDENTIAL PROFILE SUB-ROUTER
-        mainRouter.route("/credential-profile/*").subRouter(credentialRouter);
+        mainRouter.route("/credential/*").subRouter(credentialRouter);
 
         // get discovery profile
         discoveryRouter.route(HttpMethod.GET, "/get/:ipAddress").handler(ctx -> {

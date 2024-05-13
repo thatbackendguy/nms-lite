@@ -1,10 +1,11 @@
 {
   "JSON01": "json parsing error",
-  "SNMP01": "Error connecting to SNMP agent",
-  "DISC01": "Error getting system name",
-  "DISC02": "Error getting system description",
-  "DISC03": "Error getting system location",
-  "DISC04": "Error getting system objectId",
-  "DISC05": "Error getting system uptime",
-  "DISC06": "Error getting system interfaces"
+  "SNMP01": "error connecting to SNMP agent",
+  "SNMP02": "error in discovering objects",
+  "DISC01": "error getting system name",
+  "DISC02": "error getting system description",
+  "DISC03": "error getting system location",
+  "DISC04": "error getting system objectId",
+  "DISC05": "error getting system uptime",
+  "DISC06": "error getting system interfaces"
 }

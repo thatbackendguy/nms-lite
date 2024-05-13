@@ -14,80 +14,101 @@ import (
 const (
 	RequestType   = "request.type"
 	Discovery     = "Discovery"
-	DeviceType    = "device.type"
+	PluginName    = "plugin.name"
 	NetworkDevice = "Network"
+	LoggerName    = "bootstrap"
 )
+
+var pluginEngineLogger = utils.NewLogger(utils.LogFilesPath, LoggerName)
 
 func main() {
 
 	var wg sync.WaitGroup
 
-	utils.LoggerInit()
-
-	utils.Loggers["pluginEngine"].Info("Starting Plugin Engine")
+	pluginEngineLogger.Info("Starting Plugin Engine")
 
 	decodedBytes, err := base64.StdEncoding.DecodeString(os.Args[1])
 
 	if err != nil {
 
-		utils.Loggers["pluginEngine"].Error(fmt.Sprintf("Base64 decoding error: %s", err.Error()))
+		pluginEngineLogger.Error(fmt.Sprintf("base64 decoding error: %s", err.Error()))
 
 		return
 
 	}
 
-	context := make([]map[string]interface{}, 0)
+	contexts := make([]map[string]interface{}, 0)
 
-	err = json.Unmarshal(decodedBytes, &context)
+	err = json.Unmarshal(decodedBytes, &contexts)
 
 	if err != nil {
-		utils.Loggers["pluginEngine"].Error(fmt.Sprintf("Unable to convert JSON string to map: %s", err.Error()))
+		pluginEngineLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
 
 		return
 	}
 
-	wg.Add(len(context))
+	pluginEngineLogger.Debug(string(decodedBytes))
 
-	for _, device := range context {
+	for _, context := range contexts {
 
-		go func(device map[string]interface{}) {
+		wg.Add(1)
+
+		go func(context map[string]interface{}) {
+
+			defer wg.Done()
 
 			errors := make([]map[string]interface{}, 0)
 
-			switch device[DeviceType].(string) {
+			defer func(context map[string]interface{}, contexts []map[string]interface{}) {
 
-			case NetworkDevice:
+				if r := recover(); r != nil {
 
-				requestType := device[RequestType].(string)
+					pluginEngineLogger.Error("error occurred!")
 
-				if strings.EqualFold(requestType, Discovery) {
+					context[utils.Status] = utils.Failed
 
-					snmp.Discovery(device, &errors)
+					utils.SendResponse(contexts)
 
-				} else {
-
-					snmp.Collect(device, &errors)
-
+					return
 				}
+			}(context, contexts)
 
-			default:
+			if pluginName, ok := context[PluginName].(string); ok {
 
-				utils.Loggers["pluginEngine"].Error("Unsupported device type!")
+				switch pluginName {
+
+				case NetworkDevice:
+
+					if requestType, ok := context[RequestType].(string); ok {
+
+						if strings.EqualFold(requestType, Discovery) {
+
+							snmp.Discovery(context, &errors)
+
+						} else {
+
+							snmp.Collect(context, &errors)
+
+						}
+					}
+				default:
+
+					pluginEngineLogger.Error("Unsupported plugin type!")
+				}
 			}
-
 			if len(errors) > 0 {
-				device[utils.Status] = utils.Failed
+				context[utils.Status] = utils.Failed
 
-				device[utils.Error] = errors
+				context[utils.Error] = errors
 			} else {
-				device[utils.Status] = utils.Success
+				context[utils.Status] = utils.Success
 			}
 
-			wg.Done()
-		}(device)
+		}(context)
 
 	}
 
 	wg.Wait()
-	utils.SendResponse(context)
+
+	utils.SendResponse(contexts)
 }
