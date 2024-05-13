@@ -47,7 +47,7 @@ func main() {
 		return
 	}
 
-	pluginEngineLogger.Debug(string(decodedBytes))
+	pluginEngineLogger.Info(string(decodedBytes))
 
 	for _, context := range contexts {
 

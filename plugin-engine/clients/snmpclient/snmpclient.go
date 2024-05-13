@@ -115,17 +115,18 @@ func Walk(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, e
 			defer wg.Done()
 
 			for _, result := range results {
+
 				switch result.Type {
 				case g.OctetString:
 					oidResult[result.Name] = string(result.Value.([]byte))
 				case g.Integer:
 					oidResult[result.Name] = g.ToBigInt(result.Value)
+				case g.Counter32:
+					oidResult[result.Name] = result.Value.(uint)
+				case g.Gauge32:
+					oidResult[result.Name] = result.Value.(uint)
 				case g.TimeTicks:
-					oidResult[result.Name] = uint32(result.Value.(int64))
-				case g.Opaque:
-					oidResult[result.Name] = fmt.Sprintf("0x%X", result.Value.([]byte))
-				case g.Counter64:
-					oidResult[result.Name] = g.ToBigInt(result.Value)
+					oidResult[result.Name] = result.Value.(uint)
 				default:
 					oidResult[result.Name] = result.Value
 				}
