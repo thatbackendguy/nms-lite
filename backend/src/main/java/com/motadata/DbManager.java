@@ -14,7 +14,7 @@ import java.util.UUID;
 import static com.motadata.Bootstrap.*;
 import static com.motadata.Constants.*;
 
-public class DbWorker extends AbstractVerticle
+public class DbManager extends AbstractVerticle
 {
     @Override
     public void start(Promise<Void> startPromise) throws Exception
@@ -55,9 +55,10 @@ public class DbWorker extends AbstractVerticle
 
                     msg.reply(jsonObj.put(STATUS,SUCCESS));
 
-                } catch(SQLException e)
+                }  catch(SQLException e)
                 {
-                    msg.reply(jsonObj.put(STATUS,FAILED).put(ERROR,e.getMessage()));
+                    LOGGER.info("Error: {}", e.getMessage());
+                    msg.fail(500,e.getMessage());
                 }
             }
             else if(jsonObj.getString(TABLE_NAME).equals("credential_profile"))
@@ -85,9 +86,10 @@ public class DbWorker extends AbstractVerticle
 
                     jsonObj.put("credential_profiles", credProfiles);
 
-                } catch(SQLException e)
+                }  catch(SQLException e)
                 {
-                    msg.reply(jsonObj.put(STATUS,FAILED).put(ERROR,e.getMessage()));
+                    LOGGER.info("Error: {}", e.getMessage());
+                    msg.fail(500,e.getMessage());
                 }
 
                 msg.reply(jsonObj.put(STATUS,SUCCESS));
@@ -105,54 +107,49 @@ public class DbWorker extends AbstractVerticle
             {
                 jsonObj.remove(TABLE_NAME);
 
-                String dpInsertQ = "INSERT INTO `nmsDB`.`discovery_profile` (`disc.name`,`disc.profile.id`,`object.ip`,`cred.profile.id`,`snmp.port`) VALUES (?,?,?,?,?);";
+                String dpInsertQ = "INSERT INTO `nmsDB`.`discovery_profile` (`disc.name`,`object.ip`,`cred.profile.id`,`snmp.port`) VALUES (?,?,?,?,?);";
 
                 try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(dpInsertQ))
                 {
                     stmt.setString(1, jsonObj.getString(DISC_NAME));
-                    stmt.setString(2, UUID.randomUUID().toString());
-                    stmt.setString(3, jsonObj.getString(OBJECT_IP));
-                    stmt.setString(4, jsonObj.getString(CRED_PROF_ID));
-                    stmt.setString(5, jsonObj.getString(SNMP_PORT));
+                    stmt.setString(2, jsonObj.getString(OBJECT_IP));
+                    stmt.setString(3, jsonObj.getString(CRED_PROF_ID));
+                    stmt.setString(4, jsonObj.getString(SNMP_PORT));
 
                     var rowsInserted = stmt.executeUpdate();
 
                     LOGGER.info("{} rows inserted in {}", rowsInserted, jsonObj.getString(TABLE_NAME));
-
-                    jsonObj.clear();
-
-                    msg.reply(jsonObj.put(STATUS,SUCCESS).put(MESSAGE,"Discovery profile added successfully!"));
                 }
                 catch(SQLException e)
                 {
-                    msg.reply(jsonObj.put(STATUS,FAILED).put(ERROR,e.getMessage()));
+                    LOGGER.info("Error: {}", e.getMessage());
+                    msg.fail(500, e.getMessage());
                 }
             }
             else if(jsonObj.getString(TABLE_NAME).equals("credential_profile"))
             {
-                jsonObj.remove(TABLE_NAME);
+//                jsonObj.remove(TABLE_NAME);
 
-                String cpInsertQ = "INSERT INTO `nmsDB`.`credential_profile` (`cred.profile.id`,`cred.name`, `protocol`, `version`, `snmp.community`) VALUES (?,?,?,?,?);";
+                String cpInsertQ = "INSERT INTO `nmsDB`.`credential_profile` (`cred.name`, `protocol`, `version`, `snmp.community`) VALUES (?,?,?,?);";
 
                 try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(cpInsertQ))
                 {
-                    stmt.setString(1, UUID.randomUUID().toString());
-                    stmt.setString(2, jsonObj.getString(CRED_NAME));
-                    stmt.setString(3, jsonObj.getString(PROTOCOL));
-                    stmt.setString(4, jsonObj.getString(VERSION));
-                    stmt.setString(5, jsonObj.getString(SNMP_COMMUNITY));
+
+                    stmt.setString(1, jsonObj.getString(CRED_NAME));
+                    stmt.setString(2, jsonObj.getString(PROTOCOL));
+                    stmt.setString(3, jsonObj.getString(VERSION));
+                    stmt.setString(4, jsonObj.getString(SNMP_COMMUNITY));
 
                     var rowsInserted = stmt.executeUpdate();
 
                     LOGGER.info("{} rows inserted in {}", rowsInserted, jsonObj.getString(TABLE_NAME));
 
-                    jsonObj.clear();
-
-                    msg.reply(jsonObj.put(STATUS,SUCCESS).put(MESSAGE,"Credential profile added successfully!"));
+                    msg.reply("ok");
                 }
                 catch(SQLException e)
                 {
-                    msg.reply(jsonObj.put(STATUS,FAILED).put(ERROR,e.getMessage()));
+                    LOGGER.info("Error: {}", e.getMessage());
+                    msg.fail(500,e.getMessage());
                 }
 
             }
@@ -185,9 +182,10 @@ public class DbWorker extends AbstractVerticle
                     msg.reply(jsonObj.put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile deleted successfully!"));
 
                 }
-                catch (SQLException e)
+                catch(SQLException e)
                 {
-                    msg.reply(jsonObj.put(STATUS, FAILED).put(ERROR, e.getMessage()));
+                    LOGGER.info("Error: {}", e.getMessage());
+                    msg.fail(500,e.getMessage());
                 }
             }
             else if (jsonObj.getString(TABLE_NAME).equals("credential_profile"))
@@ -209,9 +207,10 @@ public class DbWorker extends AbstractVerticle
                     msg.reply(jsonObj.put(STATUS, SUCCESS).put(MESSAGE, "Credential profile deleted successfully!"));
 
                 }
-                catch (SQLException e)
+                catch(SQLException e)
                 {
-                    msg.reply(jsonObj.put(STATUS, FAILED).put(ERROR, e.getMessage()));
+                    LOGGER.info("Error: {}", e.getMessage());
+                    msg.fail(500,e.getMessage());
                 }
             }
             else
@@ -244,9 +243,10 @@ public class DbWorker extends AbstractVerticle
                     msg.reply(jsonObj.put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile updated successfully!"));
 
                 }
-                catch (SQLException e)
+                catch(SQLException e)
                 {
-                    msg.reply(jsonObj.put(STATUS, FAILED).put(ERROR, e.getMessage()));
+                    LOGGER.info("Error: {}", e.getMessage());
+                    msg.fail(500,e.getMessage());
                 }
             }
             else if (jsonObj.getString(TABLE_NAME).equals("credential_profile"))
@@ -271,9 +271,10 @@ public class DbWorker extends AbstractVerticle
                     msg.reply(jsonObj.put(STATUS, SUCCESS).put(MESSAGE, "Credential profile updated successfully!"));
 
                 }
-                catch (SQLException e)
+                catch(SQLException e)
                 {
-                    msg.reply(jsonObj.put(STATUS, FAILED).put(ERROR, e.getMessage()));
+                    LOGGER.info("Error: {}", e.getMessage());
+                    msg.fail(500,e.getMessage());
                 }
             }
             else

@@ -14,7 +14,7 @@ func Init(objectIp string, community string, port uint16) (*g.GoSNMP, error) {
 		Community: community,
 		Port:      port,
 		Retries:   3,
-		Timeout:   time.Duration(5) * time.Second,
+		Timeout:   time.Duration(3) * time.Second,
 	}
 
 	err := GoSNMP.Connect()

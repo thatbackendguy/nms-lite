@@ -1,0 +1,14 @@
+package com.motadata;
+
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
+
+public class PollingEngine extends AbstractVerticle
+{
+
+    @Override
+    public void start(Promise<Void> startPromise) throws Exception
+    {
+        startPromise.complete();
+    }
+}

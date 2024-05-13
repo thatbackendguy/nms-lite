@@ -96,10 +96,11 @@ func main() {
 					pluginEngineLogger.Error("Unsupported plugin type!")
 				}
 			}
-			if len(errors) > 0 {
-				context[utils.Status] = utils.Failed
 
-				context[utils.Error] = errors
+			context[utils.Error] = errors
+
+			if len(errors) > 0 && len(context[utils.Result].(map[string]interface{})) < 0 {
+				context[utils.Status] = utils.Failed
 			} else {
 				context[utils.Status] = utils.Success
 			}

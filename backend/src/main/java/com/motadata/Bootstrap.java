@@ -24,17 +24,24 @@ public class Bootstrap
     {
         var vertx = Vertx.vertx();
 
-        vertx.deployVerticle("com.motadata.ApiServer", handler->{
+        vertx.deployVerticle("com.motadata.ApiEngine", handler->{
             if(handler.succeeded())
             {
                 LOGGER.info("Server is up and running");
             }
         });
 
-        vertx.deployVerticle("com.motadata.DbWorker", new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), handler->{
+        vertx.deployVerticle("com.motadata.DbManager", new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), handler->{
             if(handler.succeeded())
             {
-                LOGGER.info("DB Worker is up and running");
+                LOGGER.info("DB Manager is up and running");
+            }
+        });
+
+        vertx.deployVerticle("com.motadata.PollingEngine", handler->{
+            if(handler.succeeded())
+            {
+                LOGGER.info("Polling Engine is up and running");
             }
         });
 

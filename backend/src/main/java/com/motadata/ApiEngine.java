@@ -11,7 +11,7 @@ import io.vertx.ext.web.handler.ErrorHandler;
 import static com.motadata.Bootstrap.LOGGER;
 import static com.motadata.Constants.*;
 
-public class ApiServer extends AbstractVerticle
+public class ApiEngine extends AbstractVerticle
 {
     private ErrorHandler errorHandler()
     {
@@ -29,9 +29,12 @@ public class ApiServer extends AbstractVerticle
 
         Router credentialRouter = Router.router(vertx);
 
+        Router provisionRouter = Router.router(vertx);
+
         // for handling failures
         mainRouter.route().failureHandler(errorHandler());
 
+        //--------------------------------------------------------------------------------------------------------------
         // GET: "/"
         mainRouter.route("/").handler(ctx -> {
 
@@ -40,11 +43,39 @@ public class ApiServer extends AbstractVerticle
             ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
         });
 
+        //--------------------------------------------------------------------------------------------------------------
         // DISCOVERY PROFILE SUB-ROUTER
         mainRouter.route("/discovery/*").subRouter(discoveryRouter);
 
         // CREDENTIAL PROFILE SUB-ROUTER
         mainRouter.route("/credential/*").subRouter(credentialRouter);
+
+        // PROVISION SUB-ROUTER
+        mainRouter.route("/provision/*").subRouter(provisionRouter);
+
+        //--------------------------------------------------------------------------------------------------------------
+        // create discovery profile
+        discoveryRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+
+            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+            ctx.request().bodyHandler(buffer -> {
+
+                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, "discovery_profile");
+
+                vertx.eventBus().request("insert.data", reqJSON, ar -> {
+
+                    if(ar.succeeded())
+                    {
+                        ctx.json(new JsonObject().put(STATUS,SUCCESS).put(MESSAGE,"Discovery profile added successfully!"));
+                    }
+                    else
+                    {
+                        ctx.json(new JsonObject().put(STATUS,FAILED).put(MESSAGE,ar.result().body()));
+                    }
+                });
+            });
+        });
 
         // get discovery profile
         discoveryRouter.route(HttpMethod.GET, "/get/:ipAddress").handler(ctx -> {
@@ -62,24 +93,6 @@ public class ApiServer extends AbstractVerticle
             });
         });
 
-        // create discovery profile
-        discoveryRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
-
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            ctx.request().bodyHandler(buffer -> {
-
-                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, "discovery_profile");
-
-                vertx.eventBus().request("insert.data", reqJSON, ar -> {
-
-                    if(ar.succeeded())
-                    {
-                        ctx.json(new JsonObject(ar.result().body().toString()));
-                    }
-                });
-            });
-        });
 
         // UPDATE DISCOVERY PROFILE
         discoveryRouter.route(HttpMethod.PUT, "/update/:ipAddress").handler(ctx -> {
@@ -120,21 +133,7 @@ public class ApiServer extends AbstractVerticle
             });
         });
 
-        // CREDENTIAL PROFILE
-        // get credential profile
-        credentialRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
-
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            vertx.eventBus().request("get.data", new JsonObject().put(TABLE_NAME, "credential_profile"), ar -> {
-
-                if(ar.succeeded())
-                {
-                    ctx.json(new JsonObject(ar.result().body().toString()).put(STATUS, SUCCESS));
-                }
-            });
-        });
-
+        //--------------------------------------------------------------------------------------------------------------
         // create credential profile
         credentialRouter.route(HttpMethod.POST, "/add").handler(ctx->{
 
@@ -148,9 +147,29 @@ public class ApiServer extends AbstractVerticle
 
                     if(ar.succeeded())
                     {
-                        ctx.json(new JsonObject(ar.result().body().toString()));
+
+                        ctx.json(new JsonObject().put(STATUS,SUCCESS).put(MESSAGE,"Credential profile added successfully!"));
+                    }
+                    else
+                    {
+
+                        ctx.json(new JsonObject().put(STATUS,FAILED).put(MESSAGE,ar.cause().getMessage()));
                     }
                 });
+            });
+        });
+
+        // get credential profile
+        credentialRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+
+            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+            vertx.eventBus().request("get.data", new JsonObject().put(TABLE_NAME, "credential_profile"), ar -> {
+
+                if(ar.succeeded())
+                {
+                    ctx.json(new JsonObject(ar.result().body().toString()).put(STATUS, SUCCESS));
+                }
             });
         });
 
@@ -193,6 +212,11 @@ public class ApiServer extends AbstractVerticle
             });
         });
 
+        //--------------------------------------------------------------------------------------------------------------
+        // TODO /provision/create
+        // TODO /provision/get/:discoveryId
+        // TODO /provision/get-all
+        // TODO /provision/delete
 
         server.requestHandler(mainRouter).listen(8080, res -> {
 
