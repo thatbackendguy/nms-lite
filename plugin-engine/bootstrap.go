@@ -63,13 +63,14 @@ func main() {
 
 				if r := recover(); r != nil {
 
+					//fmt.Println(r)
+
 					pluginEngineLogger.Error("error occurred!")
 
 					context[utils.Status] = utils.Failed
 
-					utils.SendResponse(contexts)
+					//utils.SendResponse(contexts)
 
-					return
 				}
 			}(context, contexts)
 
@@ -99,8 +100,10 @@ func main() {
 
 			context[utils.Error] = errors
 
-			if len(errors) > 0 && len(context[utils.Result].(map[string]interface{})) < 0 {
+			if len(errors) > 0 && len(context[utils.Result].(map[string]interface{})) <= 0 {
+
 				context[utils.Status] = utils.Failed
+
 			} else {
 				context[utils.Status] = utils.Success
 			}

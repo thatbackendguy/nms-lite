@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import static com.motadata.Bootstrap.LOGGER;
-import static com.motadata.Constants.*;
+import static com.motadata.utils.constants.Constants.*;
 
 public class DatabaseConnection
 {

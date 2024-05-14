@@ -1,11 +1,14 @@
-CREATE TABLE `nmsDB`.`credential_profile`
+CREATE TABLE `credential_profile`
 (
-    `cred.profile.id` INT AUTO_INCREMENT PRIMARY KEY,
-    `cred.name`       VARCHAR(255) NOT NULL UNIQUE,
-    protocol          VARCHAR(255) NOT NULL,
-    version           VARCHAR(255) NOT NULL,
-    `snmp.community`  VARCHAR(255) NOT NULL
+    `cred.profile.id` int          NOT NULL AUTO_INCREMENT,
+    `cred.name`       varchar(255) NOT NULL,
+    `protocol`        varchar(255) NOT NULL,
+    `version`         varchar(255) NOT NULL,
+    `snmp.community`  varchar(255) NOT NULL DEFAULT 'public',
+    PRIMARY KEY (`cred.profile.id`),
+    UNIQUE KEY `cred.name` (`cred.name`)
 );
+
 
 CREATE TABLE `nmsDB`.`discovery_profile`
 (

@@ -10,6 +10,7 @@ const (
 	ObjectIp      = "object.ip"
 	SnmpCommunity = "snmp.community"
 	SnmpPort      = "snmp.port"
+	CredProfileId = "cred.profile.id"
 )
 
 var scalerOids = map[string]string{
@@ -43,45 +44,40 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 	validateContext(context)
 
 	var client *gosnmp.GoSNMP
-	var err error
+
+	if credentials, ok := context["credentials"].([]interface{}); ok {
+		if !(len(credentials) > 0) {
+			*errors = append(*errors, map[string]interface{}{
+
+				utils.Error: "credentials not found",
+
+				utils.ErrorCode: "SNMP01",
+
+				utils.ErrorMsg: "error connecting to SNMP agent",
+			})
+			return
+		}
+
+	}
 
 	for _, credential := range context["credentials"].([]interface{}) {
 
-		client, err = snmpclient.Init(context[ObjectIp].(string), credential.(map[string]interface{})[SnmpCommunity].(string), uint16(context[SnmpPort].(float64)))
+		client, _ = snmpclient.Init(context[ObjectIp].(string), credential.(map[string]interface{})[SnmpCommunity].(string), uint16(context[SnmpPort].(float64)))
 
 		defer snmpclient.Close(client)
 
-		if err != nil {
+		results, _ := snmpclient.Get(scalerOids, client)
 
-			discLogger.Info("invalid credentials " + context[ObjectIp].(string) + " : " + credential.(map[string]interface{})[SnmpCommunity].(string))
+		if len(results) > 0 {
 
-		} else {
-			results, err := snmpclient.Get(scalerOids, client)
+			context[utils.Result] = results
 
-			if err != nil {
-				*errors = append(*errors, map[string]interface{}{
+			context[CredProfileId] = int(credential.(map[string]interface{})[CredProfileId].(float64))
 
-					utils.Error: err.Error(),
-
-					utils.ErrorCode: "SNMP02",
-
-					utils.ErrorMsg: "error in discovering objects!",
-				})
-
-				discLogger.Error("error in discovery of device: " + err.Error())
-
-			}
-
-			if len(results) > 0 {
-
-				context[utils.Result] = results
-
-				context["cred.prof.id"] = int(credential.(map[string]interface{})["cred.prof.id"].(float64))
-
-			}
-
+			break
 		}
 	}
+
 	return
 
 }

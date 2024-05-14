@@ -1,4 +1,4 @@
-package com.motadata;
+package com.motadata.utils.constants;
 
 public class Constants
 {
@@ -7,6 +7,8 @@ public class Constants
     public static final String OBJECT_IP = "object.ip";
 
     public static final String SNMP_COMMUNITY = "snmp.community";
+
+    public static final String CREDENTIALS = "credentials";
 
     public static final String RESULT = "result";
 
@@ -22,8 +24,6 @@ public class Constants
 
     public static final String REQ_CONTAINER = "{} {} {}";
 
-    public static final String SYSTEM_LOCATION = "system.location";
-
     public static final String TABLE_NAME = "table.name";
 
     public static final String ERROR = "error";
@@ -36,6 +36,10 @@ public class Constants
 
     public static final String MESSAGE = "message";
 
+    public static final String ERR_MESSAGE = "error.message";
+
+    public static final String ERR_STATUS_CODE = "error.code";
+
     public static final String SUCCESS = "success";
 
     public static final String FAILED = "failed";
@@ -47,5 +51,36 @@ public class Constants
     public static final String CRED_PROF_ID = "cred.profile.id";
 
     public static final String VERSION = "version";
+
+    public static final String INSERT_EVENT = "insert.data";
+
+    public static final String GET_EVENT = "get.data";
+
+    public static final String GET_ALL_EVENT = "get.all.data";
+
+    public static final String UPDATE_EVENT = "update.data";
+
+    public static final String DELETE_EVENT = "delete.data";
+
+    public static final String IS_PROVISIONED = "is.provisioned";
+
+    public static final String IS_DISCOVERED = "is.discovered";
+
+    public static final String MAKE_DISCOVERY_CONTEXT = "make.disc.context";
+
+    public static final String DISCOVERY = "Discovery";
+
+    public static final String PLUGIN_NAME = "plugin.name";
+
+    public static final String NETWORK = "Network";
+
+    public static final String TRUE = "1";
+
+    public static final String FALSE = "0";
+
+    public static final String RUN_DISCOVERY = "discovery.run";
+
+    public static final String POST_DISC_SUCCESS = "post.discovery.success";
+
 
 }
