@@ -3,16 +3,22 @@ package snmpclient
 import (
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
-	"sync"
+	"plugin-engine/utils"
+	"strings"
 	"time"
 )
 
-func Init(objectIp string, community string, port uint16) (*g.GoSNMP, error) {
+var discLogger = utils.NewLogger(utils.LogFilesPath, utils.DiscLoggerName)
+
+var collectLogger = utils.NewLogger(utils.LogFilesPath, utils.CollectLoggerName)
+
+func Init(objectIp string, community string, port uint16, version g.SnmpVersion) (*g.GoSNMP, error) {
 
 	GoSNMP := &g.GoSNMP{
 		Target:    objectIp,
 		Community: community,
 		Port:      port,
+		Version:   version,
 		Retries:   3,
 		Timeout:   time.Duration(3) * time.Second,
 	}
@@ -53,21 +59,22 @@ func Get(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, er
 	packet, err := GoSNMP.Get(oids)
 
 	if err != nil {
+		discLogger.Error(err.Error())
 
 		return nil, err
-
 	}
 
 	if packet.Error != 0 {
+		discLogger.Error(packet.Error.String())
 
 		return nil, fmt.Errorf("SNMP error: %s", packet.Error)
-
 	}
 
 	if len(packet.Variables) != len(oidMap) {
 
-		return nil, fmt.Errorf("unexpected number of SNMP variables returned")
+		discLogger.Error("unexpected number of SNMP variables returned")
 
+		return nil, fmt.Errorf("unexpected number of SNMP variables returned")
 	}
 
 	for _, variable := range packet.Variables {
@@ -92,52 +99,64 @@ func Get(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, er
 		}
 
 	}
-
 	return resultMap, nil
 }
 
-func Walk(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, error) {
+func Walk(oidMap map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 
-	var wg sync.WaitGroup
+	interfacesDetails := make([]interface{}, 0)
 
-	resultMap := make(map[string]interface{})
+	results := map[string]map[string]interface{}{}
 
 	for oidName, oid := range oidMap {
 
-		oidResult := make(map[string]interface{})
+		err := GoSNMP.BulkWalk(oid, func(dataUnit g.SnmpPDU) error {
 
-		wg.Add(1)
+			tokens := strings.Split(dataUnit.Name, ".")
 
-		results, _ := GoSNMP.WalkAll(oid)
+			interfaceIndex := tokens[len(tokens)-1]
 
-		go func(results []g.SnmpPDU, oidName string) {
+			if _, ok := results[interfaceIndex]; !ok {
 
-			defer wg.Done()
-
-			for _, result := range results {
-
-				switch result.Type {
-				case g.OctetString:
-					oidResult[result.Name] = string(result.Value.([]byte))
-				case g.Integer:
-					oidResult[result.Name] = g.ToBigInt(result.Value)
-				case g.Counter32:
-					oidResult[result.Name] = result.Value.(uint)
-				case g.Gauge32:
-					oidResult[result.Name] = result.Value.(uint)
-				case g.TimeTicks:
-					oidResult[result.Name] = result.Value.(uint)
-				default:
-					oidResult[result.Name] = result.Value
-				}
+				results[interfaceIndex] = make(map[string]interface{})
 			}
 
-			resultMap[oidName] = oidResult
+			results[interfaceIndex][oidName] = resolveValue(dataUnit.Value, dataUnit.Type)
 
-		}(results, oidName)
+			return nil
+		})
+
+		if err != nil {
+			collectLogger.Error(err.Error())
+
+			return nil, err
+		}
+
 	}
 
-	wg.Wait()
+	for _, interfaceData := range results {
 
-	return resultMap, nil
+		interfacesDetails = append(interfacesDetails, interfaceData)
+	}
+
+	collectLogger.Debug(interfacesDetails)
+
+	return interfacesDetails, nil
+}
+
+func resolveValue(value interface{}, dataType g.Asn1BER) interface{} {
+	switch dataType {
+	case g.OctetString:
+		return string(value.([]byte))
+	case g.Integer:
+		return g.ToBigInt(value)
+	case g.Counter32:
+		return value.(uint)
+	case g.Gauge32:
+		return value.(uint)
+	case g.TimeTicks:
+		return value.(uint)
+	default:
+		return value
+	}
 }

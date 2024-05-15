@@ -100,6 +100,7 @@ func main() {
 
 			context[utils.Error] = errors
 
+			// TODO: for collect result is array and for disc result is map...generalize it
 			if len(context[utils.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
 
 				context[utils.Status] = utils.Failed

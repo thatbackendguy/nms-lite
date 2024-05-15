@@ -321,37 +321,8 @@ public class ApiEngine extends AbstractVerticle
 
         });
 
-
         //--------------------------------------------------------------------------------------------------------------
-        // PROVISION DEVICE
-//        provisionRouter.route(HttpMethod.POST, "/run").handler(ctx -> {
-//            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-//
-//            ctx.request().bodyHandler(buffer -> {
-//
-//                var discProfiles = buffer.toJsonArray();
-//
-//                eventBus.request(PROVISION_DEVICES, discProfiles, ar -> {
-//
-//                    if(ar.succeeded())
-//                    {
-//                        var contexts = new JsonArray(ar.result().body().toString());
-//
-//                        // TODO: send to RUN_PROVISION
-//
-//                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Devices provisioned successfully!").put(RESULT, contexts));
-//                    }
-//                    else
-//                    {
-//                        LOGGER.debug(ar.cause().getMessage());
-//
-//                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(ar.cause().getMessage());
-//                    }
-//                });
-//            });
-//
-//        });
-
+        // REQUEST TO PROVISION DEVICE
         provisionRouter.route(HttpMethod.POST, "/:discProfileId").handler(ctx -> {
             LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 

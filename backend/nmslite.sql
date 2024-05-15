@@ -42,3 +42,27 @@ CREATE TABLE `profile_mapping`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE `network_interface`
+(
+    `record.id`                       int          NOT NULL AUTO_INCREMENT,
+    `object.ip`                       varchar(15)  NOT NULL,
+    `snmp.community`                  varchar(255) NOT NULL,
+    `snmp.port`                       int          NOT NULL,
+    `interface.index`                 int               DEFAULT NULL,
+    `interface.name`                  varchar(255)      DEFAULT NULL,
+    `interface.operational.status`    int               DEFAULT NULL,
+    `interface.admin.status`          int               DEFAULT NULL,
+    `interface.description`           varchar(255)      DEFAULT NULL,
+    `interface.sent.error.packet`     bigint            DEFAULT NULL,
+    `interface.received.error.packet` bigint            DEFAULT NULL,
+    `interface.sent.octets`           bigint            DEFAULT NULL,
+    `interface.received.octets`       bigint            DEFAULT NULL,
+    `interface.speed`                 bigint            DEFAULT NULL,
+    `interface.alias`                 varchar(255)      DEFAULT NULL,
+    `interface.physical.address`      varchar(255)      DEFAULT NULL,
+    `created.at`                      timestamp    NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`record.id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;

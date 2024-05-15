@@ -19,7 +19,7 @@ type Logger struct {
 
 var logLevel = 0
 
-func write(level, message, directory, component string) {
+func write(level, directory, component string, message interface{}) {
 
 	currentTime := time.Now()
 
@@ -29,13 +29,15 @@ func write(level, message, directory, component string) {
 	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 
 	if err != nil {
-
 		return
 	}
 
 	defer file.Close()
 
-	file.WriteString(fmt.Sprintf("%s %s %s\n", currentTime.Format("2006-01-02 15:04:05.999999999"), level, message))
+	_, err = file.WriteString(fmt.Sprintf("%s %s %s\n", currentTime.Format("2006-01-02 15:04:05.999999999"), level, message))
+	if err != nil {
+		return
+	}
 }
 
 func NewLogger(directory, component string) Logger {
@@ -45,39 +47,39 @@ func NewLogger(directory, component string) Logger {
 	}
 }
 
-func (l *Logger) Info(message string) {
+func (l *Logger) Info(message interface{}) {
 
 	if logLevel <= Info {
 
-		write("Info", message, l.directory, l.component)
+		write("Info", l.directory, l.component, message)
 	}
 }
-func (l *Logger) Error(message string) {
+func (l *Logger) Error(message interface{}) {
 
-	write("Error", message, l.directory, l.component)
+	write("Error", l.directory, l.component, message)
 
 }
-func (l *Logger) Debug(message string) {
+func (l *Logger) Debug(message interface{}) {
 
 	if logLevel <= Debug {
 
-		write("Debug", message, l.directory, l.component)
+		write("Debug", l.directory, l.component, message)
 	}
 }
-func (l *Logger) Trace(message string) {
+func (l *Logger) Trace(message interface{}) {
 	if logLevel <= Trace {
 
-		write("Trace", message, l.directory, l.component)
+		write("Trace", l.directory, l.component, message)
 	}
 }
-func (l *Logger) Fatal(message string) {
+func (l *Logger) Fatal(message interface{}) {
 
-	write("Fatal", message, l.directory, l.component)
+	write("Fatal", l.directory, l.component, message)
 
 }
-func (l *Logger) Warn(message string) {
+func (l *Logger) Warn(message interface{}) {
 
-	write("Warn", message, l.directory, l.component)
+	write("Warn", l.directory, l.component, message)
 
 }
 

@@ -48,9 +48,11 @@ public class ConfigManager extends AbstractVerticle
 
     private final String uniqueCredProfileIdsQ = "SELECT distinct(`cred.profile.id`) FROM nmsDB.profile_mapping where `disc.profile.id`=?;";
 
-    private final String pmSelectAllQ = "SELECT pm.`disc.profile.id`, pm.`cred.profile.id`, cp.`cred.name`, cp.`protocol`, cp.`version`, cp.`snmp.community`, dp.`disc.name`, dp.`object.ip`, dp.`snmp.port`, dp.`is.provisioned`, dp.`is.discovered`, dp.`provision.request` FROM profile_mapping pm JOIN credential_profile cp ON pm.`cred.profile.id` = cp.`cred.profile.id` JOIN discovery_profile dp ON pm.`disc.profile.id` = dp.`disc.profile.id`;";
+    private final String pmSelectAllQ = "SELECT pm.`disc.profile.id`, pm.`cred.profile.id`, cp.`cred.name`, cp.`protocol`, cp.`version`, cp.`snmp.community`, dp.`disc.name`, dp.`object.ip`, dp.`snmp.port`, dp.`is.provisioned`, dp.`is.discovered`, dp.`provision.request`, cp.`version` FROM profile_mapping pm JOIN credential_profile cp ON pm.`cred.profile.id` = cp.`cred.profile.id` JOIN discovery_profile dp ON pm.`disc.profile.id` = dp.`disc.profile.id`;";
 
     private final String pmCountSelectQ = "SELECT COUNT(*) as count FROM profile_mapping WHERE `cred.profile.id` = ?;";
+
+    private final String metricsInsertQ = "INSERT INTO network_interface (`object.ip`,`snmp.community`,`snmp.port`,`interface.index`,`interface.name`,`interface.operational.status`,`interface.admin.status`,`interface.description`,`interface.sent.error.packet`,`interface.received.error.packet`,`interface.sent.octets`,`interface.received.octets`,`interface.speed`,`interface.alias`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception
@@ -645,6 +647,54 @@ public class ConfigManager extends AbstractVerticle
             }
         });
 
+        // POLL DATA STORE
+        eventBus.localConsumer(POLL_DATA_STORE, msg -> {
+            var polledData = new JsonObject(msg.body().toString());
+
+            var interfaceData = polledData.getJsonObject(RESULT).getJsonArray(INTERFACE);
+
+            var objectIp = polledData.getString(OBJECT_IP);
+
+            var snmpCommunity = polledData.getString(SNMP_COMMUNITY);
+
+            var snmpPort = polledData.getInteger(SNMP_PORT);
+
+            try(var conn = Jdbc.getConnection(); var metricsInsertStmt = conn.prepareStatement(metricsInsertQ))
+            {
+                for(var singleInterface: interfaceData)
+                {
+                    var interfaceObj = new JsonObject(singleInterface.toString());
+
+                    metricsInsertStmt.setString(1, objectIp);
+                    metricsInsertStmt.setString(2, snmpCommunity);
+                    metricsInsertStmt.setInt(3, snmpPort);
+
+                    metricsInsertStmt.setInt(4, interfaceObj.getInteger(INTERFACE_INDEX));
+                    metricsInsertStmt.setString(5, interfaceObj.getString(INTERFACE_NAME));
+                    metricsInsertStmt.setInt(6, interfaceObj.getInteger(INTERFACE_OPERATIONAL_STATUS));
+                    metricsInsertStmt.setInt(7, interfaceObj.getInteger(INTERFACE_ADMIN_STATUS));
+                    metricsInsertStmt.setString(8,interfaceObj.getString(INTERFACE_DESCRIPTION));
+                    metricsInsertStmt.setInt(9, interfaceObj.getInteger(INTERFACE_SENT_ERROR_PACKET));
+                    metricsInsertStmt.setInt(10, interfaceObj.getInteger(INTERFACE_RECEIVED_ERROR_PACKET));
+                    metricsInsertStmt.setInt(11, interfaceObj.getInteger(INTERFACE_SENT_OCTETS));
+                    metricsInsertStmt.setInt(12, interfaceObj.getInteger(INTERFACE_RECEIVED_OCTETS));
+                    metricsInsertStmt.setInt(13, interfaceObj.getInteger(INTERFACE_SPEED));
+                    metricsInsertStmt.setString(14, interfaceObj.getString(INTERFACE_ALIAS));
+
+                    metricsInsertStmt.addBatch();
+                }
+
+                var rowsInserted = metricsInsertStmt.executeBatch();
+
+                LOGGER.debug("{} rows inserted.",rowsInserted.length);
+            }
+            catch(SQLException e)
+            {
+                LOGGER.error("Error: {}", e.getMessage());
+            }
+
+        });
+
         startPromise.complete();
     }
 
@@ -692,7 +742,7 @@ public class ConfigManager extends AbstractVerticle
             {
                 while(credProfileRS.next())
                 {
-                    credentialProfile.put(CRED_PROF_ID, credProfileRS.getInt(CRED_PROF_ID)).put(CRED_NAME, credProfileRS.getString(CRED_NAME)).put(PROTOCOL, credProfileRS.getString(PROTOCOL)).put(VERSION, credProfileRS.getString(VERSION)).put(SNMP_COMMUNITY, credProfileRS.getString(SNMP_COMMUNITY));
+                    credentialProfile.put(VERSION,credProfileRS.getString(VERSION)).put(CRED_PROF_ID, credProfileRS.getInt(CRED_PROF_ID)).put(CRED_NAME, credProfileRS.getString(CRED_NAME)).put(PROTOCOL, credProfileRS.getString(PROTOCOL)).put(VERSION, credProfileRS.getString(VERSION)).put(SNMP_COMMUNITY, credProfileRS.getString(SNMP_COMMUNITY));
                 }
             }
 
@@ -771,7 +821,7 @@ public class ConfigManager extends AbstractVerticle
             {
                 while(objectsRS.next())
                 {
-                    objectProfiles.add(new JsonObject().put(PROVISION_REQUEST, objectsRS.getInt(PROVISION_REQUEST)).put(OBJECT_IP, objectsRS.getString(OBJECT_IP)).put(DISC_NAME, objectsRS.getString(DISC_NAME)).put(SNMP_PORT, objectsRS.getInt(SNMP_PORT)).put(SNMP_COMMUNITY, objectsRS.getString(SNMP_COMMUNITY)).put(IS_PROVISIONED, objectsRS.getInt(IS_PROVISIONED)).put(IS_DISCOVERED, objectsRS.getInt(IS_DISCOVERED)).put(DISC_PROF_ID, objectsRS.getInt(DISC_PROF_ID)).put(CRED_PROF_ID, objectsRS.getInt(CRED_PROF_ID)).put(REQUEST_TYPE, COLLECT).put(PLUGIN_NAME, NETWORK));
+                    objectProfiles.add(new JsonObject().put(PROVISION_REQUEST, objectsRS.getInt(PROVISION_REQUEST)).put(OBJECT_IP, objectsRS.getString(OBJECT_IP)).put(DISC_NAME, objectsRS.getString(DISC_NAME)).put(VERSION, objectsRS.getString(VERSION)).put(SNMP_PORT, objectsRS.getInt(SNMP_PORT)).put(SNMP_COMMUNITY, objectsRS.getString(SNMP_COMMUNITY)).put(IS_PROVISIONED, objectsRS.getInt(IS_PROVISIONED)).put(IS_DISCOVERED, objectsRS.getInt(IS_DISCOVERED)).put(DISC_PROF_ID, objectsRS.getInt(DISC_PROF_ID)).put(CRED_PROF_ID, objectsRS.getInt(CRED_PROF_ID)).put(REQUEST_TYPE, COLLECT).put(PLUGIN_NAME, NETWORK));
                 }
             }
         }
