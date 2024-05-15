@@ -34,7 +34,7 @@ var tabularOids = map[string]string{
 	"interface.received.octets":       ".1.3.6.1.2.1.2.2.1.10",
 	"interface.speed":                 ".1.3.6.1.2.1.2.2.1.5",
 	"interface.alias":                 ".1.3.6.1.2.1.31.1.1.1.18",
-	"interface.physical.address":      ".1.3.6.1.2.1.2.2.1.6",
+	//"interface.physical.address":      ".1.3.6.1.2.1.2.2.1.6",
 }
 
 var discLogger = utils.NewLogger(utils.LogFilesPath, "discovery")

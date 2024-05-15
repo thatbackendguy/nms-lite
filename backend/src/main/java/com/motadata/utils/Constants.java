@@ -42,6 +42,8 @@ public class Constants
 
     public static final String DISC_PROF_ID = "disc.profile.id";
 
+    public static final String PROVISION_REQUEST = "provision.request";
+
     public static final String CRED_PROF_ID = "cred.profile.id";
 
     public static final String VERSION = "version";
@@ -64,6 +66,8 @@ public class Constants
 
     public static final String DISCOVERY = "Discovery";
 
+    public static final String COLLECT = "Collect";
+
     public static final String PLUGIN_NAME = "plugin.name";
 
     public static final String NETWORK = "Network";
@@ -82,5 +86,6 @@ public class Constants
 
     public static final String PROFILE_MAPPING_TABLE = "profile_mapping";
 
+    public static final String PROVISION_DEVICES = "provision.devices";
 
 }

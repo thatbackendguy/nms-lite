@@ -162,10 +162,6 @@ public class ApiEngine extends AbstractVerticle
                     {
                         ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile: " + credProfileId + " deleted successfully!"));
                     }
-                    else
-                    {
-                        ctx.response().setStatusCode(404).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Credential profile: " + credProfileId + " not found!")).encode());
-                    }
                 }
                 else
                 {
@@ -327,8 +323,56 @@ public class ApiEngine extends AbstractVerticle
 
 
         //--------------------------------------------------------------------------------------------------------------
-        // TODO /provision/create
-        // TODO /provision/get/:discoveryId
+        // PROVISION DEVICE
+//        provisionRouter.route(HttpMethod.POST, "/run").handler(ctx -> {
+//            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+//
+//            ctx.request().bodyHandler(buffer -> {
+//
+//                var discProfiles = buffer.toJsonArray();
+//
+//                eventBus.request(PROVISION_DEVICES, discProfiles, ar -> {
+//
+//                    if(ar.succeeded())
+//                    {
+//                        var contexts = new JsonArray(ar.result().body().toString());
+//
+//                        // TODO: send to RUN_PROVISION
+//
+//                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Devices provisioned successfully!").put(RESULT, contexts));
+//                    }
+//                    else
+//                    {
+//                        LOGGER.debug(ar.cause().getMessage());
+//
+//                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(ar.cause().getMessage());
+//                    }
+//                });
+//            });
+//
+//        });
+
+        provisionRouter.route(HttpMethod.POST, "/:discProfileId").handler(ctx -> {
+            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+            var discProfileId = ctx.request().getParam("discProfileId");
+
+                eventBus.request(UPDATE_EVENT, new JsonObject().put(DISC_PROF_ID, Integer.parseInt(discProfileId)).put(TABLE_NAME,PROFILE_MAPPING_TABLE), ar -> {
+
+                    if(ar.succeeded())
+                    {
+
+                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provisioned successfully!"));
+                    }
+                    else
+                    {
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                    }
+
+            });
+
+        });
+
         // TODO /provision/get-all
         // TODO /provision/delete
 
@@ -336,13 +380,13 @@ public class ApiEngine extends AbstractVerticle
 
             if(res.succeeded())
             {
-                LOGGER.info("Server is now listening on http://localhost:8080/");
+                LOGGER.info("HTTP Server is now listening on http://localhost:8080/");
 
                 startPromise.complete();
             }
             else
             {
-                LOGGER.info("Failed to start the server");
+                LOGGER.info("Failed to start the API Engine, port unavailable!");
 
                 startPromise.fail(res.cause());
             }

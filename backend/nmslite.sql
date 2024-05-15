@@ -7,26 +7,38 @@ CREATE TABLE `credential_profile`
     `snmp.community`  varchar(255) NOT NULL DEFAULT 'public',
     PRIMARY KEY (`cred.profile.id`),
     UNIQUE KEY `cred.name` (`cred.name`)
-);
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 36
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
 
-CREATE TABLE `nmsDB`.`discovery_profile`
+
+CREATE TABLE `discovery_profile`
 (
-    `disc.profile.id` INT AUTO_INCREMENT PRIMARY KEY,
-    `disc.name`       VARCHAR(255) NOT NULL UNIQUE,
-    `object.ip`       VARCHAR(15)  NOT NULL,
-    `cred.profile.id` INT,
-    `snmp.port`       VARCHAR(5)   NOT NULL DEFAULT '161',
-    `is.provisioned`  TINYINT(1)   NOT NULL DEFAULT 0,
-    `is.discovered`   TINYINT(1)   NOT NULL DEFAULT 0,
-    FOREIGN KEY (`cred.profile.id`) REFERENCES nmsDB.credential_profile (`cred.profile.id`),
-    UNIQUE KEY (`object.ip`, `cred.profile.id`)
-);
+    `disc.profile.id` int          NOT NULL AUTO_INCREMENT,
+    `disc.name`       varchar(255) NOT NULL,
+    `object.ip`       varchar(15)  NOT NULL,
+    `snmp.port`       int          NOT NULL DEFAULT '161',
+    `is.provisioned`  tinyint(1)   NOT NULL DEFAULT '0',
+    `is.discovered`   tinyint(1)   NOT NULL DEFAULT '0',
+    `credentials`     json         NOT NULL,
+    PRIMARY KEY (`disc.profile.id`),
+    UNIQUE KEY `disc.name` (`disc.name`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 7
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
-CREATE TABLE `nmsDB`.`profile_mapping`
+
+CREATE TABLE `profile_mapping`
 (
-    `disc.profile.id` INT NOT NULL,
-    `cred.profile.id` INT NOT NULL,
-    FOREIGN KEY (`disc.profile.id`) REFERENCES nmsDB.discovery_profile (`disc.profile.id`),
-    FOREIGN KEY (`cred.profile.id`) REFERENCES nmsDB.credential_profile (`cred.profile.id`)
-);
+    `disc.profile.id` int NOT NULL,
+    `cred.profile.id` int NOT NULL,
+    KEY `disc.profile.id` (`disc.profile.id`),
+    KEY `cred.profile.id` (`cred.profile.id`),
+    CONSTRAINT `profile_mapping_ibfk_1` FOREIGN KEY (`disc.profile.id`) REFERENCES `discovery_profile` (`disc.profile.id`),
+    CONSTRAINT `profile_mapping_ibfk_2` FOREIGN KEY (`cred.profile.id`) REFERENCES `credential_profile` (`cred.profile.id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;

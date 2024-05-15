@@ -17,7 +17,11 @@ public class Bootstrap
         vertx.deployVerticle("com.motadata.engine.ApiEngine", handler->{
             if(handler.succeeded())
             {
-                LOGGER.info("Server is up and running");
+                LOGGER.info("API engine is up and running");
+            }
+            else
+            {
+                LOGGER.error(handler.cause().getMessage());
             }
         });
 
@@ -26,7 +30,11 @@ public class Bootstrap
                 handler->{
             if(handler.succeeded())
             {
-                LOGGER.info("DB Manager is up and running");
+                LOGGER.info("Config Manager is up and running");
+            }
+            else
+            {
+                LOGGER.error(handler.cause().getMessage());
             }
         });
 
@@ -36,6 +44,10 @@ public class Bootstrap
             if(handler.succeeded())
             {
                 LOGGER.info("Plugin engine is up and running");
+            }
+            else
+            {
+                LOGGER.error(handler.cause().getMessage());
             }
         });
     }
