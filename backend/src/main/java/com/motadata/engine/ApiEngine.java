@@ -2,7 +2,6 @@ package com.motadata.engine;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
@@ -10,15 +9,12 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.ErrorHandler;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Base64;
 
 import static com.motadata.Bootstrap.LOGGER;
-import static com.motadata.utils.constants.Constants.*;
+import static com.motadata.utils.Constants.*;
 
-public class Api extends AbstractVerticle
+public class ApiEngine extends AbstractVerticle
 {
     private ErrorHandler errorHandler()
     {
@@ -46,7 +42,6 @@ public class Api extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
         // GET: "/"
         mainRouter.route("/").handler(ctx -> {
-
             LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
             ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
@@ -70,13 +65,13 @@ public class Api extends AbstractVerticle
 
             ctx.request().bodyHandler(buffer -> {
 
-                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, "credential_profile");
+                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE);
 
                 eventBus.request(INSERT_EVENT, reqJSON, ar -> {
 
                     if(ar.succeeded())
                     {
-                        if(ar.result().body().equals("success"))
+                        if(ar.result().body().equals(SUCCESS))
                         {
                             ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile added successfully!"));
                         }
@@ -94,11 +89,11 @@ public class Api extends AbstractVerticle
 
             LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-            eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, "credential_profile"), ar -> {
+            eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
 
                 if(ar.succeeded())
                 {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profiles fetched successfully!").put("credential.profiles", ar.result().body()));
+                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profiles fetched successfully!").put("result", ar.result().body()));
                 }
                 else
                 {
@@ -114,7 +109,7 @@ public class Api extends AbstractVerticle
 
             var credProfileId = ctx.request().getParam("credProfileId");
 
-            eventBus.request(GET_EVENT, new JsonObject().put(TABLE_NAME, "credential_profile").put(CRED_PROF_ID, credProfileId), ar -> {
+            eventBus.request(GET_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE).put(CRED_PROF_ID, credProfileId), ar -> {
 
                 if(ar.succeeded())
                 {
@@ -136,7 +131,7 @@ public class Api extends AbstractVerticle
 
             ctx.request().bodyHandler(buffer -> {
 
-                JsonObject reqJSON = buffer.toJsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, "credential_profile");
+                JsonObject reqJSON = buffer.toJsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, CRED_PROFILE_TABLE);
 
                 eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
 
@@ -159,7 +154,7 @@ public class Api extends AbstractVerticle
 
             var credProfileId = ctx.request().getParam("credProfileId");
 
-            eventBus.request(DELETE_EVENT, new JsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, "credential_profile"), ar -> {
+            eventBus.request(DELETE_EVENT, new JsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
 
                 if(ar.succeeded())
                 {
@@ -187,13 +182,13 @@ public class Api extends AbstractVerticle
 
             ctx.request().bodyHandler(buffer -> {
 
-                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, "discovery_profile");
+                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE);
 
                 eventBus.request(INSERT_EVENT, reqJSON, ar -> {
 
                     if(ar.succeeded())
                     {
-                        if(ar.result().body().equals("success"))
+                        if(ar.result().body().equals(SUCCESS))
                         {
                             ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile added successfully!"));
                         }
@@ -210,7 +205,7 @@ public class Api extends AbstractVerticle
 
             LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-            eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, "discovery_profile"), ar -> {
+            eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
 
                 if(ar.succeeded())
                 {
@@ -230,7 +225,7 @@ public class Api extends AbstractVerticle
 
             var discProfileId = ctx.request().getParam("discProfileId");
 
-            eventBus.request(GET_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, "discovery_profile"), ar -> {
+            eventBus.request(GET_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
 
                 if(ar.succeeded())
                 {
@@ -252,7 +247,7 @@ public class Api extends AbstractVerticle
 
             ctx.request().bodyHandler(buffer -> {
 
-                var reqJSON = buffer.toJsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, "discovery_profile");
+                var reqJSON = buffer.toJsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE);
 
                 eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
 
@@ -275,7 +270,7 @@ public class Api extends AbstractVerticle
 
             var discProfileId = ctx.request().getParam("discProfileId");
 
-            eventBus.request(DELETE_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, "discovery_profile"), ar -> {
+            eventBus.request(DELETE_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
 
                 if(ar.succeeded())
                 {
@@ -308,7 +303,7 @@ public class Api extends AbstractVerticle
 
                     if(ar.succeeded())
                     {
-                        LOGGER.info("context build success: {}", ar.result().body().toString());
+                        LOGGER.debug("context build success: {}", ar.result().body().toString());
 
                         String encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
 
@@ -321,9 +316,9 @@ public class Api extends AbstractVerticle
                     }
                     else
                     {
-                        LOGGER.info(ar.cause().getMessage());
+                        LOGGER.debug(ar.cause().getMessage());
 
-                        ctx.response().setStatusCode(500).end(ar.cause().getMessage());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(ar.cause().getMessage());
                     }
                 });
             });

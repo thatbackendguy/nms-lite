@@ -1,4 +1,4 @@
-package com.motadata.utils.constants;
+package com.motadata.utils;
 
 public class Constants
 {
@@ -15,12 +15,6 @@ public class Constants
     public static final String SNMP_PORT = "snmp.port";
 
     public static final String REQUEST_TYPE = "request.type";
-
-    public static final String DB_URI = "jdbc:mysql://localhost:3306/nmsDB";
-
-    public static final String DB_USER = "root";
-
-    public static final String DB_PASS = "Root@1010";
 
     public static final String REQ_CONTAINER = "{} {} {}";
 
@@ -74,13 +68,19 @@ public class Constants
 
     public static final String NETWORK = "Network";
 
-    public static final String TRUE = "1";
+    public static final int TRUE = 1;
 
-    public static final String FALSE = "0";
+    public static final int FALSE = 0;
 
     public static final String RUN_DISCOVERY = "discovery.run";
 
     public static final String POST_DISC_SUCCESS = "post.discovery.success";
+
+    public static final String DISC_PROFILE_TABLE = "discovery_profile";
+
+    public static final String CRED_PROFILE_TABLE = "credential_profile";
+
+    public static final String PROFILE_MAPPING_TABLE = "profile_mapping";
 
 
 }

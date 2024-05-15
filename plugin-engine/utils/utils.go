@@ -19,6 +19,8 @@ func SendResponse(context []map[string]interface{}) {
 
 	}
 
+	pluginEngineLogger.Debug(string(jsonOutput))
+
 	encodedString := base64.StdEncoding.EncodeToString(jsonOutput)
 
 	pluginEngineLogger.Info(encodedString)

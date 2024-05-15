@@ -14,21 +14,25 @@ public class Bootstrap
     {
         var vertx = Vertx.vertx();
 
-        vertx.deployVerticle("com.motadata.engine.Api", handler->{
+        vertx.deployVerticle("com.motadata.engine.ApiEngine", handler->{
             if(handler.succeeded())
             {
                 LOGGER.info("Server is up and running");
             }
         });
 
-        vertx.deployVerticle("com.motadata.dbmanager.DbManager", new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), handler->{
+        vertx.deployVerticle("com.motadata.manager.ConfigManager", new DeploymentOptions()
+                .setThreadingModel(ThreadingModel.WORKER),
+                handler->{
             if(handler.succeeded())
             {
                 LOGGER.info("DB Manager is up and running");
             }
         });
 
-        vertx.deployVerticle("com.motadata.engine.Plugin", new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), handler->{
+        vertx.deployVerticle("com.motadata.engine.PluginEngine", new DeploymentOptions()
+                .setThreadingModel(ThreadingModel.WORKER),
+                handler->{
             if(handler.succeeded())
             {
                 LOGGER.info("Plugin engine is up and running");

@@ -19,6 +19,7 @@ var scalerOids = map[string]string{
 	//"system.objectId":    ".1.3.6.1.2.1.1.2.0",
 	//"system.uptime":      ".1.3.6.1.2.1.1.3.0",
 	//"system.interfaces":  ".1.3.6.1.2.1.2.1.0",
+	//"system.location":    ".1.3.6.1.2.1.1.6.0",
 }
 
 var tabularOids = map[string]string{
@@ -32,6 +33,7 @@ var tabularOids = map[string]string{
 	"interface.sent.octets":           ".1.3.6.1.2.1.2.2.1.16",
 	"interface.received.octets":       ".1.3.6.1.2.1.2.2.1.10",
 	"interface.speed":                 ".1.3.6.1.2.1.2.2.1.5",
+	"interface.alias":                 ".1.3.6.1.2.1.31.1.1.1.18",
 	"interface.physical.address":      ".1.3.6.1.2.1.2.2.1.6",
 }
 

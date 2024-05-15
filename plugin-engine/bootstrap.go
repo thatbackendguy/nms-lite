@@ -100,7 +100,7 @@ func main() {
 
 			context[utils.Error] = errors
 
-			if len(errors) > 0 && len(context[utils.Result].(map[string]interface{})) <= 0 {
+			if len(context[utils.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
 
 				context[utils.Status] = utils.Failed
 

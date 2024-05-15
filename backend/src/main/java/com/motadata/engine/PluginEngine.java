@@ -12,9 +12,9 @@ import java.io.InputStreamReader;
 import java.util.Base64;
 
 import static com.motadata.Bootstrap.LOGGER;
-import static com.motadata.utils.constants.Constants.*;
+import static com.motadata.utils.Constants.*;
 
-public class Plugin extends AbstractVerticle
+public class PluginEngine extends AbstractVerticle
 {
 
     @Override

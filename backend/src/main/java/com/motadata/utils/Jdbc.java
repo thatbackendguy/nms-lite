@@ -5,11 +5,16 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import static com.motadata.Bootstrap.LOGGER;
-import static com.motadata.utils.constants.Constants.*;
 
-public class DatabaseConnection
+public class Jdbc
 {
-    private DatabaseConnection(){}
+    private Jdbc(){}
+
+    private static final String DB_URI = "jdbc:mysql://localhost:3306/nmsDB";
+
+    private static final String DB_USER = "root";
+
+    private static final String DB_PASS = "Root@1010";
 
     public static Connection getConnection()
     {

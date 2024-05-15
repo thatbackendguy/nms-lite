@@ -1,6 +1,6 @@
-package com.motadata.dbmanager;
+package com.motadata.manager;
 
-import com.motadata.utils.DatabaseConnection;
+import com.motadata.utils.Jdbc;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 
@@ -12,9 +12,9 @@ import java.sql.SQLException;
 import java.util.HashSet;
 
 import static com.motadata.Bootstrap.*;
-import static com.motadata.utils.constants.Constants.*;
+import static com.motadata.utils.Constants.*;
 
-public class DbManager extends AbstractVerticle
+public class ConfigManager extends AbstractVerticle
 {
     private final String cpInsertQ = "INSERT INTO `nmsDB`.`credential_profile` (`cred.name`, `protocol`, `version`, `snmp.community`) VALUES (?,?,?,?);";
 
@@ -30,9 +30,9 @@ public class DbManager extends AbstractVerticle
 
     private final String dpSelectAllQ = "SELECT * FROM `discovery_profile`";
 
-    private final String dpUpdateQ = "UPDATE `discovery_profile` SET `disc.name` = ?, `snmp.port` = ? WHERE `disc.profile.id` = ?;";
+    private final String dpUpdateQ = "UPDATE `discovery_profile` SET `is.discovered` = 0,`is.provisioned` = 0,`disc.name` = ?, `snmp.port` = ? WHERE `disc.profile.id` = ?;";
 
-    private final String dpUpdateIsDiscStatusQ = "UPDATE `discovery_profile` SET `is.discovered` = ? WHERE `disc.profile.id` = ?;";
+    private final String dpUpdateIsDiscStatusQ = "UPDATE `discovery_profile` SET `is.discovered` = 1 WHERE `disc.profile.id` = ?;";
 
     private final String cpDeleteQ = "DELETE FROM `credential_profile` WHERE `cred.profile.id` = ?;";
 
@@ -40,60 +40,61 @@ public class DbManager extends AbstractVerticle
 
     private final String pmInsertQ = "INSERT INTO `nmsDB`.`profile_mapping` (`disc.profile.id`,`cred.profile.id`) VALUES (?,?);";
 
+    private final String uniqueCredProfileIdsQ = "SELECT distinct(`cred.profile.id`) FROM nmsDB.profile_mapping where `disc.profile.id`=?;";
+
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
         var eventBus = vertx.eventBus();
 
-        // TODO: instead of msg.reply() use promise
-        // TODO: add validations before inserting/updating
-        // TODO: update the logic based on 3 tables
-
-
         // INSERTING DATA TO DB
         eventBus.localConsumer(INSERT_EVENT, msg -> {
             var jsonObj = new JsonObject(msg.body().toString());
 
-            if(jsonObj.getString(TABLE_NAME).equals("discovery_profile"))
+            if(jsonObj.getString(TABLE_NAME).equals(DISC_PROFILE_TABLE))
             {
-
                 var credentialsDB = new JsonArray();
 
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.createStatement())
+                try(var conn = Jdbc.getConnection(); var cpSelectAllStmt = conn.createStatement())
                 {
-                    var rs = stmt.executeQuery(cpSelectAllQ);
+                    var credentials = cpSelectAllStmt.executeQuery(cpSelectAllQ);
 
-                    while(rs.next())
+                    while(credentials.next())
                     {
-                        credentialsDB.add(rs.getString(CRED_PROF_ID));
+                        credentialsDB.add(credentials.getInt(CRED_PROF_ID));
                     }
+
+                    LOGGER.debug(credentialsDB.toString());
 
                 } catch(SQLException e)
                 {
                     LOGGER.error(e.getMessage());
                 }
 
-                var credentialsReq = new JsonArray(jsonObj.getString(CREDENTIALS));
+                // checking if the credential profile is present for binding or not
+                var userCredentials = new JsonArray(jsonObj.getString(CREDENTIALS));
 
-                var credentialsReqSet = new HashSet<>(credentialsReq.stream().toList());
+                var credentialsReqSet = new HashSet<>(userCredentials.stream().toList());
 
                 var credentialsDBJsonSet = new HashSet<>(credentialsDB.stream().toList());
 
                 if(!credentialsDBJsonSet.containsAll(credentialsReqSet))
                 {
                     LOGGER.error("One or more credential IDs are not available in the database.");
+
                     msg.fail(500, "One or more credential IDs are not available in the database.");
+
                     return;
                 }
 
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(dpInsertQ))
+                try(var conn = Jdbc.getConnection(); var dpInsertStmt = conn.prepareStatement(dpInsertQ))
                 {
-                    stmt.setString(1, jsonObj.getString(DISC_NAME));
-                    stmt.setString(2, jsonObj.getString(OBJECT_IP));
-                    stmt.setString(3, jsonObj.getString(SNMP_PORT));
-                    stmt.setString(4, jsonObj.getJsonArray(CREDENTIALS).toString());
+                    dpInsertStmt.setString(1, jsonObj.getString(DISC_NAME));
+                    dpInsertStmt.setString(2, jsonObj.getString(OBJECT_IP));
+                    dpInsertStmt.setString(3, jsonObj.getString(SNMP_PORT));
+                    dpInsertStmt.setString(4, jsonObj.getJsonArray(CREDENTIALS).toString());
 
-                    var rowsInserted = stmt.executeUpdate();
+                    var rowsInserted = dpInsertStmt.executeUpdate();
 
                     if(rowsInserted > 0)
                     {
@@ -110,17 +111,16 @@ public class DbManager extends AbstractVerticle
                     msg.fail(500, e.getMessage());
                 }
             }
-            else if(jsonObj.getString(TABLE_NAME).equals("credential_profile"))
+            else if(jsonObj.getString(TABLE_NAME).equals(CRED_PROFILE_TABLE))
             {
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(cpInsertQ))
+                try(var conn = Jdbc.getConnection(); var cpInsertStmt = conn.prepareStatement(cpInsertQ))
                 {
+                    cpInsertStmt.setString(1, jsonObj.getString(CRED_NAME));
+                    cpInsertStmt.setString(2, jsonObj.getString(PROTOCOL));
+                    cpInsertStmt.setString(3, jsonObj.getString(VERSION));
+                    cpInsertStmt.setString(4, jsonObj.getString(SNMP_COMMUNITY));
 
-                    stmt.setString(1, jsonObj.getString(CRED_NAME));
-                    stmt.setString(2, jsonObj.getString(PROTOCOL));
-                    stmt.setString(3, jsonObj.getString(VERSION));
-                    stmt.setString(4, jsonObj.getString(SNMP_COMMUNITY));
-
-                    var rowsInserted = stmt.executeUpdate();
+                    var rowsInserted = cpInsertStmt.executeUpdate();
 
                     if(rowsInserted > 0)
                     {
@@ -148,17 +148,17 @@ public class DbManager extends AbstractVerticle
         eventBus.localConsumer(GET_ALL_EVENT, msg -> {
             var jsonObj = new JsonObject(msg.body().toString());
 
-            if(jsonObj.getString(TABLE_NAME).equals("credential_profile"))
+            if(jsonObj.getString(TABLE_NAME).equals(CRED_PROFILE_TABLE))
             {
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.createStatement())
+                try(var conn = Jdbc.getConnection(); var cpSelectAllStmt = conn.createStatement())
                 {
-                    var rs = stmt.executeQuery(cpSelectAllQ);
+                    var credentials = cpSelectAllStmt.executeQuery(cpSelectAllQ);
 
                     var credentialProfiles = new JsonArray();
 
-                    while(rs.next())
+                    while(credentials.next())
                     {
-                        credentialProfiles.add(new JsonObject().put(CRED_NAME, rs.getString(CRED_NAME)).put(PROTOCOL, rs.getString(PROTOCOL)).put(CRED_PROF_ID, rs.getString(CRED_PROF_ID)).put(VERSION, rs.getString(VERSION)).put(SNMP_COMMUNITY, rs.getString(SNMP_COMMUNITY)));
+                        credentialProfiles.add(new JsonObject().put(CRED_NAME, credentials.getString(CRED_NAME)).put(PROTOCOL, credentials.getString(PROTOCOL)).put(CRED_PROF_ID, credentials.getInt(CRED_PROF_ID)).put(VERSION, credentials.getString(VERSION)).put(SNMP_COMMUNITY, credentials.getString(SNMP_COMMUNITY)));
                     }
 
                     if(credentialProfiles.isEmpty())
@@ -173,20 +173,21 @@ public class DbManager extends AbstractVerticle
                 } catch(SQLException e)
                 {
                     LOGGER.info("Error: {}", e.getMessage());
+
                     msg.fail(404, e.getMessage());
                 }
             }
-            else if(jsonObj.getString(TABLE_NAME).equals("discovery_profile"))
+            else if(jsonObj.getString(TABLE_NAME).equals(DISC_PROFILE_TABLE))
             {
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.createStatement())
+                try(var conn = Jdbc.getConnection(); var dpSelectAllStmt = conn.createStatement())
                 {
-                    var rs = stmt.executeQuery(dpSelectAllQ);
+                    var discoveryProfilesRS = dpSelectAllStmt.executeQuery(dpSelectAllQ);
 
                     var discoveryProfiles = new JsonArray();
 
-                    while(rs.next())
+                    while(discoveryProfilesRS.next())
                     {
-                        discoveryProfiles.add(new JsonObject().put(DISC_PROF_ID, rs.getString(DISC_PROF_ID)).put(DISC_NAME, rs.getString(DISC_NAME)).put(OBJECT_IP, rs.getString(OBJECT_IP)).put(SNMP_PORT, rs.getString(SNMP_PORT)).put(IS_PROVISIONED, rs.getString(IS_PROVISIONED)).put(IS_DISCOVERED, rs.getString(IS_DISCOVERED)).put(CREDENTIALS, rs.getString(CREDENTIALS)));
+                        discoveryProfiles.add(new JsonObject().put(DISC_PROF_ID, discoveryProfilesRS.getInt(DISC_PROF_ID)).put(DISC_NAME, discoveryProfilesRS.getString(DISC_NAME)).put(OBJECT_IP, discoveryProfilesRS.getString(OBJECT_IP)).put(SNMP_PORT, discoveryProfilesRS.getInt(SNMP_PORT)).put(IS_PROVISIONED, discoveryProfilesRS.getInt(IS_PROVISIONED)).put(IS_DISCOVERED, discoveryProfilesRS.getInt(IS_DISCOVERED)).put(CREDENTIALS, discoveryProfilesRS.getString(CREDENTIALS)));
                     }
 
                     if(discoveryProfiles.isEmpty())
@@ -201,6 +202,7 @@ public class DbManager extends AbstractVerticle
                 } catch(SQLException e)
                 {
                     LOGGER.info("Error: {}", e.getMessage());
+
                     msg.fail(404, e.getMessage());
                 }
             }
@@ -213,12 +215,10 @@ public class DbManager extends AbstractVerticle
 
             var jsonObj = new JsonObject(msg.body().toString());
 
-            if(jsonObj.getString(TABLE_NAME).equals("discovery_profile"))
+            if(jsonObj.getString(TABLE_NAME).equals(DISC_PROFILE_TABLE))
             {
-
                 try
                 {
-
                     var discoveryProfile = getDiscoveryProfile(Integer.parseInt(jsonObj.getString(DISC_PROF_ID)));
 
                     if(discoveryProfile.isEmpty())
@@ -227,33 +227,23 @@ public class DbManager extends AbstractVerticle
                     }
                     else
                     {
-
                         LOGGER.info("discovery profile id = {} fetched successfully", jsonObj.getString(DISC_PROF_ID));
 
                         msg.reply(discoveryProfile);
-
                     }
 
                 } catch(SQLException e)
                 {
                     LOGGER.info("Error: {}", e.getMessage());
+
                     msg.fail(500, e.getMessage());
                 }
             }
-            else if(jsonObj.getString(TABLE_NAME).equals("credential_profile"))
+            else if(jsonObj.getString(TABLE_NAME).equals(CRED_PROFILE_TABLE))
             {
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(cpSelectQ))
+                try
                 {
-                    stmt.setInt(1, Integer.parseInt(jsonObj.getString(CRED_PROF_ID)));
-
-                    ResultSet rs = stmt.executeQuery();
-
-                    var credentialProfile = new JsonObject();
-
-                    while(rs.next())
-                    {
-                        credentialProfile.put(CRED_PROF_ID, rs.getString(CRED_PROF_ID)).put(CRED_NAME, rs.getString(CRED_NAME)).put(PROTOCOL, rs.getString(PROTOCOL)).put(VERSION, rs.getString(VERSION)).put(SNMP_COMMUNITY, rs.getString(SNMP_COMMUNITY));
-                    }
+                    var credentialProfile = getCredentialProfile(Integer.parseInt(jsonObj.getString(CRED_PROF_ID)));
 
                     if(credentialProfile.isEmpty())
                     {
@@ -261,16 +251,15 @@ public class DbManager extends AbstractVerticle
                     }
                     else
                     {
-
                         LOGGER.info("credential profile id = {} fetched successfully", jsonObj.getString(CRED_PROF_ID));
 
                         msg.reply(credentialProfile);
-
                     }
 
                 } catch(SQLException e)
                 {
                     LOGGER.info("Error: {}", e.getMessage());
+
                     msg.fail(500, e.getMessage());
                 }
 
@@ -285,25 +274,23 @@ public class DbManager extends AbstractVerticle
         eventBus.localConsumer(UPDATE_EVENT, msg -> {
             var jsonObj = new JsonObject(msg.body().toString());
 
-            if(jsonObj.getString(TABLE_NAME).equals("discovery_profile"))
+            if(jsonObj.getString(TABLE_NAME).equals(DISC_PROFILE_TABLE))
             {
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(dpUpdateQ))
+                try(var conn = Jdbc.getConnection(); var dpUpdateStmt = conn.prepareStatement(dpUpdateQ))
                 {
-                    stmt.setString(1, jsonObj.getString(DISC_NAME));
+                    dpUpdateStmt.setString(1, jsonObj.getString(DISC_NAME));
 
-                    stmt.setString(2, jsonObj.getString(SNMP_PORT));
+                    dpUpdateStmt.setString(2, jsonObj.getString(SNMP_PORT));
 
-                    stmt.setInt(3, Integer.parseInt(jsonObj.getString(DISC_PROF_ID)));
+                    dpUpdateStmt.setInt(3, Integer.parseInt(jsonObj.getString(DISC_PROF_ID)));
 
-                    var rowsUpdated = stmt.executeUpdate();
+                    var rowsUpdated = dpUpdateStmt.executeUpdate();
 
                     if(rowsUpdated > 0)
                     {
                         LOGGER.info("{} rows updated in credential_profile", rowsUpdated);
 
                         var discoveryProfile = getDiscoveryProfile(Integer.parseInt(jsonObj.getString(DISC_PROF_ID)));
-
-                        // TODO: on success update the is.discovered to 0 & is.provisioned 0
 
                         msg.reply(discoveryProfile);
                     }
@@ -320,9 +307,9 @@ public class DbManager extends AbstractVerticle
                     msg.fail(500, e.getMessage());
                 }
             }
-            else if(jsonObj.getString(TABLE_NAME).equals("credential_profile"))
+            else if(jsonObj.getString(TABLE_NAME).equals(CRED_PROFILE_TABLE))
             {
-                try(var conn = DatabaseConnection.getConnection(); var updateStmt = conn.prepareStatement(cpUpdateQ); var selectStmt = conn.prepareStatement(cpSelectQ);)
+                try(var conn = Jdbc.getConnection(); var updateStmt = conn.prepareStatement(cpUpdateQ))
                 {
                     updateStmt.setString(1, jsonObj.getString(VERSION));
                     updateStmt.setString(2, jsonObj.getString(SNMP_COMMUNITY));
@@ -334,18 +321,8 @@ public class DbManager extends AbstractVerticle
                     {
                         LOGGER.info("{} rows updated in credential_profile", rowsUpdated);
 
-                        selectStmt.setInt(1, Integer.parseInt(jsonObj.getString(CRED_PROF_ID)));
+                        var credentialProfile = getCredentialProfile(Integer.parseInt(jsonObj.getString(CRED_PROF_ID)));
 
-                        var rs = selectStmt.executeQuery();
-
-                        var credentialProfile = new JsonObject();
-
-                        while(rs.next())
-                        {
-                            credentialProfile.put(CRED_PROF_ID, rs.getString(CRED_PROF_ID)).put(CRED_NAME, rs.getString(CRED_NAME)).put(PROTOCOL, rs.getString(PROTOCOL)).put(VERSION, rs.getString(VERSION)).put(SNMP_COMMUNITY, rs.getString(SNMP_COMMUNITY));
-                        }
-
-                        //  TODO: on updating credential profile: change is.discovered to 0
                         msg.reply(credentialProfile);
                     }
                     else
@@ -373,9 +350,9 @@ public class DbManager extends AbstractVerticle
 
             var jsonObj = new JsonObject(msg.body().toString());
 
-            if(jsonObj.getString(TABLE_NAME).equals("discovery_profile"))
+            if(jsonObj.getString(TABLE_NAME).equals(DISC_PROFILE_TABLE))
             {
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(dpDeleteQ))
+                try(var conn = Jdbc.getConnection(); var stmt = conn.prepareStatement(dpDeleteQ))
                 {
                     stmt.setInt(1, Integer.parseInt(jsonObj.getString(DISC_PROF_ID)));
 
@@ -400,11 +377,11 @@ public class DbManager extends AbstractVerticle
                     msg.fail(500, e.getMessage());
                 }
             }
-            else if(jsonObj.getString(TABLE_NAME).equals("credential_profile"))
+            else if(jsonObj.getString(TABLE_NAME).equals(CRED_PROFILE_TABLE))
             {
-                // TODO: add validation before deleting credential profile
+                // TODO: add validation before deleting credential profile to check if it is bind with any device or not
 
-                try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(cpDeleteQ))
+                try(var conn = Jdbc.getConnection(); var stmt = conn.prepareStatement(cpDeleteQ))
                 {
                     stmt.setInt(1, Integer.parseInt(jsonObj.getString(CRED_PROF_ID)));
 
@@ -427,6 +404,7 @@ public class DbManager extends AbstractVerticle
                 } catch(SQLException e)
                 {
                     LOGGER.info("Error: {}", e.getMessage());
+
                     msg.fail(500, e.getMessage());
                 }
             }
@@ -442,70 +420,35 @@ public class DbManager extends AbstractVerticle
 
             var contexts = new JsonArray();
 
-            try(var conn = DatabaseConnection.getConnection(); var discSelectStmt = conn.prepareStatement(dpSelectQ); var cpSelectStmt = conn.prepareStatement(cpSelectQ))
+            try
             {
-                for(var device : reqArray)
+                for(var discProfileId : reqArray)
                 {
-                    discSelectStmt.setInt(1, Integer.parseInt(device.toString()));
+                    var discoveryProfile = getDiscoveryProfile(Integer.parseInt(discProfileId.toString()));
 
-                    var rs = discSelectStmt.executeQuery();
+                    discoveryProfile.put(REQUEST_TYPE, DISCOVERY).put(PLUGIN_NAME, NETWORK);
 
-                    var monitor = new JsonObject().put(REQUEST_TYPE, DISCOVERY).put(PLUGIN_NAME, NETWORK);
+                    var credentialStr = discoveryProfile.getString(CREDENTIALS);
 
-                    var credentialStr = "";
-
-                    if(!rs.isBeforeFirst())
+                    if(discoveryProfile.getInteger(IS_DISCOVERED) == TRUE || discoveryProfile.getInteger(IS_PROVISIONED) == TRUE)
                     {
-                        msg.fail(500, "One of the discovery profile does not exists");
+                        msg.fail(500, new JsonObject().put(ERROR, "Error in running discovery").put(ERR_MESSAGE, "Device ID " + discProfileId + " is already discovered or provisioned").put(ERR_STATUS_CODE, 500).toString());
 
                         return;
                     }
-                    else
+
+                    var credentialsArray = new JsonArray();
+
+                    for(var credentialId : new JsonArray(credentialStr))
                     {
-                        while(rs.next())
-                        {
-                            monitor.put(OBJECT_IP, rs.getString(OBJECT_IP)).put(SNMP_PORT, rs.getInt(SNMP_PORT)).put(IS_PROVISIONED, rs.getInt(IS_PROVISIONED)).put(IS_DISCOVERED, rs.getInt(IS_DISCOVERED)).put(DISC_PROF_ID, rs.getInt(DISC_PROF_ID));
+                        var credentialProfile = getCredentialProfile(Integer.parseInt(credentialId.toString()));
 
-                            credentialStr = rs.getString(CREDENTIALS);
-                        }
-
-                        if(monitor.isEmpty())
-                        {
-                            throw new SQLException("No discovery profile found!");
-                        }
-                        else
-                        {
-                            if(monitor.getString(IS_DISCOVERED).equals(TRUE) || monitor.getString(IS_PROVISIONED).equals(TRUE))
-                            {
-                                msg.fail(500, "Device is already discovered");
-
-                                return;
-                            }
-
-
-                            var credentialsArray = new JsonArray();
-
-                            for(var credentialId : new JsonArray(credentialStr))
-                            {
-
-                                cpSelectStmt.setInt(1, Integer.parseInt(credentialId.toString()));
-
-                                var credResultSet = cpSelectStmt.executeQuery();
-
-
-                                while(credResultSet.next())
-                                {
-                                    var credentialObject = new JsonObject().put(CRED_PROF_ID, credResultSet.getInt(CRED_PROF_ID)).put(SNMP_COMMUNITY, credResultSet.getString(SNMP_COMMUNITY));
-
-                                    credentialsArray.add(credentialObject);
-                                }
-                            }
-
-                            monitor.put(CREDENTIALS, credentialsArray);
-                        }
-
-                        contexts.add(monitor);
+                        credentialsArray.add(credentialProfile);
                     }
+
+                    discoveryProfile.put(CREDENTIALS, credentialsArray);
+
+                    contexts.add(discoveryProfile);
                 }
 
                 if(!contexts.isEmpty())
@@ -514,11 +457,11 @@ public class DbManager extends AbstractVerticle
                 }
                 else
                 {
-                    msg.fail(500, "Failed");
+                    msg.fail(500, new JsonObject().put(ERROR, "Error in running discovery").put(ERR_MESSAGE, "Context is empty!").put(ERR_STATUS_CODE, 500).toString());
                 }
             } catch(SQLException | NullPointerException e)
             {
-                msg.fail(500, e.getMessage());
+                msg.fail(500, new JsonObject().put(ERROR, "Error in running discovery").put(ERR_MESSAGE, e.getMessage()).put(ERR_STATUS_CODE, 500).toString());
             }
 
         });
@@ -527,33 +470,59 @@ public class DbManager extends AbstractVerticle
         eventBus.localConsumer(POST_DISC_SUCCESS, msg -> {
             var jsonObj = new JsonObject(msg.body().toString());
 
-            try(var conn = DatabaseConnection.getConnection(); var pmStmt = conn.prepareStatement(pmInsertQ); var dpUpdateStmt = conn.prepareStatement(dpUpdateIsDiscStatusQ))
+            try(var conn = Jdbc.getConnection(); var dpUpdateStmt = conn.prepareStatement(dpUpdateIsDiscStatusQ); var uniqueCredProfStmt = conn.prepareStatement(uniqueCredProfileIdsQ))
             {
-                dpUpdateStmt.setInt(1, 1);
+                dpUpdateStmt.setInt(1, jsonObj.getInteger(DISC_PROF_ID));
 
-                dpUpdateStmt.setInt(2, jsonObj.getInteger(DISC_PROF_ID));
-
-                var rowsUpdated = dpUpdateStmt.executeUpdate();
-
-                if(rowsUpdated > 0)
+                if(dpUpdateStmt.executeUpdate() > 0)
                 {
-                    LOGGER.info("{} rows updated for discovery profile: {}", rowsUpdated, jsonObj.getInteger(DISC_PROF_ID));
+                    LOGGER.info("Discovery status changed to 1 for disc.profile.id: {}",jsonObj.getInteger(DISC_PROF_ID));
+                }
+                else
+                {
+                    throw new SQLException("Error in updating disc profile");
                 }
 
-                pmStmt.setInt(1, jsonObj.getInteger(DISC_PROF_ID));
+                uniqueCredProfStmt.setInt(1, jsonObj.getInteger(DISC_PROF_ID));
 
-                pmStmt.setInt(2, jsonObj.getInteger(CRED_PROF_ID));
+                var uniqueCredsRS = uniqueCredProfStmt.executeQuery();
 
-                var rowsInserted = pmStmt.executeUpdate();
-
-                if(rowsInserted > 0)
+                // if mapping = 0
+                if(!uniqueCredsRS.isBeforeFirst())
                 {
-                    LOGGER.info("{} rows inserted in profile_mapping", rowsInserted);
+                    if(insertProfileMapping(jsonObj.getInteger(DISC_PROF_ID), jsonObj.getInteger(CRED_PROF_ID)) > 0)
+                    {
+                        LOGGER.info("Mapping added for [discId:credId]: [{}:{}]",jsonObj.getInteger(DISC_PROF_ID), jsonObj.getInteger(CRED_PROF_ID));
+                    }
                 }
+                // if credential profiles are present
+                else
+                {
+                    var credentialsArray = new JsonArray();
 
+                    while(uniqueCredsRS.next())
+                    {
+                        credentialsArray.add(uniqueCredsRS.getInt(CRED_PROF_ID));
+                    }
+
+                    // if mapping for credential profile & discovery profile does not exist
+                    if(!credentialsArray.contains(jsonObj.getInteger(CRED_PROF_ID)))
+                    {
+                        if(insertProfileMapping(jsonObj.getInteger(DISC_PROF_ID), jsonObj.getInteger(CRED_PROF_ID)) > 0)
+                        {
+                            LOGGER.info("Mapping added for [discId:credId]: [{}:{}]",jsonObj.getInteger(DISC_PROF_ID), jsonObj.getInteger(CRED_PROF_ID));
+                        }
+                    }
+                    // if mapping for credential profile & discovery profile exists
+                    else
+                    {
+                        LOGGER.info("Mapping already exists for [discId:credId]: [{}:{}]",jsonObj.getInteger(DISC_PROF_ID), jsonObj.getInteger(CRED_PROF_ID));
+                    }
+
+                }
             } catch(SQLException e)
             {
-                LOGGER.info("Error: {}", e.getMessage());
+                LOGGER.error("Error: {}", e.getMessage());
             }
         });
 
@@ -565,21 +534,64 @@ public class DbManager extends AbstractVerticle
     {
         var discoveryProfile = new JsonObject();
 
-        String dpSelectQ = "SELECT * FROM `discovery_profile` WHERE `disc.profile.id` = ?";
-
-        try(var conn = DatabaseConnection.getConnection(); var stmt = conn.prepareStatement(dpSelectQ))
+        try(var conn = Jdbc.getConnection(); var dpSelectStmt = conn.prepareStatement(dpSelectQ))
         {
-            stmt.setInt(1, discoveryProfileId);
+            dpSelectStmt.setInt(1, discoveryProfileId);
 
-            var rs = stmt.executeQuery();
+            var discProfileRS = dpSelectStmt.executeQuery();
 
-            while(rs.next())
+            if(!discProfileRS.isBeforeFirst())
             {
-                discoveryProfile.put(DISC_PROF_ID, rs.getString(DISC_PROF_ID)).put(DISC_NAME, rs.getString(DISC_NAME)).put(OBJECT_IP, rs.getString(OBJECT_IP)).put(SNMP_PORT, rs.getString(SNMP_PORT)).put(IS_PROVISIONED, rs.getString(IS_PROVISIONED)).put(IS_DISCOVERED, rs.getString(IS_DISCOVERED)).put(CREDENTIALS, rs.getString(CREDENTIALS));
+                throw new SQLException("No discovery profile found!");
+            }
+            else
+            {
+                while(discProfileRS.next())
+                {
+                    discoveryProfile.put(DISC_PROF_ID, discProfileRS.getInt(DISC_PROF_ID)).put(DISC_NAME, discProfileRS.getString(DISC_NAME)).put(OBJECT_IP, discProfileRS.getString(OBJECT_IP)).put(SNMP_PORT, discProfileRS.getInt(SNMP_PORT)).put(IS_PROVISIONED, discProfileRS.getInt(IS_PROVISIONED)).put(IS_DISCOVERED, discProfileRS.getInt(IS_DISCOVERED)).put(CREDENTIALS, discProfileRS.getString(CREDENTIALS));
+                }
+            }
+        }
+        return discoveryProfile;
+    }
+
+    private JsonObject getCredentialProfile(int credProfileId) throws SQLException
+    {
+        var credentialProfile = new JsonObject();
+
+        try(var conn = Jdbc.getConnection(); var dpSelectStmt = conn.prepareStatement(cpSelectQ))
+        {
+            dpSelectStmt.setInt(1, credProfileId);
+
+            var credProfileRS = dpSelectStmt.executeQuery();
+
+            if(!credProfileRS.isBeforeFirst())
+            {
+                throw new SQLException("No credential profile found!");
+            }
+            else
+            {
+                while(credProfileRS.next())
+                {
+                    credentialProfile.put(CRED_PROF_ID, credProfileRS.getInt(CRED_PROF_ID)).put(CRED_NAME, credProfileRS.getString(CRED_NAME)).put(PROTOCOL, credProfileRS.getString(PROTOCOL)).put(VERSION, credProfileRS.getString(VERSION)).put(SNMP_COMMUNITY, credProfileRS.getString(SNMP_COMMUNITY));
+                }
             }
 
         }
 
-        return discoveryProfile;
+        return credentialProfile;
     }
+
+    private int insertProfileMapping(int discProfileId, int credProfileId) throws SQLException
+    {
+        try(var conn = Jdbc.getConnection(); var pmStmt = conn.prepareStatement(pmInsertQ);)
+        {
+            pmStmt.setInt(1, discProfileId);
+
+            pmStmt.setInt(2, credProfileId);
+
+            return pmStmt.executeUpdate();
+        }
+    }
+
 }
