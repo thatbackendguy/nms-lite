@@ -1,23 +1,23 @@
 package com.motadata.manager;
 
+
 import com.motadata.utils.Utils;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
 
-import static com.motadata.Bootstrap.*;
 import static com.motadata.utils.Constants.*;
 
 public class ConfigServiceManager extends AbstractVerticle
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigServiceManager.class);
+
     private final String CREDENTIAL_PROFILE_INSERT_QUERY = "INSERT INTO `nmsDB`.`credential_profile` (`credential.name`, `protocol`, `version`, `community`) VALUES (?,?,?,?);";
 
     private final String CREDENTIAL_PROFILE_SELECT_QUERY = "SELECT * FROM `credential_profile` where `credential.profile.id`=?;";
@@ -637,7 +637,7 @@ public class ConfigServiceManager extends AbstractVerticle
                     // if mapping for credential profile & discovery profile exists
                     else
                     {
-                        LOGGER.trace("Mapping already exists for [discId:credId]: [{}:{}]", jsonObj.getInteger(DISCOVERY_PROFILE_ID), jsonObj.getInteger(CREDENTIAL_PROFILE_ID));
+                        LOGGER.warn("Mapping already exists for [discId:credId]: [{}:{}]", jsonObj.getInteger(DISCOVERY_PROFILE_ID), jsonObj.getInteger(CREDENTIAL_PROFILE_ID));
                     }
 
                 }

@@ -9,14 +9,17 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.ErrorHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Base64;
 
-import static com.motadata.Bootstrap.LOGGER;
 import static com.motadata.utils.Constants.*;
 
 public class ApiEngine extends AbstractVerticle
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApiEngine.class);
+
     private ErrorHandler errorHandler()
     {
         return ErrorHandler.create(vertx);

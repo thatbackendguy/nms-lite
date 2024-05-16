@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 public class Bootstrap
 {
-    public static final Logger LOGGER = LoggerFactory.getLogger(Bootstrap.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Bootstrap.class);
 
     public static void main(String[] args)
     {

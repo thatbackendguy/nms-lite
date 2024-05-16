@@ -1,5 +1,6 @@
 <configuration>
-    <!-- Console Appender -->
+
+    <!-- Console Appender for System.log/Bootstrap -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] %msg%n</pattern>
@@ -8,17 +9,95 @@
             <level>INFO</level>
         </filter>
     </appender>
-    <!-- File Appender -->
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>Backend.log</file>
+
+    <!-- File Appender for Bootstrap -->
+    <appender name="BOOTSTRAP_LOGS" class="ch.qos.logback.core.FileAppender">
+        <file>logs/Bootstrap.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- File Appender for ApiEngine -->
+    <appender name="API_ENGINE_LOGS" class="ch.qos.logback.core.FileAppender">
+        <file>logs/ApiEngine.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for DiscoveryEngine -->
+    <appender name="DISCOVERY_ENGINE_LOGS" class="ch.qos.logback.core.FileAppender">
+        <file>logs/DiscoveryEngine.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for PollingEngine -->
+    <appender name="POLLING_ENGINE_LOGS" class="ch.qos.logback.core.FileAppender">
+        <file>logs/PollingEngine.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for ConfigServiceManager -->
+    <appender name="CONFIG_SERVICE_MANAGER_LOGS" class="ch.qos.logback.core.FileAppender">
+        <file>logs/ConfigServiceManager.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for Utils -->
+    <appender name="UTILS_LOGS" class="ch.qos.logback.core.FileAppender">
+        <file>logs/Utils.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+
     <!-- Root Logger -->
     <root level="TRACE">
-        <appender-ref ref="FILE" />
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="STDOUT"/>
     </root>
+
+    <!-- Bootstrap -->
+    <logger name="com.motadata.Bootstrap" level="TRACE" additivity="false">
+        <appender-ref ref="BOOTSTRAP_LOGS"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- ApiEngine -->
+    <logger name="com.motadata.engine.ApiEngine" level="TRACE" additivity="false">
+        <appender-ref ref="API_ENGINE_LOGS"/>
+    </logger>
+
+    <!-- DiscoveryEngine -->
+    <logger name="com.motadata.engine.DiscoveryEngine" level="TRACE" additivity="false">
+        <appender-ref ref="DISCOVERY_ENGINE_LOGS"/>
+    </logger>
+
+    <!-- PollingEngine -->
+    <logger name="com.motadata.engine.PollingEngine" level="TRACE" additivity="false">
+        <appender-ref ref="POLLING_ENGINE_LOGS"/>
+    </logger>
+
+    <!-- ConfigServiceManager -->
+    <logger name="com.motadata.manager.ConfigServiceManager" level="TRACE" additivity="false">
+        <appender-ref ref="CONFIG_SERVICE_MANAGER_LOGS"/>
+    </logger>
+
+    <!-- Utils -->
+    <logger name="com.motadata.utils.Utils" level="TRACE" additivity="false">
+        <appender-ref ref="UTILS_LOGS"/>
+    </logger>
+
+    <!-- Config -->
+    <logger name="com.motadata.utils.Config" level="TRACE" additivity="false">
+        <appender-ref ref="UTILS_LOGS"/>
+    </logger>
+
 </configuration>

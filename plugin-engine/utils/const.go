@@ -17,10 +17,6 @@ const (
 
 	LogFilesPath = "go-engine/logs"
 
-	DiscLoggerName = "discovery"
-
-	CollectLoggerName = "collect"
-
 	SystemLoggerName = "system"
 
 	InterfacePhysicalAddress = "interface.physical.address"

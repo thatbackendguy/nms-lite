@@ -4,6 +4,8 @@ import com.motadata.utils.Config;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,11 +13,11 @@ import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
-import static com.motadata.Bootstrap.LOGGER;
 import static com.motadata.utils.Constants.*;
 
 public class PollingEngine extends AbstractVerticle
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PollingEngine.class);
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception
@@ -25,7 +27,7 @@ public class PollingEngine extends AbstractVerticle
         vertx.setPeriodic(Config.POLLING_INTERVAL, timerId -> {
             try
             {
-                LOGGER.info("Polling started, requesting for provision devices...");
+                LOGGER.trace("Polling started, requesting for provision devices...");
 
                 eventBus.request(GET_PROVISIONED_DEVICES_EVENT, EMPTY_STRING, ar -> {
                     try
@@ -84,7 +86,7 @@ public class PollingEngine extends AbstractVerticle
                         }
                         else
                         {
-                            LOGGER.error(ar.cause().getMessage());
+                            LOGGER.warn(ar.cause().getMessage());
                         }
 
                     } catch(InterruptedException | IOException err)

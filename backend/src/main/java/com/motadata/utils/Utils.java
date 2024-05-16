@@ -1,5 +1,8 @@
 package com.motadata.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.sql.Connection;
@@ -7,10 +10,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
-import static com.motadata.Bootstrap.LOGGER;
 
 public class Utils
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 
     public static Connection getConnection()
     {

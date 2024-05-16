@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var logger = utils.NewLogger(utils.LogFilesPath+"/clients", "snmpclient")
+
 func Init(objectIp string, community string, port uint16, version g.SnmpVersion) (*g.GoSNMP, error) {
 
 	GoSNMP := &g.GoSNMP{
@@ -57,21 +59,21 @@ func Get(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, er
 
 	if err != nil {
 
-		utils.DiscLogger.Error(err.Error())
+		logger.Error(err.Error())
 
 		return nil, err
 	}
 
 	if packet.Error != 0 {
 
-		utils.DiscLogger.Error(packet.Error.String())
+		logger.Error(packet.Error.String())
 
 		return nil, fmt.Errorf("SNMP error: %s", packet.Error)
 	}
 
 	if len(packet.Variables) != len(oidMap) {
 
-		utils.DiscLogger.Error("unexpected number of SNMP variables returned")
+		logger.Error("unexpected number of SNMP variables returned")
 
 		return nil, fmt.Errorf("unexpected number of SNMP variables returned")
 	}
@@ -135,7 +137,7 @@ func Walk(oids map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 
 		if err != nil {
 
-			utils.CollectLogger.Error(err.Error())
+			logger.Error(err.Error())
 
 			return nil, err
 		}
@@ -147,7 +149,7 @@ func Walk(oids map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 		interfacesDetails = append(interfacesDetails, interfaceData)
 	}
 
-	utils.CollectLogger.Debug(interfacesDetails)
+	logger.Debug(interfacesDetails)
 
 	return interfacesDetails, nil
 }

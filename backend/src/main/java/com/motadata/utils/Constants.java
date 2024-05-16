@@ -1,5 +1,7 @@
 package com.motadata.utils;
 
+import org.slf4j.Logger;
+
 public class Constants
 {
     private Constants() {}

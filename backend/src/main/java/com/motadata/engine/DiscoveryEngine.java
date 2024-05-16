@@ -5,6 +5,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,12 +14,13 @@ import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
-import static com.motadata.Bootstrap.LOGGER;
 import static com.motadata.utils.Constants.*;
 import static com.motadata.utils.Constants.CREDENTIAL_PROFILE_ID;
 
 public class DiscoveryEngine extends AbstractVerticle
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiscoveryEngine.class);
+
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
@@ -31,6 +34,8 @@ public class DiscoveryEngine extends AbstractVerticle
                 processBuilder.redirectErrorStream(true);
 
                 LOGGER.trace("Initiating process builder");
+
+                LOGGER.trace(msg.body().toString());
 
                 var process = processBuilder.start();
 
@@ -59,6 +64,8 @@ public class DiscoveryEngine extends AbstractVerticle
                     LOGGER.trace("Process completed, Decoding & sending result...");
 
                     var decodedString = new String(Base64.getDecoder().decode(processBuffer.toString()));
+
+                    LOGGER.trace(decodedString);
 
                     var results = new JsonArray(decodedString);
 

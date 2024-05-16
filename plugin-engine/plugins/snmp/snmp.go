@@ -65,7 +65,7 @@ var tabularOids = map[string]string{
 	utils.InterfacePhysicalAddress:  ".1.3.6.1.2.1.2.2.1.6",
 }
 
-var logger = utils.NewLogger("plugins", "snmp")
+var logger = utils.NewLogger(utils.LogFilesPath+"/plugins", "snmp")
 
 func Discovery(context map[string]interface{}, errors *[]map[string]interface{}) {
 
@@ -88,6 +88,8 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 				utils.ErrorMsg: "error connecting to SNMP agent",
 			})
 
+			logger.Error("error connecting to SNMP agent. reason: credentials not found")
+
 			return
 		}
 
@@ -107,6 +109,8 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 				utils.ErrorMsg: err.Error(),
 			})
 
+			logger.Error("error connecting from " + context[ObjectIp].(string) + " to SNMP agent. reason: " + err.Error())
+
 			return
 		}
 
@@ -123,6 +127,8 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 				utils.ErrorMsg: err.Error(),
 			})
+
+			logger.Error("error connecting from " + context[ObjectIp].(string) + " to SNMP agent. reason: " + err.Error())
 		}
 
 		if len(results) > 0 {
@@ -158,7 +164,7 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 			utils.ErrorMsg: "error connecting to SNMP agent",
 		})
 
-		utils.CollectLogger.Error("error connecting to SNMP agent: " + err.Error())
+		logger.Error("error connecting to SNMP agent: " + err.Error())
 
 		return
 	}
@@ -176,7 +182,7 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 			utils.ErrorMsg: "error in collecting objects!",
 		})
 
-		utils.DiscLogger.Error("error in discovery of device: " + err.Error())
+		logger.Error("error in discovery of device: " + err.Error())
 
 		return
 	}

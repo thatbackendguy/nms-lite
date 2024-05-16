@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-var logger = NewLogger(LogFilesPath, "system")
+var logger = NewLogger(LogFilesPath, SystemLoggerName)
 
 func SendResponse(context []map[string]interface{}) {
 
