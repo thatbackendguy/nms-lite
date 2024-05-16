@@ -1,68 +1,52 @@
 CREATE TABLE `credential_profile`
 (
-    `cred.profile.id` int          NOT NULL AUTO_INCREMENT,
-    `cred.name`       varchar(255) NOT NULL,
-    `protocol`        varchar(255) NOT NULL,
-    `version`         varchar(255) NOT NULL,
-    `snmp.community`  varchar(255) NOT NULL DEFAULT 'public',
-    PRIMARY KEY (`cred.profile.id`),
-    UNIQUE KEY `cred.name` (`cred.name`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 36
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci;
-
+    `credential.profile.id` int          NOT NULL AUTO_INCREMENT,
+    `credential.name`       varchar(255) NOT NULL,
+    `protocol`              varchar(255) NOT NULL,
+    `version`               varchar(255) NOT NULL,
+    `community`             varchar(255) NOT NULL DEFAULT 'public',
+    PRIMARY KEY (`credential.profile.id`),
+    UNIQUE KEY `credential.name` (`credential.name`)
+);
 
 
 CREATE TABLE `discovery_profile`
 (
-    `disc.profile.id` int          NOT NULL AUTO_INCREMENT,
-    `disc.name`       varchar(255) NOT NULL,
-    `object.ip`       varchar(15)  NOT NULL,
-    `snmp.port`       int          NOT NULL DEFAULT '161',
-    `is.provisioned`  tinyint(1)   NOT NULL DEFAULT '0',
-    `is.discovered`   tinyint(1)   NOT NULL DEFAULT '0',
-    `credentials`     json         NOT NULL,
-    PRIMARY KEY (`disc.profile.id`),
-    UNIQUE KEY `disc.name` (`disc.name`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 7
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci;
+    `discovery.profile.id` int          NOT NULL AUTO_INCREMENT,
+    `discovery.name`       varchar(255) NOT NULL,
+    `object.ip`            varchar(15)  NOT NULL,
+    `port`                 int          NOT NULL DEFAULT '161',
+    `is.provisioned`       tinyint(1)   NOT NULL DEFAULT '0',
+    `is.discovered`        int          NOT NULL DEFAULT '0',
+    PRIMARY KEY (`discovery.profile.id`),
+    UNIQUE KEY `discovery.name` (`discovery.name`)
+);
 
 
 CREATE TABLE `profile_mapping`
 (
-    `disc.profile.id` int NOT NULL,
-    `cred.profile.id` int NOT NULL,
-    KEY `disc.profile.id` (`disc.profile.id`),
-    KEY `cred.profile.id` (`cred.profile.id`),
-    CONSTRAINT `profile_mapping_ibfk_1` FOREIGN KEY (`disc.profile.id`) REFERENCES `discovery_profile` (`disc.profile.id`),
-    CONSTRAINT `profile_mapping_ibfk_2` FOREIGN KEY (`cred.profile.id`) REFERENCES `credential_profile` (`cred.profile.id`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci;
+    `discovery.profile.id`  int NOT NULL,
+    `credential.profile.id` int NOT NULL,
+    KEY `profile_mapping_ibfk_1` (`discovery.profile.id`),
+    KEY `profile_mapping_ibfk_2` (`credential.profile.id`),
+    CONSTRAINT `profile_mapping_ibfk_1` FOREIGN KEY (`discovery.profile.id`) REFERENCES `discovery_profile` (`discovery.profile.id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    CONSTRAINT `profile_mapping_ibfk_2` FOREIGN KEY (`credential.profile.id`) REFERENCES `credential_profile` (`credential.profile.id`)
+);
 
 CREATE TABLE `network_interface`
 (
-    `record.id`                       int          NOT NULL AUTO_INCREMENT,
-    `object.ip`                       varchar(15)  NOT NULL,
-    `snmp.community`                  varchar(255) NOT NULL,
-    `snmp.port`                       int          NOT NULL,
-    `interface.index`                 int               DEFAULT NULL,
-    `interface.name`                  varchar(255)      DEFAULT NULL,
-    `interface.operational.status`    int               DEFAULT NULL,
-    `interface.admin.status`          int               DEFAULT NULL,
-    `interface.description`           varchar(255)      DEFAULT NULL,
-    `interface.sent.error.packet`     bigint            DEFAULT NULL,
-    `interface.received.error.packet` bigint            DEFAULT NULL,
-    `interface.sent.octets`           bigint            DEFAULT NULL,
-    `interface.received.octets`       bigint            DEFAULT NULL,
-    `interface.speed`                 bigint            DEFAULT NULL,
-    `interface.alias`                 varchar(255)      DEFAULT NULL,
-    `interface.physical.address`      varchar(255)      DEFAULT NULL,
-    `created.at`                      timestamp    NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`record.id`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci;
+    `object.ip`                       varchar(50) NOT NULL,
+    `interface.index`                 int              DEFAULT NULL,
+    `interface.name`                  varchar(255)     DEFAULT NULL,
+    `interface.operational.status`    int              DEFAULT NULL,
+    `interface.admin.status`          int              DEFAULT NULL,
+    `interface.description`           varchar(255)     DEFAULT NULL,
+    `interface.sent.error.packet`     bigint   DEFAULT NULL,
+    `interface.received.error.packet` bigint   DEFAULT NULL,
+    `interface.sent.octets`           bigint   DEFAULT NULL,
+    `interface.received.octets`       bigint   DEFAULT NULL,
+    `interface.speed`                 bigint           DEFAULT NULL,
+    `interface.alias`                 varchar(255)     DEFAULT NULL,
+    `interface.physical.address`      varchar(50)      DEFAULT NULL,
+    `poll.time`                       timestamp   NULL DEFAULT NULL
+);

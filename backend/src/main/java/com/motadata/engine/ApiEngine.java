@@ -1,9 +1,10 @@
 package com.motadata.engine;
 
+import com.motadata.utils.Config;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -24,51 +25,61 @@ public class ApiEngine extends AbstractVerticle
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
-        HttpServer server = vertx.createHttpServer();
+        var server = vertx.createHttpServer(new HttpServerOptions().setHost(Config.HOST).setPort(Config.PORT));
 
         var eventBus = vertx.eventBus();
 
-        Router mainRouter = Router.router(vertx);
+        var router = Router.router(vertx);
 
-        Router credentialRouter = Router.router(vertx);
+        var credentialRouter = Router.router(vertx);
 
-        Router discoveryRouter = Router.router(vertx);
+        var discoveryRouter = Router.router(vertx);
 
-        Router provisionRouter = Router.router(vertx);
+        var provisionRouter = Router.router(vertx);
+
+        var metricsRouter = Router.router(vertx);
+
+        var snmpRouter = Router.router(vertx);
 
         // FOR HANDLING FAILURES
-        mainRouter.route().failureHandler(errorHandler());
+        router.route().failureHandler(errorHandler());
 
         //--------------------------------------------------------------------------------------------------------------
 
         // CREDENTIAL PROFILE SUB-ROUTER
-        mainRouter.route("/credential/*").subRouter(credentialRouter);
+        router.route("/credential/*").subRouter(credentialRouter);
 
         // DISCOVERY PROFILE SUB-ROUTER
-        mainRouter.route("/discovery/*").subRouter(discoveryRouter);
+        router.route("/discovery/*").subRouter(discoveryRouter);
 
         // PROVISION SUB-ROUTER
-        mainRouter.route("/provision/*").subRouter(provisionRouter);
+        router.route("/provision/*").subRouter(provisionRouter);
+
+        // METRICS SUB-ROUTER
+        router.route("/metrics/*").subRouter(metricsRouter);
+
+        // NETWORK DEVICE - SNMP
+        metricsRouter.route("/snmp/*").subRouter(snmpRouter);
 
         //--------------------------------------------------------------------------------------------------------------
 
         // GET: "/"
-        mainRouter.route("/").handler(ctx -> {
+        router.route("/").handler(ctx -> {
 
             LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
             ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
         });
 
-        // GET STORED INTERFACE DATA
-        mainRouter.route(HttpMethod.PUT, "/get-data").handler(ctx -> {
+        // GET STORED INTERFACE DATA - /metrics/snmp/get-data
+        snmpRouter.route(HttpMethod.GET, "/get-data").handler(ctx -> {
             try
             {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 ctx.request().bodyHandler(buffer -> {
 
-                    var reqJSON = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INF_TABLE);
+                    var reqJSON = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INTERFACE_TABLE);
 
                     eventBus.request(GET_EVENT, reqJSON, ar -> {
 
@@ -84,7 +95,7 @@ public class ApiEngine extends AbstractVerticle
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, REQUEST_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -98,7 +109,7 @@ public class ApiEngine extends AbstractVerticle
 
                 ctx.request().bodyHandler(buffer -> {
 
-                    JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE);
+                    JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE);
 
                     eventBus.request(INSERT_EVENT, reqJSON, ar -> {
 
@@ -118,7 +129,7 @@ public class ApiEngine extends AbstractVerticle
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQUEST_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -129,7 +140,7 @@ public class ApiEngine extends AbstractVerticle
             {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
+                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
@@ -155,7 +166,7 @@ public class ApiEngine extends AbstractVerticle
 
                 var credProfileId = ctx.request().getParam("credProfileId");
 
-                eventBus.request(GET_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE).put(CRED_PROF_ID, credProfileId), ar -> {
+                eventBus.request(GET_EVENT, new JsonObject().put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE).put(CREDENTIAL_PROFILE_ID, credProfileId), ar -> {
 
                     if(ar.succeeded())
                     {
@@ -183,7 +194,7 @@ public class ApiEngine extends AbstractVerticle
 
                 ctx.request().bodyHandler(buffer -> {
 
-                    JsonObject reqJSON = buffer.toJsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, CRED_PROFILE_TABLE);
+                    JsonObject reqJSON = buffer.toJsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId).put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE);
 
                     eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
 
@@ -200,7 +211,7 @@ public class ApiEngine extends AbstractVerticle
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQUEST_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -212,7 +223,7 @@ public class ApiEngine extends AbstractVerticle
 
                 var credProfileId = ctx.request().getParam("credProfileId");
 
-                eventBus.request(DELETE_EVENT, new JsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
+                eventBus.request(DELETE_EVENT, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId).put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
@@ -243,7 +254,7 @@ public class ApiEngine extends AbstractVerticle
 
                 ctx.request().bodyHandler(buffer -> {
 
-                    JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE);
+                    JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, DISCOVERY_PROFILE_TABLE);
 
                     eventBus.request(INSERT_EVENT, reqJSON, ar -> {
 
@@ -263,7 +274,7 @@ public class ApiEngine extends AbstractVerticle
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQUEST_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -273,7 +284,7 @@ public class ApiEngine extends AbstractVerticle
             {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
+                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, DISCOVERY_PROFILE_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
@@ -298,7 +309,7 @@ public class ApiEngine extends AbstractVerticle
 
                 var discProfileId = ctx.request().getParam("discProfileId");
 
-                eventBus.request(GET_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
+                eventBus.request(GET_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId).put(TABLE_NAME, DISCOVERY_PROFILE_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
@@ -325,7 +336,7 @@ public class ApiEngine extends AbstractVerticle
 
                 ctx.request().bodyHandler(buffer -> {
 
-                    var reqJSON = buffer.toJsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE);
+                    var reqJSON = buffer.toJsonObject().put(DISCOVERY_PROFILE_ID, discProfileId).put(TABLE_NAME, DISCOVERY_PROFILE_TABLE);
 
                     eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
 
@@ -341,7 +352,7 @@ public class ApiEngine extends AbstractVerticle
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQUEST_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -353,7 +364,7 @@ public class ApiEngine extends AbstractVerticle
 
                 var discProfileId = ctx.request().getParam("discProfileId");
 
-                eventBus.request(DELETE_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
+                eventBus.request(DELETE_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId).put(TABLE_NAME, DISCOVERY_PROFILE_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
@@ -385,11 +396,24 @@ public class ApiEngine extends AbstractVerticle
             {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
+                // TODO: change the req body from json array of discId to json object having
+                /* Example:
+                 [
+                     {
+                        "discovery.profile.id": 2,
+                        "credentials": [1,2,3,4,5]
+                     },
+                     {
+                        "discovery.profile.id": 3,
+                        "credentials": [9,4,5]
+                     },
+                 ]
+                */
                 ctx.request().bodyHandler(buffer -> {
 
                     var reqArray = buffer.toJsonArray();
 
-                    eventBus.request(MAKE_DISCOVERY_CONTEXT, reqArray, ar -> {
+                    eventBus.request(MAKE_DISCOVERY_CONTEXT_EVENT, reqArray, ar -> {
 
                         if(ar.succeeded())
                         {
@@ -399,7 +423,7 @@ public class ApiEngine extends AbstractVerticle
 
                             LOGGER.trace("Execute Blocking initiated\t{}", encodedString);
 
-                            eventBus.request(RUN_DISCOVERY, encodedString, res -> {
+                            eventBus.request(RUN_DISCOVERY_EVENT, encodedString, res -> {
                                 ctx.json(new JsonArray(res.result().body().toString()));
                             });
 
@@ -414,7 +438,7 @@ public class ApiEngine extends AbstractVerticle
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error in running discovery").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error in running discovery").put(ERR_MESSAGE, REQUEST_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -428,7 +452,7 @@ public class ApiEngine extends AbstractVerticle
 
                 var discProfileId = ctx.request().getParam("discProfileId");
 
-                eventBus.request(UPDATE_EVENT, new JsonObject().put(DISC_PROF_ID, Integer.parseInt(discProfileId)).put(TABLE_NAME, PROFILE_MAPPING_TABLE), ar -> {
+                eventBus.request(UPDATE_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, Integer.parseInt(discProfileId)).put(EVENT_NAME, PROVISION_DEVICE), ar -> {
 
                     if(ar.succeeded())
                     {
@@ -452,7 +476,7 @@ public class ApiEngine extends AbstractVerticle
             {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, PROVISION_DEVICES), ar -> {
+                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, GET_PROVISIONED_DEVICES_EVENT), ar -> {
                     if(ar.succeeded())
                     {
                         ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Provisioned devices fetched successfully!").put(RESULT, ar.result().body()));
@@ -476,7 +500,7 @@ public class ApiEngine extends AbstractVerticle
 
                 var discProfileId = ctx.request().getParam("discProfileId");
 
-                eventBus.request(PROVISION_STOP, discProfileId, ar -> {
+                eventBus.request(STOP_POLLING_EVENT, discProfileId, ar -> {
                     if(ar.succeeded())
                     {
                         ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provision stopped successfully!"));
@@ -492,7 +516,7 @@ public class ApiEngine extends AbstractVerticle
             }
         });
 
-        server.requestHandler(mainRouter).listen(8080, res -> {
+        server.requestHandler(router).listen(res -> {
 
             if(res.succeeded())
             {

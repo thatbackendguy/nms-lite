@@ -8,10 +8,10 @@ import (
 
 const (
 	ObjectIp      = "object.ip"
-	SnmpCommunity = "snmp.community"
-	SnmpPort      = "snmp.port"
-	SnmpVersion   = "version"
-	CredProfileId = "cred.profile.id"
+	Community     = "community"
+	Port          = "port"
+	Version       = "version"
+	CredProfileId = "credential.profile.id"
 	Credentials   = "credentials"
 	Interface     = "interface"
 )
@@ -63,6 +63,8 @@ var tabularOids = map[string]string{
 	utils.InterfacePhysicalAddress:  ".1.3.6.1.2.1.2.2.1.6",
 }
 
+var logger = utils.NewLogger("plugins", "snmp")
+
 func Discovery(context map[string]interface{}, errors *[]map[string]interface{}) {
 
 	validateContext(context)
@@ -70,7 +72,9 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 	var client *gosnmp.GoSNMP
 
 	if credentials, ok := context[Credentials].([]interface{}); ok {
+
 		if !(len(credentials) > 0) {
+
 			*errors = append(*errors, map[string]interface{}{
 
 				utils.Error: "credentials not found",
@@ -79,6 +83,7 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 				utils.ErrorMsg: "error connecting to SNMP agent",
 			})
+
 			return
 		}
 
@@ -86,7 +91,7 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 	for _, credential := range context[Credentials].([]interface{}) {
 
-		client, _ = snmpclient.Init(context[ObjectIp].(string), credential.(map[string]interface{})[SnmpCommunity].(string), uint16(context[SnmpPort].(float64)), credential.(map[string]interface{})[SnmpVersion].(gosnmp.SnmpVersion))
+		client, _ = snmpclient.Init(context[ObjectIp].(string), credential.(map[string]interface{})[Community].(string), uint16(context[Port].(float64)), credential.(map[string]interface{})[Version].(gosnmp.SnmpVersion))
 
 		defer snmpclient.Close(client)
 
@@ -110,7 +115,7 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 
 	validateContext(context)
 
-	client, err := snmpclient.Init(context[ObjectIp].(string), context[SnmpCommunity].(string), uint16(context[SnmpPort].(float64)), context[SnmpVersion].(gosnmp.SnmpVersion))
+	client, err := snmpclient.Init(context[ObjectIp].(string), context[Community].(string), uint16(context[Port].(float64)), context[Version].(gosnmp.SnmpVersion))
 
 	defer snmpclient.Close(client)
 
@@ -133,6 +138,7 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 	results, err := snmpclient.Walk(tabularOids, client)
 
 	if err != nil {
+
 		*errors = append(*errors, map[string]interface{}{
 
 			utils.Error: err.Error(),
@@ -150,6 +156,7 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 	if len(results) > 0 {
 
 		context[utils.Result] = map[string]interface{}{
+
 			Interface: results,
 		}
 
@@ -161,41 +168,64 @@ func validateContext(context map[string]interface{}) {
 
 	// for multiple context
 	if credentials, ok := context[Credentials]; ok {
+
 		for _, credential := range credentials.([]interface{}) {
-			if value, ok := credential.(map[string]interface{})[SnmpVersion]; ok {
+
+			if value, ok := credential.(map[string]interface{})[Version]; ok {
+
 				switch value {
+
 				case "v1":
-					credential.(map[string]interface{})[SnmpVersion] = gosnmp.Version1
+
+					credential.(map[string]interface{})[Version] = gosnmp.Version1
+
 				case "v3":
-					credential.(map[string]interface{})[SnmpVersion] = gosnmp.Version3
+
+					credential.(map[string]interface{})[Version] = gosnmp.Version3
+
 				default:
-					credential.(map[string]interface{})[SnmpVersion] = gosnmp.Version2c
+
+					credential.(map[string]interface{})[Version] = gosnmp.Version2c
+
 				}
+
 			} else {
-				credential.(map[string]interface{})[SnmpVersion] = gosnmp.Version2c
+
+				credential.(map[string]interface{})[Version] = gosnmp.Version2c
 			}
 		}
 	}
 
 	if _, ok := context[ObjectIp]; !ok {
+
 		context[ObjectIp] = "127.0.0.1"
 	}
 
-	if _, ok := context[SnmpPort]; !ok {
-		context[SnmpPort] = 161
+	if _, ok := context[Port]; !ok {
+
+		context[Port] = 161
 	}
 
 	// for single device context
-	if value, ok := context[SnmpVersion]; ok {
+	if value, ok := context[Version]; ok {
+
 		switch value {
+
 		case "v1":
-			context[SnmpVersion] = gosnmp.Version1
+
+			context[Version] = gosnmp.Version1
+
 		case "v3":
-			context[SnmpVersion] = gosnmp.Version3
+
+			context[Version] = gosnmp.Version3
+
 		default:
-			context[SnmpVersion] = gosnmp.Version2c
+
+			context[Version] = gosnmp.Version2c
 		}
+
 	} else {
-		context[SnmpVersion] = gosnmp.Version2c
+
+		context[Version] = gosnmp.Version2c
 	}
 }

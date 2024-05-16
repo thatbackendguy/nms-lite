@@ -56,12 +56,14 @@ func Get(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, er
 	packet, err := GoSNMP.Get(oids)
 
 	if err != nil {
+
 		utils.DiscLogger.Error(err.Error())
 
 		return nil, err
 	}
 
 	if packet.Error != 0 {
+
 		utils.DiscLogger.Error(packet.Error.String())
 
 		return nil, fmt.Errorf("SNMP error: %s", packet.Error)
@@ -99,13 +101,13 @@ func Get(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, er
 	return resultMap, nil
 }
 
-func Walk(oidMap map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
+func Walk(oids map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 
 	interfacesDetails := make([]interface{}, 0)
 
 	results := map[string]map[string]interface{}{}
 
-	for oidName, oid := range oidMap {
+	for oidName, oid := range oids {
 
 		err := GoSNMP.BulkWalk(oid, func(dataUnit g.SnmpPDU) error {
 
@@ -119,15 +121,20 @@ func Walk(oidMap map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 			}
 
 			if strings.EqualFold(oidName, utils.InterfacePhysicalAddress) {
+
 				results[interfaceIndex][oidName] = resolveMacAddress(dataUnit.Value, dataUnit.Type)
+
 			} else {
+
 				results[interfaceIndex][oidName] = resolveValue(dataUnit.Value, dataUnit.Type)
+
 			}
 
 			return nil
 		})
 
 		if err != nil {
+
 			utils.CollectLogger.Error(err.Error())
 
 			return nil, err
@@ -146,23 +153,41 @@ func Walk(oidMap map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 }
 
 func resolveValue(value interface{}, dataType g.Asn1BER) interface{} {
+
+	if value == nil {
+
+		return ""
+	}
+
 	switch dataType {
+
 	case g.OctetString:
+
 		return string(value.([]byte))
+
 	case g.Integer:
+
 		return g.ToBigInt(value)
+
 	case g.Counter32, g.TimeTicks, g.Gauge32:
+
 		return value.(uint)
+
 	default:
+
 		return value
 	}
 }
 
 func resolveMacAddress(value interface{}, dataType g.Asn1BER) interface{} {
-	switch dataType {
-	case g.OctetString:
-		return fmt.Sprintf("%v", net.HardwareAddr(value.([]byte)))
-	default:
-		return value
+
+	if dataType == g.OctetString {
+
+		if value != nil {
+
+			return net.HardwareAddr(value.([]byte)).String()
+		}
 	}
+
+	return ""
 }

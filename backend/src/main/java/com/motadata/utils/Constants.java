@@ -4,19 +4,27 @@ public class Constants
 {
     private Constants() {}
 
+    public static final String HOST = "host";
+
+    public static final String DATABASE_URI = "database.uri";
+
+    public static final String POLLING_INTERVAL = "polling.interval";
+
+    public static final String DATABASE_USERNAME = "database.username";
+
+    public static final String DATABASE_PASSWORD = "database.password";
+
     public static final String CONTENT_TYPE = "Content-Type";
 
     public static final String APP_JSON = "application/json";
 
     public static final String OBJECT_IP = "object.ip";
 
-    public static final String SNMP_COMMUNITY = "snmp.community";
-
-    public static final String CREDENTIALS = "credentials";
+    public static final String SNMP_COMMUNITY = "community";
 
     public static final String RESULT = "result";
 
-    public static final String SNMP_PORT = "snmp.port";
+    public static final String PORT = "port";
 
     public static final String REQUEST_TYPE = "request.type";
 
@@ -26,9 +34,9 @@ public class Constants
 
     public static final String ERROR = "error";
 
-    public static final String DISC_NAME = "disc.name";
+    public static final String DISCOVERY_NAME = "discovery.name";
 
-    public static final String CRED_NAME = "cred.name";
+    public static final String CREDENTIAL_NAME = "credential.name";
 
     public static final String STATUS = "status";
 
@@ -44,11 +52,9 @@ public class Constants
 
     public static final String PROTOCOL = "protocol";
 
-    public static final String DISC_PROF_ID = "disc.profile.id";
+    public static final String DISCOVERY_PROFILE_ID = "discovery.profile.id";
 
-    public static final String PROVISION_REQUEST = "provision.request";
-
-    public static final String CRED_PROF_ID = "cred.profile.id";
+    public static final String CREDENTIAL_PROFILE_ID = "credential.profile.id";
 
     public static final String VERSION = "version";
 
@@ -66,7 +72,7 @@ public class Constants
 
     public static final String IS_DISCOVERED = "is.discovered";
 
-    public static final String MAKE_DISCOVERY_CONTEXT = "make.disc.context";
+    public static final String MAKE_DISCOVERY_CONTEXT_EVENT = "make.disc.context";
 
     public static final String DISCOVERY = "Discovery";
 
@@ -80,21 +86,23 @@ public class Constants
 
     public static final int FALSE = 0;
 
-    public static final String RUN_DISCOVERY = "discovery.run";
+    public static final String RUN_DISCOVERY_EVENT = "discovery.run";
 
-    public static final String POST_DISC_SUCCESS = "post.discovery.success";
+    public static final String POST_DISCOVERY_SUCCESS_EVENT = "post.discovery.success";
 
-    public static final String DISC_PROFILE_TABLE = "discovery_profile";
+    public static final String DISCOVERY_PROFILE_TABLE = "discovery_profile";
 
-    public static final String NETWORK_INF_TABLE = "network_interface";
+    public static final String NETWORK_INTERFACE_TABLE = "network_interface";
 
-    public static final String CRED_PROFILE_TABLE = "credential_profile";
+    public static final String CREDENTIAL_PROFILE_TABLE = "credential_profile";
 
     public static final String PROFILE_MAPPING_TABLE = "profile_mapping";
 
-    public static final String PROVISION_DEVICES = "provision.devices";
+    public static final String GET_PROVISIONED_DEVICES_EVENT = "get.provisioned.devices";
 
-    public static final String POLL_DATA_STORE = "poll.data.store";
+    public static final String STORE_POLLED_DATA_EVENT = "store.polled.data";
+
+    public static final String STOP_POLLING_EVENT = "polling.stop";
 
     public static final String INTERFACE_INDEX = "interface.index";
 
@@ -120,7 +128,7 @@ public class Constants
 
     public static final String INTERFACE_PHYSICAL_ADDRESS = "interface.physical.address";
 
-    public static final String CREATED_AT = "created.at";
+    public static final String POLL_TIME = "poll.time";
 
     public static final String INTERFACE = "interface";
 
@@ -136,9 +144,13 @@ public class Constants
 
     public static final String INVALID_TABLE = "Invalid table name!";
 
-    public static final String PROVISION_STOP = "provision.stop";
-
-    public static final String REQ_BODY_ERROR = "Invalid request body!";
+    public static final String REQUEST_BODY_ERROR = "Invalid request body!";
 
     public static final String BAD_REQUEST = "Bad request";
+
+    public static final String EMPTY_STRING = "";
+
+    public static final String EVENT_NAME = "event.name";
+
+    public static final String PROVISION_DEVICE = "provision.device";
 }

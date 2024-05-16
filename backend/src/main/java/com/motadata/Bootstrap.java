@@ -1,5 +1,9 @@
 package com.motadata;
 
+import com.motadata.engine.ApiEngine;
+import com.motadata.engine.DiscoveryEngine;
+import com.motadata.engine.PollingEngine;
+import com.motadata.manager.ConfigServiceManager;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
@@ -14,37 +18,54 @@ public class Bootstrap
     {
         var vertx = Vertx.vertx();
 
-        vertx.deployVerticle("com.motadata.engine.ApiEngine", handler -> {
-            if(handler.succeeded())
+        vertx.deployVerticle(ConfigServiceManager.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), configServiceManagerHandler -> {
+
+            if(configServiceManagerHandler.succeeded())
             {
-                LOGGER.info("API engine is up and running");
+                LOGGER.info("Config Service Manager is up and running");
+
+                vertx.deployVerticle(DiscoveryEngine.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), discoveryEngineHandler -> {
+
+                    if(discoveryEngineHandler.succeeded())
+                    {
+                        LOGGER.info("Discovery engine is up and running");
+
+                        vertx.deployVerticle(PollingEngine.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), pollingEngineHandler -> {
+
+                            if(pollingEngineHandler.succeeded())
+                            {
+                                LOGGER.info("Polling engine is up and running");
+
+                                vertx.deployVerticle(ApiEngine.class.getName(), apiEngineHandler -> {
+
+                                    if(apiEngineHandler.succeeded())
+                                    {
+                                        LOGGER.info("API engine is up and running");
+                                    }
+                                    else
+                                    {
+                                        LOGGER.error(apiEngineHandler.cause().getMessage());
+                                    }
+                                });
+                            }
+                            else
+                            {
+                                LOGGER.error(pollingEngineHandler.cause().getMessage());
+                            }
+                        });
+                    }
+                    else
+                    {
+                        LOGGER.error(discoveryEngineHandler.cause().getMessage());
+                    }
+                });
             }
             else
             {
-                LOGGER.error(handler.cause().getMessage());
+                LOGGER.error(configServiceManagerHandler.cause().getMessage());
             }
         });
 
-        vertx.deployVerticle("com.motadata.manager.ConfigManager", new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), handler -> {
-            if(handler.succeeded())
-            {
-                LOGGER.info("Config Manager is up and running");
-            }
-            else
-            {
-                LOGGER.error(handler.cause().getMessage());
-            }
-        });
 
-        vertx.deployVerticle("com.motadata.engine.PluginEngine", new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), handler -> {
-            if(handler.succeeded())
-            {
-                LOGGER.info("Plugin engine is up and running");
-            }
-            else
-            {
-                LOGGER.error(handler.cause().getMessage());
-            }
-        });
     }
 }

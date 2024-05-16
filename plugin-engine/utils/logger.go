@@ -20,7 +20,7 @@ type Logger struct {
 
 var logLevel = 0
 
-func write(level, directory, component string, message interface{}) {
+func (logger *Logger) write(level, directory, component string, message interface{}) {
 
 	currentTime := time.Now()
 
@@ -88,8 +88,6 @@ func (l *Logger) Warn(message interface{}) {
 	write("Warn", l.directory, l.component, message)
 
 }
-
-var PluginEngineLogger = NewLogger(LogFilesPath, BootstrapLoggerName)
 
 var DiscLogger = NewLogger(LogFilesPath, DiscLoggerName)
 
