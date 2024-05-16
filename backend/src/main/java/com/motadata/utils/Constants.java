@@ -116,4 +116,18 @@ public class Constants
 
     public static final String INTERFACE = "interface";
 
+    public static final String ROWS_INSERTED_CONTAINER = "{} rows inserted in {}";
+
+    public static final String ROWS_UPDATED_CONTAINER = "{} rows updated in {}";
+
+    public static final String ROWS_DELETED_CONTAINER = "{} rows deleted in {}";
+
+    public static final String KEY_VAL_NOT_FOUND_CONTAINER = "{} = {} not found";
+
+    public static final String ERROR_CONTAINER = "Error: {}";
+
+    public static final String INVALID_TABLE = "Invalid table name!";
+
+    public static final String PROVISION_STOP = "provision.stop";
+
 }

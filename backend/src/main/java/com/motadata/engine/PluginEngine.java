@@ -71,7 +71,7 @@ public class PluginEngine extends AbstractVerticle
         });
 
         // TODO: if not, change to 5 * 60 * 1000 for 5 minutes
-        vertx.setPeriodic(30000, timerId -> {
+        vertx.setPeriodic(20 * 1000, timerId -> {
 
             LOGGER.trace("Polling started, requesting for provision devices..");
 
@@ -82,7 +82,7 @@ public class PluginEngine extends AbstractVerticle
 
                     var encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
 
-                    LOGGER.trace("Polling initiated\n{}", encodedString);
+                    LOGGER.trace("Polling initiated\t{}", encodedString);
 
                     var processBuilder = new ProcessBuilder("/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine", encodedString);
 
@@ -108,10 +108,10 @@ public class PluginEngine extends AbstractVerticle
 
                     var decodedString = new String(Base64.getDecoder().decode(processBuffer.toString()));
 
-                    var results = new JsonArray(decodedString);
+                    LOGGER.debug(decodedString);
 
-                    // TODO: add eventBus.send(POLL_DATA_STORE) & also check if the data is stored for multiple monitors or not
-                    LOGGER.info(results.toString());
+                    eventBus.send(POLL_DATA_STORE, decodedString);
+
 
                 } catch(IOException err)
                 {

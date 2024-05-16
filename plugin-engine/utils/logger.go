@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -41,6 +42,11 @@ func write(level, directory, component string, message interface{}) {
 }
 
 func NewLogger(directory, component string) Logger {
+
+	dirPath := filepath.Join(".", directory)
+
+	_ = os.MkdirAll(dirPath, 0755)
+
 	return Logger{
 		directory: directory,
 		component: component,

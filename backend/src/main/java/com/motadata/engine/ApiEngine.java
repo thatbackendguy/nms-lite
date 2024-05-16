@@ -24,315 +24,323 @@ public class ApiEngine extends AbstractVerticle
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
-        HttpServer server = vertx.createHttpServer();
+        try
+        {
+            HttpServer server = vertx.createHttpServer();
 
-        var eventBus = vertx.eventBus();
+            var eventBus = vertx.eventBus();
 
-        Router mainRouter = Router.router(vertx);
+            Router mainRouter = Router.router(vertx);
 
-        Router credentialRouter = Router.router(vertx);
+            Router credentialRouter = Router.router(vertx);
 
-        Router discoveryRouter = Router.router(vertx);
+            Router discoveryRouter = Router.router(vertx);
 
-        Router provisionRouter = Router.router(vertx);
+            Router provisionRouter = Router.router(vertx);
 
-        // for handling failures
-        mainRouter.route().failureHandler(errorHandler());
+            // FOR HANDLING FAILURES
+            mainRouter.route().failureHandler(errorHandler());
 
-        //--------------------------------------------------------------------------------------------------------------
-        // GET: "/"
-        mainRouter.route("/").handler(ctx -> {
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            //--------------------------------------------------------------------------------------------------------------
 
-            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
-        });
+            // GET: "/"
+            mainRouter.route("/").handler(ctx -> {
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-        //--------------------------------------------------------------------------------------------------------------
-        // CREDENTIAL PROFILE SUB-ROUTER
-        mainRouter.route("/credential/*").subRouter(credentialRouter);
+                ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
+            });
 
-        // DISCOVERY PROFILE SUB-ROUTER
-        mainRouter.route("/discovery/*").subRouter(discoveryRouter);
+            //--------------------------------------------------------------------------------------------------------------
 
-        // PROVISION SUB-ROUTER
-        mainRouter.route("/provision/*").subRouter(provisionRouter);
+            // CREDENTIAL PROFILE SUB-ROUTER
+            mainRouter.route("/credential/*").subRouter(credentialRouter);
 
-        //--------------------------------------------------------------------------------------------------------------
-        // create credential profile
-        credentialRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+            // DISCOVERY PROFILE SUB-ROUTER
+            mainRouter.route("/discovery/*").subRouter(discoveryRouter);
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            // PROVISION SUB-ROUTER
+            mainRouter.route("/provision/*").subRouter(provisionRouter);
 
-            ctx.request().bodyHandler(buffer -> {
+            //--------------------------------------------------------------------------------------------------------------
 
-                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE);
+            // CREATE CREDENTIAL PROFILE
+            credentialRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
 
-                eventBus.request(INSERT_EVENT, reqJSON, ar -> {
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                ctx.request().bodyHandler(buffer -> {
+
+                    JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE);
+
+                    eventBus.request(INSERT_EVENT, reqJSON, ar -> {
+
+                        if(ar.succeeded())
+                        {
+                            if(ar.result().body().equals(SUCCESS))
+                            {
+                                ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile added successfully!"));
+                            }
+                        }
+                        else
+                        {
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        }
+                    });
+                });
+            });
+
+            // GET-ALL CREDENTIAL PROFILES
+            credentialRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
+
+                    if(ar.succeeded())
+                    {
+                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profiles fetched successfully!").put("result", ar.result().body()));
+                    }
+                    else
+                    {
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                    }
+                });
+            });
+
+            // GET CREDENTIAL PROFILE
+            credentialRouter.route(HttpMethod.GET, "/get/:credProfileId").handler(ctx -> {
+
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                var credProfileId = ctx.request().getParam("credProfileId");
+
+                eventBus.request(GET_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE).put(CRED_PROF_ID, credProfileId), ar -> {
+
+                    if(ar.succeeded())
+                    {
+                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile fetched successfully!").put(RESULT, ar.result().body()));
+                    }
+                    else
+                    {
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                    }
+                });
+            });
+
+            // UPDATE CREDENTIAL PROFILE
+            credentialRouter.route(HttpMethod.PUT, "/update/:credProfileId").handler(ctx -> {
+
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                var credProfileId = ctx.request().getParam("credProfileId");
+
+                ctx.request().bodyHandler(buffer -> {
+
+                    JsonObject reqJSON = buffer.toJsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, CRED_PROFILE_TABLE);
+
+                    eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
+
+                        if(ar.succeeded())
+                        {
+                            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile updated successfully!").put("result", ar.result().body()));
+                        }
+                        else
+                        {
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        }
+                    });
+                });
+            });
+
+            // DELETE CREDENTIAL PROFILE
+            credentialRouter.route(HttpMethod.DELETE, "/delete/:credProfileId").handler(ctx -> {
+
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                var credProfileId = ctx.request().getParam("credProfileId");
+
+                eventBus.request(DELETE_EVENT, new JsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
                         if(ar.result().body().equals(SUCCESS))
                         {
-                            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile added successfully!"));
+                            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile: " + credProfileId + " deleted successfully!"));
                         }
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
                     }
                 });
             });
-        });
 
-        // get-all credential profiles
-        credentialRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+            //--------------------------------------------------------------------------------------------------------------
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            // CREATE DISCOVERY PROFILE
+            discoveryRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
 
-            eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-                if(ar.succeeded())
-                {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profiles fetched successfully!").put("result", ar.result().body()));
-                }
-                else
-                {
-                    ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
-                }
+                ctx.request().bodyHandler(buffer -> {
+
+                    JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE);
+
+                    eventBus.request(INSERT_EVENT, reqJSON, ar -> {
+
+                        if(ar.succeeded())
+                        {
+                            if(ar.result().body().equals(SUCCESS))
+                            {
+                                ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile added successfully!"));
+                            }
+                        }
+                        else
+                        {
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        }
+                    });
+                });
             });
-        });
 
-        // get credential profile
-        credentialRouter.route(HttpMethod.GET, "/get/:credProfileId").handler(ctx -> {
+            // GET ALL DISCOVERY PROFILES
+            discoveryRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-            var credProfileId = ctx.request().getParam("credProfileId");
-
-            eventBus.request(GET_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE).put(CRED_PROF_ID, credProfileId), ar -> {
-
-                if(ar.succeeded())
-                {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile fetched successfully!").put(RESULT, ar.result().body()));
-                }
-                else
-                {
-                    ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
-                }
-            });
-        });
-
-        // UPDATE CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.PUT, "/update/:credProfileId").handler(ctx -> {
-
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            var credProfileId = ctx.request().getParam("credProfileId");
-
-            ctx.request().bodyHandler(buffer -> {
-
-                JsonObject reqJSON = buffer.toJsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, CRED_PROFILE_TABLE);
-
-                eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
+                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
-                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile updated successfully!").put("result", ar.result().body()));
+                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profiles fetched successfully!").put("discovery.profiles", ar.result().body()));
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
                     }
                 });
             });
-        });
 
-        // DELETE CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.DELETE, "/delete/:credProfileId").handler(ctx -> {
+            // GET DISCOVERY PROFILE
+            discoveryRouter.route(HttpMethod.GET, "/get/:discProfileId").handler(ctx -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-            var credProfileId = ctx.request().getParam("credProfileId");
+                var discProfileId = ctx.request().getParam("discProfileId");
 
-            eventBus.request(DELETE_EVENT, new JsonObject().put(CRED_PROF_ID, credProfileId).put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
+                eventBus.request(GET_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
 
-                if(ar.succeeded())
-                {
-                    if(ar.result().body().equals(SUCCESS))
+                    if(ar.succeeded())
                     {
-                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile: " + credProfileId + " deleted successfully!"));
+                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile fetched successfully!").put(RESULT, ar.result().body()));
                     }
-                }
-                else
-                {
-                    ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
-                }
+                    else
+                    {
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                    }
+                });
             });
-        });
 
-        //--------------------------------------------------------------------------------------------------------------
-        // create discovery profile
-        discoveryRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+            // UPDATE DISCOVERY PROFILE
+            discoveryRouter.route(HttpMethod.PUT, "/update/:discProfileId").handler(ctx -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-            ctx.request().bodyHandler(buffer -> {
+                var discProfileId = ctx.request().getParam("discProfileId");
 
-                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE);
+                ctx.request().bodyHandler(buffer -> {
 
-                eventBus.request(INSERT_EVENT, reqJSON, ar -> {
+                    var reqJSON = buffer.toJsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE);
+
+                    eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
+
+                        if(ar.succeeded())
+                        {
+                            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile updated successfully!").put("result", ar.result().body()));
+                        }
+                        else
+                        {
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        }
+                    });
+                });
+            });
+
+            // DELETE DISCOVERY PROFILE
+            discoveryRouter.route(HttpMethod.DELETE, "/delete/:discProfileId").handler(ctx -> {
+
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                var discProfileId = ctx.request().getParam("discProfileId");
+
+                eventBus.request(DELETE_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
                         if(ar.result().body().equals(SUCCESS))
                         {
-                            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile added successfully!"));
+                            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile: " + discProfileId + " deleted successfully!"));
+                        }
+                        else
+                        {
+                            ctx.response().setStatusCode(404).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Discovery profile: " + discProfileId + " not found!")).encode());
                         }
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
-                    }
-                });
-            });
-        });
-
-        discoveryRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
-
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
-
-                if(ar.succeeded())
-                {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profiles fetched successfully!").put("discovery.profiles", ar.result().body()));
-                }
-                else
-                {
-                    ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
-                }
-            });
-        });
-
-        // get discovery profile
-        discoveryRouter.route(HttpMethod.GET, "/get/:discProfileId").handler(ctx -> {
-
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            var discProfileId = ctx.request().getParam("discProfileId");
-
-            eventBus.request(GET_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
-
-                if(ar.succeeded())
-                {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile fetched successfully!").put(RESULT, ar.result().body()));
-                }
-                else
-                {
-                    ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
-                }
-            });
-        });
-
-        // UPDATE DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.PUT, "/update/:discProfileId").handler(ctx -> {
-
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            var discProfileId = ctx.request().getParam("discProfileId");
-
-            ctx.request().bodyHandler(buffer -> {
-
-                var reqJSON = buffer.toJsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE);
-
-                eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
-
-                    if(ar.succeeded())
-                    {
-                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile updated successfully!").put("result", ar.result().body()));
-                    }
-                    else
-                    {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
-                    }
-                });
-            });
-        });
-
-        // DELETE DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.DELETE, "/delete/:discProfileId").handler(ctx -> {
-
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            var discProfileId = ctx.request().getParam("discProfileId");
-
-            eventBus.request(DELETE_EVENT, new JsonObject().put(DISC_PROF_ID, discProfileId).put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
-
-                if(ar.succeeded())
-                {
-                    if(ar.result().body().equals(SUCCESS))
-                    {
-                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile: " + discProfileId + " deleted successfully!"));
-                    }
-                    else
-                    {
-                        ctx.response().setStatusCode(404).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Discovery profile: " + discProfileId + " not found!")).encode());
-                    }
-                }
-                else
-                {
-                    ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
-                }
-            });
-        });
-
-        //--------------------------------------------------------------------------------------------------------------
-        // RUN DISCOVERY
-        discoveryRouter.route(HttpMethod.POST, "/run").handler(ctx -> {
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            ctx.request().bodyHandler(buffer -> {
-
-                var reqArray = buffer.toJsonArray();
-
-                eventBus.request(MAKE_DISCOVERY_CONTEXT, reqArray, ar -> {
-
-                    if(ar.succeeded())
-                    {
-                        LOGGER.debug("context build success: {}", ar.result().body().toString());
-
-                        String encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
-
-                        LOGGER.trace("Execute Blocking initiated\n{}", encodedString);
-
-                        eventBus.request(RUN_DISCOVERY, encodedString, res -> {
-                            ctx.json(new JsonArray(res.result().body().toString()));
-                        });
-
-                    }
-                    else
-                    {
-                        LOGGER.debug(ar.cause().getMessage());
-
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(ar.cause().getMessage());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
                     }
                 });
             });
 
-        });
+            //--------------------------------------------------------------------------------------------------------------
 
-        //--------------------------------------------------------------------------------------------------------------
-        // REQUEST TO PROVISION DEVICE
-        provisionRouter.route(HttpMethod.POST, "/:discProfileId").handler(ctx -> {
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            // RUN DISCOVERY
+            discoveryRouter.route(HttpMethod.POST, "/run").handler(ctx -> {
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-            var discProfileId = ctx.request().getParam("discProfileId");
+                ctx.request().bodyHandler(buffer -> {
 
-                eventBus.request(UPDATE_EVENT, new JsonObject().put(DISC_PROF_ID, Integer.parseInt(discProfileId)).put(TABLE_NAME,PROFILE_MAPPING_TABLE), ar -> {
+                    var reqArray = buffer.toJsonArray();
+
+                    eventBus.request(MAKE_DISCOVERY_CONTEXT, reqArray, ar -> {
+
+                        if(ar.succeeded())
+                        {
+                            LOGGER.debug("context build success: {}", ar.result().body().toString());
+
+                            String encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
+
+                            LOGGER.trace("Execute Blocking initiated\t{}", encodedString);
+
+                            eventBus.request(RUN_DISCOVERY, encodedString, res -> {
+                                ctx.json(new JsonArray(res.result().body().toString()));
+                            });
+
+                        }
+                        else
+                        {
+                            LOGGER.debug(ar.cause().getMessage());
+
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(ar.cause().getMessage());
+                        }
+                    });
+                });
+
+            });
+
+            //--------------------------------------------------------------------------------------------------------------
+
+            // REQUEST TO PROVISION DEVICE
+            provisionRouter.route(HttpMethod.POST, "/add/:discProfileId").handler(ctx -> {
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                var discProfileId = ctx.request().getParam("discProfileId");
+
+                eventBus.request(UPDATE_EVENT, new JsonObject().put(DISC_PROF_ID, Integer.parseInt(discProfileId)).put(TABLE_NAME, PROFILE_MAPPING_TABLE), ar -> {
 
                     if(ar.succeeded())
                     {
-
                         ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provisioned successfully!"));
                     }
                     else
@@ -340,27 +348,67 @@ public class ApiEngine extends AbstractVerticle
                         ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
 
+                });
+
             });
 
-        });
+            // GET ALL PROVISION DEVICES LIST
+            provisionRouter.route(HttpMethod.GET, "/get-all").handler(ctx->{
 
-        // TODO /provision/get-all
-        // TODO /provision/delete
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-        server.requestHandler(mainRouter).listen(8080, res -> {
+                eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, PROVISION_DEVICES), ar -> {
+                    if(ar.succeeded())
+                    {
+                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Provisioned devices fetched successfully!").put(RESULT, ar.result().body()));
+                    }
+                    else
+                    {
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                    }
+                });
 
-            if(res.succeeded())
-            {
-                LOGGER.info("HTTP Server is now listening on http://localhost:8080/");
+            });
 
-                startPromise.complete();
-            }
-            else
-            {
-                LOGGER.info("Failed to start the API Engine, port unavailable!");
+            // REMOVE PROVISION/ STOP POLLING
+            provisionRouter.route(HttpMethod.DELETE, "/stop/:discProfileId").handler(ctx->{
 
-                startPromise.fail(res.cause());
-            }
-        });
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                var discProfileId = ctx.request().getParam("discProfileId");
+
+                eventBus.request(PROVISION_STOP,discProfileId,ar->{
+                    if(ar.succeeded())
+                    {
+                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provision stopped successfully!"));
+                    }
+                    else
+                    {
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                    }
+                });
+            });
+
+
+            server.requestHandler(mainRouter).listen(8080, res -> {
+
+                if(res.succeeded())
+                {
+                    LOGGER.info("HTTP Server is now listening on http://localhost:8080/");
+
+                    startPromise.complete();
+                }
+                else
+                {
+                    LOGGER.info("Failed to start the API Engine, port unavailable!");
+
+                    startPromise.fail(res.cause());
+                }
+            });
+        } catch(NullPointerException e)
+        {
+            LOGGER.error("Invalid request body");
+        }
+
     }
 }

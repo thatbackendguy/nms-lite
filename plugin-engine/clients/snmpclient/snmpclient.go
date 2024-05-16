@@ -150,11 +150,7 @@ func resolveValue(value interface{}, dataType g.Asn1BER) interface{} {
 		return string(value.([]byte))
 	case g.Integer:
 		return g.ToBigInt(value)
-	case g.Counter32:
-		return value.(uint)
-	case g.Gauge32:
-		return value.(uint)
-	case g.TimeTicks:
+	case g.Counter32, g.TimeTicks, g.Gauge32:
 		return value.(uint)
 	default:
 		return value

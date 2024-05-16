@@ -8,7 +8,7 @@ const (
 	Error             = "error"
 	ErrorMsg          = "error.message"
 	ErrorCode         = "error.code"
-	LogFilesPath      = "logs"
+	LogFilesPath      = "goEngine/logs"
 	DiscLoggerName    = "discovery"
 	CollectLoggerName = "collect"
 )
