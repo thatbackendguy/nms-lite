@@ -20,7 +20,7 @@ type Logger struct {
 
 var logLevel = 0
 
-func (logger *Logger) write(level, directory, component string, message interface{}) {
+func write(level, directory, component string, message interface{}) {
 
 	currentTime := time.Now()
 

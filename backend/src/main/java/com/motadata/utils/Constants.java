@@ -56,6 +56,8 @@ public class Constants
 
     public static final String CREDENTIAL_PROFILE_ID = "credential.profile.id";
 
+    public static final String CREDENTIAL_PROFILE_IDS = "credential.profile.ids";
+
     public static final String VERSION = "version";
 
     public static final String INSERT_EVENT = "insert.data";
@@ -153,4 +155,6 @@ public class Constants
     public static final String EVENT_NAME = "event.name";
 
     public static final String PROVISION_DEVICE = "provision.device";
+
+    public static final String CREDENTIALS = "credentials";
 }

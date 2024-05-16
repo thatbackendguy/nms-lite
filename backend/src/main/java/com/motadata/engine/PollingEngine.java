@@ -25,7 +25,7 @@ public class PollingEngine extends AbstractVerticle
         vertx.setPeriodic(Config.POLLING_INTERVAL, timerId -> {
             try
             {
-                LOGGER.trace("Polling started, requesting for provision devices..");
+                LOGGER.info("Polling started, requesting for provision devices...");
 
                 eventBus.request(GET_PROVISIONED_DEVICES_EVENT, EMPTY_STRING, ar -> {
                     try
@@ -39,6 +39,8 @@ public class PollingEngine extends AbstractVerticle
                                 var encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
 
                                 LOGGER.trace("Polling initiated\t{}", encodedString);
+
+
 
                                 var processBuilder = new ProcessBuilder("/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine", encodedString);
 
@@ -79,6 +81,10 @@ public class PollingEngine extends AbstractVerticle
                                 }
 
                             }
+                        }
+                        else
+                        {
+                            LOGGER.error(ar.cause().getMessage());
                         }
 
                     } catch(InterruptedException | IOException err)

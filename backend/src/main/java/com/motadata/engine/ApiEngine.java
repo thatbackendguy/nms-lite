@@ -396,7 +396,6 @@ public class ApiEngine extends AbstractVerticle
             {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-                // TODO: change the req body from json array of discId to json object having
                 /* Example:
                  [
                      {
@@ -452,7 +451,7 @@ public class ApiEngine extends AbstractVerticle
 
                 var discProfileId = ctx.request().getParam("discProfileId");
 
-                eventBus.request(UPDATE_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, Integer.parseInt(discProfileId)).put(EVENT_NAME, PROVISION_DEVICE), ar -> {
+                eventBus.request(UPDATE_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, Integer.parseInt(discProfileId)).put(TABLE_NAME, PROVISION_DEVICE), ar -> {
 
                     if(ar.succeeded())
                     {
@@ -520,7 +519,7 @@ public class ApiEngine extends AbstractVerticle
 
             if(res.succeeded())
             {
-                LOGGER.info("HTTP Server is now listening on http://localhost:8080/");
+                LOGGER.info(String.format("HTTP Server is now listening on http://%s:%d/",Config.HOST, Config.PORT));
 
                 startPromise.complete();
             }

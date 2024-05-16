@@ -15,7 +15,7 @@ const (
 
 	ErrorCode = "error.code"
 
-	LogFilesPath = "goEngine/logs"
+	LogFilesPath = "go-engine/logs"
 
 	DiscLoggerName = "discovery"
 

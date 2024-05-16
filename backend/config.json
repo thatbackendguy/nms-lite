@@ -1,8 +1,8 @@
 {
-  "host": "10.20.40.227",
+  "host": "127.0.0.1",
   "port": 8080,
   "database.uri": "jdbc:mysql://localhost:3306/nmsDB",
   "database.username": "root",
   "database.password": "Root@1010",
-  "polling.interval": 300000
+  "polling.interval": 30000
 }

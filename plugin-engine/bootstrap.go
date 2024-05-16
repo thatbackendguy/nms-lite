@@ -52,8 +52,6 @@ func main() {
 
 		wg.Add(1)
 
-		context[utils.Result] = map[string]interface{}{}
-
 		go func(context map[string]interface{}) {
 
 			defer wg.Done()
@@ -97,12 +95,17 @@ func main() {
 
 			context[utils.Error] = errors
 
-			if len(context[utils.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
+			if _, ok := context[utils.Result]; ok {
 
-				context[utils.Status] = utils.Failed
+				if len(context[utils.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
 
+					context[utils.Status] = utils.Failed
+
+				} else {
+					context[utils.Status] = utils.Success
+				}
 			} else {
-				context[utils.Status] = utils.Success
+				context[utils.Status] = utils.Failed
 			}
 
 		}(context)

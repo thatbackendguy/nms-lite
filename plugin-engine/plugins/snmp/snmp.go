@@ -4,6 +4,7 @@ import (
 	"github.com/gosnmp/gosnmp"
 	"plugin-engine/clients/snmpclient"
 	"plugin-engine/utils"
+	"time"
 )
 
 const (
@@ -14,6 +15,7 @@ const (
 	CredProfileId = "credential.profile.id"
 	Credentials   = "credentials"
 	Interface     = "interface"
+	PollTime      = "poll.time"
 )
 
 const (
@@ -71,6 +73,8 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 	var client *gosnmp.GoSNMP
 
+	var err error
+
 	if credentials, ok := context[Credentials].([]interface{}); ok {
 
 		if !(len(credentials) > 0) {
@@ -91,11 +95,35 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 	for _, credential := range context[Credentials].([]interface{}) {
 
-		client, _ = snmpclient.Init(context[ObjectIp].(string), credential.(map[string]interface{})[Community].(string), uint16(context[Port].(float64)), credential.(map[string]interface{})[Version].(gosnmp.SnmpVersion))
+		client, err = snmpclient.Init(context[ObjectIp].(string), credential.(map[string]interface{})[Community].(string), uint16(context[Port].(float64)), credential.(map[string]interface{})[Version].(gosnmp.SnmpVersion))
+
+		if err != nil {
+			*errors = append(*errors, map[string]interface{}{
+
+				utils.Error: "connection error",
+
+				utils.ErrorCode: "SNMP01",
+
+				utils.ErrorMsg: err.Error(),
+			})
+
+			return
+		}
 
 		defer snmpclient.Close(client)
 
-		results, _ := snmpclient.Get(scalerOids, client)
+		results, err := snmpclient.Get(scalerOids, client)
+
+		if err != nil {
+			*errors = append(*errors, map[string]interface{}{
+
+				utils.Error: "invalid credentials/ connection timed out",
+
+				utils.ErrorCode: "SNMP01",
+
+				utils.ErrorMsg: err.Error(),
+			})
+		}
 
 		if len(results) > 0 {
 
@@ -160,14 +188,20 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 			Interface: results,
 		}
 
+		context[PollTime] = time.Now().Format("2006-01-02 15:04:05")
+
 	}
 
 }
 
 func validateContext(context map[string]interface{}) {
 
+	var isMultiContext bool
+
 	// for multiple context
 	if credentials, ok := context[Credentials]; ok {
+
+		isMultiContext = true
 
 		for _, credential := range credentials.([]interface{}) {
 
@@ -207,25 +241,29 @@ func validateContext(context map[string]interface{}) {
 	}
 
 	// for single device context
-	if value, ok := context[Version]; ok {
+	if !isMultiContext {
 
-		switch value {
+		if value, ok := context[Version]; ok {
 
-		case "v1":
+			switch value {
 
-			context[Version] = gosnmp.Version1
+			case "v1":
 
-		case "v3":
+				context[Version] = gosnmp.Version1
 
-			context[Version] = gosnmp.Version3
+			case "v3":
 
-		default:
+				context[Version] = gosnmp.Version3
+
+			default:
+
+				context[Version] = gosnmp.Version2c
+			}
+
+		} else {
 
 			context[Version] = gosnmp.Version2c
 		}
-
-	} else {
-
-		context[Version] = gosnmp.Version2c
 	}
+
 }
