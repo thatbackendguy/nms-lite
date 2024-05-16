@@ -53,7 +53,7 @@ public class ConfigManager extends AbstractVerticle
 
     private final String pmCountSelectQ = "SELECT COUNT(*) as count FROM profile_mapping WHERE `cred.profile.id` = ?;";
 
-    private final String metricsInsertQ = "INSERT INTO network_interface (`object.ip`,`snmp.community`,`snmp.port`,`interface.index`,`interface.name`,`interface.operational.status`,`interface.admin.status`,`interface.description`,`interface.sent.error.packet`,`interface.received.error.packet`,`interface.sent.octets`,`interface.received.octets`,`interface.speed`,`interface.alias`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+    private final String metricsInsertQ = "INSERT INTO network_interface (`object.ip`,`snmp.community`,`snmp.port`,`interface.index`,`interface.name`,`interface.operational.status`,`interface.admin.status`,`interface.description`,`interface.sent.error.packet`,`interface.received.error.packet`,`interface.sent.octets`,`interface.received.octets`,`interface.speed`,`interface.alias`,`interface.physical.address`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
     private final String provDevicesAllQ = "SELECT `object.ip` FROM nmsDB.discovery_profile where `is.provisioned`=1;";
 
@@ -721,17 +721,18 @@ public class ConfigManager extends AbstractVerticle
                         metricsInsertStmt.setString(2, snmpCommunity);
                         metricsInsertStmt.setInt(3, snmpPort);
 
-                        metricsInsertStmt.setInt(4, interfaceObj.containsKey(INTERFACE_INDEX) ? interfaceObj.getInteger(INTERFACE_INDEX) : 0);
+                        metricsInsertStmt.setInt(4, interfaceObj.containsKey(INTERFACE_INDEX) ? interfaceObj.getInteger(INTERFACE_INDEX) : -999);
                         metricsInsertStmt.setString(5, interfaceObj.containsKey(INTERFACE_NAME) ? interfaceObj.getString(INTERFACE_NAME) : "");
-                        metricsInsertStmt.setInt(6, interfaceObj.containsKey(INTERFACE_OPERATIONAL_STATUS) ? interfaceObj.getInteger(INTERFACE_OPERATIONAL_STATUS) : 0);
-                        metricsInsertStmt.setInt(7, interfaceObj.containsKey(INTERFACE_ADMIN_STATUS) ? interfaceObj.getInteger(INTERFACE_ADMIN_STATUS) : 0);
+                        metricsInsertStmt.setInt(6, interfaceObj.containsKey(INTERFACE_OPERATIONAL_STATUS) ? interfaceObj.getInteger(INTERFACE_OPERATIONAL_STATUS) : -999);
+                        metricsInsertStmt.setInt(7, interfaceObj.containsKey(INTERFACE_ADMIN_STATUS) ? interfaceObj.getInteger(INTERFACE_ADMIN_STATUS) : -999);
                         metricsInsertStmt.setString(8, interfaceObj.containsKey(INTERFACE_DESCRIPTION) ? interfaceObj.getString(INTERFACE_DESCRIPTION) : "");
-                        metricsInsertStmt.setBigDecimal(9, BigDecimal.valueOf(interfaceObj.containsKey(INTERFACE_SENT_ERROR_PACKET) ? interfaceObj.getInteger(INTERFACE_SENT_ERROR_PACKET) : 0));
-                        metricsInsertStmt.setBigDecimal(10, BigDecimal.valueOf(interfaceObj.containsKey(INTERFACE_RECEIVED_ERROR_PACKET) ? interfaceObj.getInteger(INTERFACE_RECEIVED_ERROR_PACKET) : 0));
-                        metricsInsertStmt.setBigDecimal(11, BigDecimal.valueOf(interfaceObj.containsKey(INTERFACE_SENT_OCTETS) ? interfaceObj.getInteger(INTERFACE_SENT_OCTETS) : 0));
-                        metricsInsertStmt.setBigDecimal(12, BigDecimal.valueOf(interfaceObj.containsKey(INTERFACE_RECEIVED_OCTETS) ? interfaceObj.getInteger(INTERFACE_RECEIVED_OCTETS) : 0));
-                        metricsInsertStmt.setInt(13, interfaceObj.containsKey(INTERFACE_SPEED) ? interfaceObj.getInteger(INTERFACE_SPEED) : 0);
+                        metricsInsertStmt.setBigDecimal(9, BigDecimal.valueOf(interfaceObj.containsKey(INTERFACE_SENT_ERROR_PACKET) ? interfaceObj.getInteger(INTERFACE_SENT_ERROR_PACKET) : -999));
+                        metricsInsertStmt.setBigDecimal(10, BigDecimal.valueOf(interfaceObj.containsKey(INTERFACE_RECEIVED_ERROR_PACKET) ? interfaceObj.getInteger(INTERFACE_RECEIVED_ERROR_PACKET) : -999));
+                        metricsInsertStmt.setBigDecimal(11, BigDecimal.valueOf(interfaceObj.containsKey(INTERFACE_SENT_OCTETS) ? interfaceObj.getInteger(INTERFACE_SENT_OCTETS) : -999));
+                        metricsInsertStmt.setBigDecimal(12, BigDecimal.valueOf(interfaceObj.containsKey(INTERFACE_RECEIVED_OCTETS) ? interfaceObj.getInteger(INTERFACE_RECEIVED_OCTETS) : -999));
+                        metricsInsertStmt.setInt(13, interfaceObj.containsKey(INTERFACE_SPEED) ? interfaceObj.getInteger(INTERFACE_SPEED) : -999);
                         metricsInsertStmt.setString(14, interfaceObj.containsKey(INTERFACE_ALIAS) ? interfaceObj.getString(INTERFACE_ALIAS) : "");
+                        metricsInsertStmt.setString(15, interfaceObj.containsKey(INTERFACE_PHYSICAL_ADDRESS) ? interfaceObj.getString(INTERFACE_PHYSICAL_ADDRESS) : "");
 
                         metricsInsertStmt.addBatch();
                     }

@@ -37,7 +37,6 @@ const (
 	InterfaceReceivedOctetsKey      = "interface.received.octets"
 	InterfaceSpeedKey               = "interface.speed"
 	InterfaceAliasKey               = "interface.alias"
-	InterfacePhysicalAddress        = "interface.physical.address"
 )
 
 var scalerOids = map[string]string{
@@ -61,7 +60,7 @@ var tabularOids = map[string]string{
 	InterfaceReceivedOctetsKey:      ".1.3.6.1.2.1.2.2.1.10",
 	InterfaceSpeedKey:               ".1.3.6.1.2.1.2.2.1.5",
 	InterfaceAliasKey:               ".1.3.6.1.2.1.31.1.1.1.18",
-	//InterfacePhysicalAddress:        ".1.3.6.1.2.1.2.2.1.6",
+	utils.InterfacePhysicalAddress:  ".1.3.6.1.2.1.2.2.1.6",
 }
 
 var discLogger = utils.NewLogger(utils.LogFilesPath, utils.DiscLoggerName)

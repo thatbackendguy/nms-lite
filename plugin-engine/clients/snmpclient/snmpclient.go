@@ -3,6 +3,7 @@ package snmpclient
 import (
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
+	"net"
 	"plugin-engine/utils"
 	"strings"
 	"time"
@@ -121,7 +122,11 @@ func Walk(oidMap map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 				results[interfaceIndex] = make(map[string]interface{})
 			}
 
-			results[interfaceIndex][oidName] = resolveValue(dataUnit.Value, dataUnit.Type)
+			if strings.EqualFold(oidName, utils.InterfacePhysicalAddress) {
+				results[interfaceIndex][oidName] = resolveMacAddress(dataUnit.Value, dataUnit.Type)
+			} else {
+				results[interfaceIndex][oidName] = resolveValue(dataUnit.Value, dataUnit.Type)
+			}
 
 			return nil
 		})
@@ -152,6 +157,15 @@ func resolveValue(value interface{}, dataType g.Asn1BER) interface{} {
 		return g.ToBigInt(value)
 	case g.Counter32, g.TimeTicks, g.Gauge32:
 		return value.(uint)
+	default:
+		return value
+	}
+}
+
+func resolveMacAddress(value interface{}, dataType g.Asn1BER) interface{} {
+	switch dataType {
+	case g.OctetString:
+		return fmt.Sprintf("%v", net.HardwareAddr(value.([]byte)))
 	default:
 		return value
 	}
