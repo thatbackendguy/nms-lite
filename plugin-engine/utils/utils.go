@@ -7,8 +7,6 @@ import (
 	"log"
 )
 
-var pluginEngineLogger = NewLogger(LogFilesPath, "bootstrap")
-
 func SendResponse(context []map[string]interface{}) {
 
 	jsonOutput, err := json.Marshal(context)
@@ -19,11 +17,11 @@ func SendResponse(context []map[string]interface{}) {
 
 	}
 
-	pluginEngineLogger.Debug(string(jsonOutput))
+	PluginEngineLogger.Debug(string(jsonOutput))
 
 	encodedString := base64.StdEncoding.EncodeToString(jsonOutput)
 
-	pluginEngineLogger.Info(encodedString)
+	PluginEngineLogger.Info(encodedString)
 
 	fmt.Println(encodedString)
 }

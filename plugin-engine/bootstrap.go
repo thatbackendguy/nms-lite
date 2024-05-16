@@ -16,22 +16,19 @@ const (
 	Discovery     = "Discovery"
 	PluginName    = "plugin.name"
 	NetworkDevice = "Network"
-	LoggerName    = "bootstrap"
 )
-
-var pluginEngineLogger = utils.NewLogger(utils.LogFilesPath, LoggerName)
 
 func main() {
 
 	var wg sync.WaitGroup
 
-	pluginEngineLogger.Info("Starting Plugin Engine")
+	utils.PluginEngineLogger.Info("Starting Plugin Engine")
 
 	decodedBytes, err := base64.StdEncoding.DecodeString(os.Args[1])
 
 	if err != nil {
 
-		pluginEngineLogger.Error(fmt.Sprintf("base64 decoding error: %s", err.Error()))
+		utils.PluginEngineLogger.Error(fmt.Sprintf("base64 decoding error: %s", err.Error()))
 
 		return
 
@@ -42,12 +39,12 @@ func main() {
 	err = json.Unmarshal(decodedBytes, &contexts)
 
 	if err != nil {
-		pluginEngineLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
+		utils.PluginEngineLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
 
 		return
 	}
 
-	pluginEngineLogger.Info(string(decodedBytes))
+	utils.PluginEngineLogger.Info(string(decodedBytes))
 
 	for _, context := range contexts {
 
@@ -65,7 +62,7 @@ func main() {
 
 					//fmt.Println(r)
 
-					pluginEngineLogger.Error("error occurred!")
+					utils.PluginEngineLogger.Error("error occurred!")
 
 					context[utils.Status] = utils.Failed
 
@@ -94,7 +91,7 @@ func main() {
 					}
 				default:
 
-					pluginEngineLogger.Error("Unsupported plugin type!")
+					utils.PluginEngineLogger.Error("Unsupported plugin type!")
 				}
 			}
 

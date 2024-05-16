@@ -63,10 +63,6 @@ var tabularOids = map[string]string{
 	utils.InterfacePhysicalAddress:  ".1.3.6.1.2.1.2.2.1.6",
 }
 
-var discLogger = utils.NewLogger(utils.LogFilesPath, utils.DiscLoggerName)
-
-var collectLogger = utils.NewLogger(utils.LogFilesPath, utils.CollectLoggerName)
-
 func Discovery(context map[string]interface{}, errors *[]map[string]interface{}) {
 
 	validateContext(context)
@@ -129,7 +125,7 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 			utils.ErrorMsg: "error connecting to SNMP agent",
 		})
 
-		collectLogger.Error("error connecting to SNMP agent: " + err.Error())
+		utils.CollectLogger.Error("error connecting to SNMP agent: " + err.Error())
 
 		return
 	}
@@ -146,7 +142,7 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 			utils.ErrorMsg: "error in collecting objects!",
 		})
 
-		discLogger.Error("error in discovery of device: " + err.Error())
+		utils.DiscLogger.Error("error in discovery of device: " + err.Error())
 
 		return
 	}

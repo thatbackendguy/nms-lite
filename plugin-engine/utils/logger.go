@@ -89,6 +89,12 @@ func (l *Logger) Warn(message interface{}) {
 
 }
 
+var PluginEngineLogger = NewLogger(LogFilesPath, BootstrapLoggerName)
+
+var DiscLogger = NewLogger(LogFilesPath, DiscLoggerName)
+
+var CollectLogger = NewLogger(LogFilesPath, CollectLoggerName)
+
 //func SetLogLevel(level int) {
 //
 //  logLevel = level

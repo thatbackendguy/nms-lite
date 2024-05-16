@@ -11,5 +11,6 @@ const (
 	LogFilesPath             = "goEngine/logs"
 	DiscLoggerName           = "discovery"
 	CollectLoggerName        = "collect"
+	BootstrapLoggerName      = "bootstrap"
 	InterfacePhysicalAddress = "interface.physical.address"
 )
