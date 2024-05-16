@@ -130,4 +130,7 @@ public class Constants
 
     public static final String PROVISION_STOP = "provision.stop";
 
+    public static final String REQ_BODY_ERROR = "Invalid request body!";
+
+    public static final String BAD_REQUEST = "Bad request";
 }

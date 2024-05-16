@@ -22,7 +22,7 @@ public class PluginEngine extends AbstractVerticle
     {
         var eventBus = vertx.eventBus();
 
-        eventBus.localConsumer(RUN_DISCOVERY,msg->{
+        eventBus.localConsumer(RUN_DISCOVERY, msg -> {
             try
             {
 
@@ -52,7 +52,7 @@ public class PluginEngine extends AbstractVerticle
 
                 var results = new JsonArray(decodedString);
 
-                for(var result: results)
+                for(var result : results)
                 {
                     var monitor = new JsonObject(result.toString());
 
@@ -71,53 +71,63 @@ public class PluginEngine extends AbstractVerticle
         });
 
         // TODO: if not, change to 5 * 60 * 1000 for 5 minutes
-        vertx.setPeriodic(20 * 1000, timerId -> {
+        vertx.setPeriodic(5 * 60 * 1000, timerId -> {
+            try
+            {
+                LOGGER.trace("Polling started, requesting for provision devices..");
 
-            LOGGER.trace("Polling started, requesting for provision devices..");
-
-            eventBus.request(PROVISION_DEVICES, "",ar -> {
-                try
-                {
-                    LOGGER.debug("polling context build success: {}", ar.result().body().toString());
-
-                    var encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
-
-                    LOGGER.trace("Polling initiated\t{}", encodedString);
-
-                    var processBuilder = new ProcessBuilder("/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine", encodedString);
-
-                    processBuilder.redirectErrorStream(true);
-
-                    LOGGER.trace("Initiating process builder");
-
-                    var process = processBuilder.start();
-
-                    // Read the output of the command
-                    var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-                    var line = "";
-
-                    var processBuffer = Buffer.buffer();
-
-                    while((line = reader.readLine()) != null)
+                eventBus.request(PROVISION_DEVICES, "", ar -> {
+                    try
                     {
-                        processBuffer.appendString(line);
+                        if(!ar.result().body().toString().isEmpty())
+                        {
+                            LOGGER.debug("polling context build success: {}", ar.result().body().toString());
+
+                            var encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
+
+                            LOGGER.trace("Polling initiated\t{}", encodedString);
+
+                            var processBuilder = new ProcessBuilder("/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine", encodedString);
+
+                            processBuilder.redirectErrorStream(true);
+
+                            LOGGER.trace("Initiating process builder");
+
+                            var process = processBuilder.start();
+
+                            // Read the output of the command
+                            var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                            var line = "";
+
+                            var processBuffer = Buffer.buffer();
+
+                            while((line = reader.readLine()) != null)
+                            {
+                                processBuffer.appendString(line);
+                            }
+
+                            LOGGER.trace("Process completed, Decoding & sending result...");
+
+                            var decodedString = new String(Base64.getDecoder().decode(processBuffer.toString()));
+
+                            LOGGER.debug(decodedString);
+
+                            eventBus.send(POLL_DATA_STORE, decodedString);
+
+                        }
+
+
+                    } catch(IOException err)
+                    {
+                        LOGGER.error("Error while polling context", err);
                     }
+                });
 
-                    LOGGER.trace("Process completed, Decoding & sending result...");
-
-                    var decodedString = new String(Base64.getDecoder().decode(processBuffer.toString()));
-
-                    LOGGER.debug(decodedString);
-
-                    eventBus.send(POLL_DATA_STORE, decodedString);
-
-
-                } catch(IOException err)
-                {
-                    LOGGER.error("Error while polling context", err);
-                }
-            });
+            } catch(Exception e)
+            {
+                LOGGER.error("Exception occured in setPeriodic: {}", e.getMessage(), e);
+            }
         });
 
 

@@ -14,7 +14,7 @@ public class Bootstrap
     {
         var vertx = Vertx.vertx();
 
-        vertx.deployVerticle("com.motadata.engine.ApiEngine", handler->{
+        vertx.deployVerticle("com.motadata.engine.ApiEngine", handler -> {
             if(handler.succeeded())
             {
                 LOGGER.info("API engine is up and running");
@@ -25,9 +25,7 @@ public class Bootstrap
             }
         });
 
-        vertx.deployVerticle("com.motadata.manager.ConfigManager", new DeploymentOptions()
-                .setThreadingModel(ThreadingModel.WORKER),
-                handler->{
+        vertx.deployVerticle("com.motadata.manager.ConfigManager", new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), handler -> {
             if(handler.succeeded())
             {
                 LOGGER.info("Config Manager is up and running");
@@ -38,9 +36,7 @@ public class Bootstrap
             }
         });
 
-        vertx.deployVerticle("com.motadata.engine.PluginEngine", new DeploymentOptions()
-                .setThreadingModel(ThreadingModel.WORKER),
-                handler->{
+        vertx.deployVerticle("com.motadata.engine.PluginEngine", new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), handler -> {
             if(handler.succeeded())
             {
                 LOGGER.info("Plugin engine is up and running");

@@ -24,48 +24,48 @@ public class ApiEngine extends AbstractVerticle
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
-        try
-        {
-            HttpServer server = vertx.createHttpServer();
+        HttpServer server = vertx.createHttpServer();
 
-            var eventBus = vertx.eventBus();
+        var eventBus = vertx.eventBus();
 
-            Router mainRouter = Router.router(vertx);
+        Router mainRouter = Router.router(vertx);
 
-            Router credentialRouter = Router.router(vertx);
+        Router credentialRouter = Router.router(vertx);
 
-            Router discoveryRouter = Router.router(vertx);
+        Router discoveryRouter = Router.router(vertx);
 
-            Router provisionRouter = Router.router(vertx);
+        Router provisionRouter = Router.router(vertx);
 
-            // FOR HANDLING FAILURES
-            mainRouter.route().failureHandler(errorHandler());
+        // FOR HANDLING FAILURES
+        mainRouter.route().failureHandler(errorHandler());
 
-            //--------------------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------------------
 
-            // GET: "/"
-            mainRouter.route("/").handler(ctx -> {
-                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+        // GET: "/"
+        mainRouter.route("/").handler(ctx -> {
 
-                ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
-            });
+            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
-            //--------------------------------------------------------------------------------------------------------------
+            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
+        });
 
-            // CREDENTIAL PROFILE SUB-ROUTER
-            mainRouter.route("/credential/*").subRouter(credentialRouter);
+        //--------------------------------------------------------------------------------------------------------------
 
-            // DISCOVERY PROFILE SUB-ROUTER
-            mainRouter.route("/discovery/*").subRouter(discoveryRouter);
+        // CREDENTIAL PROFILE SUB-ROUTER
+        mainRouter.route("/credential/*").subRouter(credentialRouter);
 
-            // PROVISION SUB-ROUTER
-            mainRouter.route("/provision/*").subRouter(provisionRouter);
+        // DISCOVERY PROFILE SUB-ROUTER
+        mainRouter.route("/discovery/*").subRouter(discoveryRouter);
 
-            //--------------------------------------------------------------------------------------------------------------
+        // PROVISION SUB-ROUTER
+        mainRouter.route("/provision/*").subRouter(provisionRouter);
 
-            // CREATE CREDENTIAL PROFILE
-            credentialRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+        //--------------------------------------------------------------------------------------------------------------
 
+        // CREATE CREDENTIAL PROFILE
+        credentialRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 ctx.request().bodyHandler(buffer -> {
@@ -83,15 +83,22 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                         }
                     });
                 });
-            });
 
-            // GET-ALL CREDENTIAL PROFILES
-            credentialRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
+        // GET-ALL CREDENTIAL PROFILES
+        credentialRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, CRED_PROFILE_TABLE), ar -> {
@@ -102,14 +109,20 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
-            });
 
-            // GET CREDENTIAL PROFILE
-            credentialRouter.route(HttpMethod.GET, "/get/:credProfileId").handler(ctx -> {
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
+        // GET CREDENTIAL PROFILE
+        credentialRouter.route(HttpMethod.GET, "/get/:credProfileId").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 var credProfileId = ctx.request().getParam("credProfileId");
@@ -122,14 +135,20 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
-            });
 
-            // UPDATE CREDENTIAL PROFILE
-            credentialRouter.route(HttpMethod.PUT, "/update/:credProfileId").handler(ctx -> {
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
+        // UPDATE CREDENTIAL PROFILE
+        credentialRouter.route(HttpMethod.PUT, "/update/:credProfileId").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 var credProfileId = ctx.request().getParam("credProfileId");
@@ -146,15 +165,21 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                         }
                     });
                 });
-            });
 
-            // DELETE CREDENTIAL PROFILE
-            credentialRouter.route(HttpMethod.DELETE, "/delete/:credProfileId").handler(ctx -> {
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
+        // DELETE CREDENTIAL PROFILE
+        credentialRouter.route(HttpMethod.DELETE, "/delete/:credProfileId").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 var credProfileId = ctx.request().getParam("credProfileId");
@@ -170,16 +195,22 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
-            });
 
-            //--------------------------------------------------------------------------------------------------------------
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
-            // CREATE DISCOVERY PROFILE
-            discoveryRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+        //--------------------------------------------------------------------------------------------------------------
 
+        // CREATE DISCOVERY PROFILE
+        discoveryRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 ctx.request().bodyHandler(buffer -> {
@@ -197,15 +228,21 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                         }
                     });
                 });
-            });
 
-            // GET ALL DISCOVERY PROFILES
-            discoveryRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
+        // GET ALL DISCOVERY PROFILES
+        discoveryRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, DISC_PROFILE_TABLE), ar -> {
@@ -216,14 +253,19 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
-            });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
-            // GET DISCOVERY PROFILE
-            discoveryRouter.route(HttpMethod.GET, "/get/:discProfileId").handler(ctx -> {
-
+        // GET DISCOVERY PROFILE
+        discoveryRouter.route(HttpMethod.GET, "/get/:discProfileId").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 var discProfileId = ctx.request().getParam("discProfileId");
@@ -236,14 +278,19 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
-            });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
-            // UPDATE DISCOVERY PROFILE
-            discoveryRouter.route(HttpMethod.PUT, "/update/:discProfileId").handler(ctx -> {
-
+        // UPDATE DISCOVERY PROFILE
+        discoveryRouter.route(HttpMethod.PUT, "/update/:discProfileId").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 var discProfileId = ctx.request().getParam("discProfileId");
@@ -260,15 +307,20 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                         }
                     });
                 });
-            });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
-            // DELETE DISCOVERY PROFILE
-            discoveryRouter.route(HttpMethod.DELETE, "/delete/:discProfileId").handler(ctx -> {
-
+        // DELETE DISCOVERY PROFILE
+        discoveryRouter.route(HttpMethod.DELETE, "/delete/:discProfileId").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 var discProfileId = ctx.request().getParam("discProfileId");
@@ -283,20 +335,26 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(404).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Discovery profile: " + discProfileId + " not found!")).encode());
+                            ctx.response().setStatusCode(404).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Discovery profile: " + discProfileId + " not found!")).toString());
                         }
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
-            });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
-            //--------------------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------------------
 
-            // RUN DISCOVERY
-            discoveryRouter.route(HttpMethod.POST, "/run").handler(ctx -> {
+        // RUN DISCOVERY
+        discoveryRouter.route(HttpMethod.POST, "/run").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 ctx.request().bodyHandler(buffer -> {
@@ -326,13 +384,18 @@ public class ApiEngine extends AbstractVerticle
                         }
                     });
                 });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error in running discovery").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
-            });
+        //--------------------------------------------------------------------------------------------------------------
 
-            //--------------------------------------------------------------------------------------------------------------
-
-            // REQUEST TO PROVISION DEVICE
-            provisionRouter.route(HttpMethod.POST, "/add/:discProfileId").handler(ctx -> {
+        // REQUEST TO PROVISION DEVICE
+        provisionRouter.route(HttpMethod.POST, "/add/:discProfileId").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 var discProfileId = ctx.request().getParam("discProfileId");
@@ -349,12 +412,16 @@ public class ApiEngine extends AbstractVerticle
                     }
 
                 });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
-            });
-
-            // GET ALL PROVISION DEVICES LIST
-            provisionRouter.route(HttpMethod.GET, "/get-all").handler(ctx->{
-
+        // GET ALL PROVISION DEVICES LIST
+        provisionRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, PROVISION_DEVICES), ar -> {
@@ -364,20 +431,24 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).encode());
+                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
-            });
-
-            // REMOVE PROVISION/ STOP POLLING
-            provisionRouter.route(HttpMethod.DELETE, "/stop/:discProfileId").handler(ctx->{
-
+        // REMOVE PROVISION/ STOP POLLING
+        provisionRouter.route(HttpMethod.DELETE, "/stop/:discProfileId").handler(ctx -> {
+            try
+            {
                 LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 var discProfileId = ctx.request().getParam("discProfileId");
 
-                eventBus.request(PROVISION_STOP,discProfileId,ar->{
+                eventBus.request(PROVISION_STOP, discProfileId, ar -> {
                     if(ar.succeeded())
                     {
                         ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provision stopped successfully!"));
@@ -387,28 +458,29 @@ public class ApiEngine extends AbstractVerticle
                         ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
-            });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
 
-            server.requestHandler(mainRouter).listen(8080, res -> {
+        server.requestHandler(mainRouter).listen(8080, res -> {
 
-                if(res.succeeded())
-                {
-                    LOGGER.info("HTTP Server is now listening on http://localhost:8080/");
+            if(res.succeeded())
+            {
+                LOGGER.info("HTTP Server is now listening on http://localhost:8080/");
 
-                    startPromise.complete();
-                }
-                else
-                {
-                    LOGGER.info("Failed to start the API Engine, port unavailable!");
+                startPromise.complete();
+            }
+            else
+            {
+                LOGGER.info("Failed to start the API Engine, port unavailable!");
 
-                    startPromise.fail(res.cause());
-                }
-            });
-        } catch(NullPointerException e)
-        {
-            LOGGER.error("Invalid request body");
-        }
+                startPromise.fail(res.cause());
+            }
+        });
+
 
     }
 }

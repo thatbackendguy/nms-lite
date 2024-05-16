@@ -8,7 +8,7 @@ import static com.motadata.Bootstrap.LOGGER;
 
 public class Jdbc
 {
-    private Jdbc(){}
+    private Jdbc() {}
 
     private static final String DB_URI = "jdbc:mysql://localhost:3306/nmsDB";
 
@@ -18,7 +18,7 @@ public class Jdbc
 
     public static Connection getConnection()
     {
-        Connection connection=null;
+        Connection connection = null;
 
         try
         {
@@ -26,7 +26,7 @@ public class Jdbc
 
         } catch(SQLException e)
         {
-            LOGGER.error("{}",e.getMessage());
+            LOGGER.error("{}", e.getMessage());
         }
 
         return connection;

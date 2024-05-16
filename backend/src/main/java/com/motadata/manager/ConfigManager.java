@@ -493,7 +493,7 @@ public class ConfigManager extends AbstractVerticle
                             }
                             else
                             {
-                                LOGGER.info(KEY_VAL_NOT_FOUND_CONTAINER, CRED_PROF_ID,jsonObj.getString(CRED_PROF_ID));
+                                LOGGER.info(KEY_VAL_NOT_FOUND_CONTAINER, CRED_PROF_ID, jsonObj.getString(CRED_PROF_ID));
 
                                 msg.fail(500, String.format("cred.profile.id = %s not found", jsonObj.getString(CRED_PROF_ID)));
                             }
@@ -680,19 +680,20 @@ public class ConfigManager extends AbstractVerticle
                     }
                 }
 
-                if(!contexts.isEmpty())
-                {
-                    msg.reply(contexts);
-                }
-                else
-                {
-                    msg.fail(500, new JsonObject().put(ERROR, "Error provisioning devices!").put(ERR_MESSAGE, "No devices qualified for provisioning").put(ERR_STATUS_CODE, 500).toString());
-                }
-
             } catch(SQLException e)
             {
                 msg.fail(500, new JsonObject().put(ERROR, "Error provisioning devices!").put(ERR_MESSAGE, e.getMessage()).put(ERR_STATUS_CODE, 500).toString());
             }
+
+            if(!contexts.isEmpty())
+            {
+                msg.reply(contexts);
+            }
+            else
+            {
+                msg.fail(500, new JsonObject().put(ERROR, "Error provisioning devices!").put(ERR_MESSAGE, "No devices qualified for provisioning").put(ERR_STATUS_CODE, 500).toString());
+            }
+
         });
 
         // STORE POLLED DATA
@@ -748,11 +749,11 @@ public class ConfigManager extends AbstractVerticle
 
         });
 
-        eventBus.localConsumer(PROVISION_STOP, msg->{
+        eventBus.localConsumer(PROVISION_STOP, msg -> {
 
             var discProfileId = Integer.parseInt(msg.body().toString());
 
-            try(var conn = Jdbc.getConnection(); var provStatusUpdataStmt = conn.prepareStatement(dpUpdateIsProvStatusQ);var provReqUpdateStmt = conn.prepareStatement(dpUpdateProvReqStatusQ))
+            try(var conn = Jdbc.getConnection(); var provStatusUpdataStmt = conn.prepareStatement(dpUpdateIsProvStatusQ); var provReqUpdateStmt = conn.prepareStatement(dpUpdateProvReqStatusQ))
             {
                 provStatusUpdataStmt.setInt(1, 0);
 
@@ -764,7 +765,7 @@ public class ConfigManager extends AbstractVerticle
                 }
                 else
                 {
-                    throw new SQLException("Error in updating provision status of discovery profile: "+discProfileId);
+                    throw new SQLException("Error in updating provision status of discovery profile: " + discProfileId);
                 }
 
                 provReqUpdateStmt.setInt(1, 0);
@@ -777,7 +778,7 @@ public class ConfigManager extends AbstractVerticle
                 }
                 else
                 {
-                    throw new SQLException("Error in updating provision request of discovery profile: "+discProfileId);
+                    throw new SQLException("Error in updating provision request of discovery profile: " + discProfileId);
                 }
 
             } catch(SQLException e)
