@@ -57,6 +57,8 @@ public class ConfigManager extends AbstractVerticle
 
     private final String provDevicesAllQ = "SELECT `object.ip` FROM nmsDB.discovery_profile where `is.provisioned`=1;";
 
+    private final String getMetricsQ = "SELECT * FROM nmsDB.network_interface where `object.ip`=? and `interface.index`=? order by `created.at` desc limit 1;";
+
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
@@ -311,6 +313,38 @@ public class ConfigManager extends AbstractVerticle
                     msg.fail(500, e.getMessage());
                 }
 
+            }
+            else if(jsonObj.getString(TABLE_NAME).equals(NETWORK_INF_TABLE))
+            {
+                jsonObj.remove(TABLE_NAME);
+
+                try(var conn = Jdbc.getConnection(); var getMetricsStmt = conn.prepareStatement(getMetricsQ))
+                {
+                    getMetricsStmt.setString(1, jsonObj.getString(OBJECT_IP));
+                    getMetricsStmt.setInt(2, jsonObj.getInteger(INTERFACE_INDEX));
+
+                    var record = getMetricsStmt.executeQuery();
+
+                    while(record.next())
+                    {
+                        jsonObj.put(INTERFACE, new JsonObject().put(INTERFACE_INDEX, record.getInt(INTERFACE_INDEX)).put(INTERFACE_NAME, record.getString(INTERFACE_NAME)).put(INTERFACE_DESCRIPTION, record.getString(INTERFACE_DESCRIPTION)).put(INTERFACE_ALIAS, record.getString(INTERFACE_ALIAS)).put(INTERFACE_PHYSICAL_ADDRESS, record.getString(INTERFACE_PHYSICAL_ADDRESS)).put(INTERFACE_OPERATIONAL_STATUS, record.getInt(INTERFACE_OPERATIONAL_STATUS)).put(INTERFACE_ADMIN_STATUS, record.getInt(INTERFACE_ADMIN_STATUS)).put(INTERFACE_SENT_ERROR_PACKET, record.getBigDecimal(INTERFACE_SENT_ERROR_PACKET)).put(INTERFACE_RECEIVED_ERROR_PACKET, record.getBigDecimal(INTERFACE_RECEIVED_ERROR_PACKET)).put(INTERFACE_SENT_OCTETS, record.getBigDecimal(INTERFACE_SENT_OCTETS)).put(INTERFACE_RECEIVED_OCTETS, record.getBigDecimal(INTERFACE_RECEIVED_OCTETS)).put(INTERFACE_SPEED, record.getInt(INTERFACE_SPEED)).put(CREATED_AT, record.getTimestamp(CREATED_AT)));
+                    }
+
+
+                } catch(SQLException e)
+                {
+                    LOGGER.info(ERROR_CONTAINER, e.getMessage());
+
+                    msg.fail(500, e.getMessage());
+                }
+                if(!jsonObj.isEmpty())
+                {
+                    msg.reply(jsonObj);
+                }
+                else
+                {
+                    msg.fail(500, "Metrics not found for " + jsonObj.getString(OBJECT_IP));
+                }
             }
             else
             {
@@ -749,6 +783,7 @@ public class ConfigManager extends AbstractVerticle
 
         });
 
+        // REMOVE PROVISIONED DEVICE
         eventBus.localConsumer(PROVISION_STOP, msg -> {
 
             var discProfileId = Integer.parseInt(msg.body().toString());

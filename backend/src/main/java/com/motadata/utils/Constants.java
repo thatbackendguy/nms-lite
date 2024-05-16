@@ -4,6 +4,10 @@ public class Constants
 {
     private Constants() {}
 
+    public static final String CONTENT_TYPE = "Content-Type";
+
+    public static final String APP_JSON = "application/json";
+
     public static final String OBJECT_IP = "object.ip";
 
     public static final String SNMP_COMMUNITY = "snmp.community";
@@ -82,6 +86,8 @@ public class Constants
 
     public static final String DISC_PROFILE_TABLE = "discovery_profile";
 
+    public static final String NETWORK_INF_TABLE = "network_interface";
+
     public static final String CRED_PROFILE_TABLE = "credential_profile";
 
     public static final String PROFILE_MAPPING_TABLE = "profile_mapping";
@@ -113,6 +119,8 @@ public class Constants
     public static final String INTERFACE_ALIAS = "interface.alias";
 
     public static final String INTERFACE_PHYSICAL_ADDRESS = "interface.physical.address";
+
+    public static final String CREATED_AT = "created.at";
 
     public static final String INTERFACE = "interface";
 

@@ -41,16 +41,6 @@ public class ApiEngine extends AbstractVerticle
 
         //--------------------------------------------------------------------------------------------------------------
 
-        // GET: "/"
-        mainRouter.route("/").handler(ctx -> {
-
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
-
-            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
-        });
-
-        //--------------------------------------------------------------------------------------------------------------
-
         // CREDENTIAL PROFILE SUB-ROUTER
         mainRouter.route("/credential/*").subRouter(credentialRouter);
 
@@ -59,6 +49,44 @@ public class ApiEngine extends AbstractVerticle
 
         // PROVISION SUB-ROUTER
         mainRouter.route("/provision/*").subRouter(provisionRouter);
+
+        //--------------------------------------------------------------------------------------------------------------
+
+        // GET: "/"
+        mainRouter.route("/").handler(ctx -> {
+
+            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
+        });
+
+        // GET STORED INTERFACE DATA
+        mainRouter.route(HttpMethod.PUT, "/get-data").handler(ctx -> {
+            try
+            {
+                LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+                ctx.request().bodyHandler(buffer -> {
+
+                    var reqJSON = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INF_TABLE);
+
+                    eventBus.request(GET_EVENT, reqJSON, ar -> {
+
+                        if(ar.succeeded())
+                        {
+                            ctx.json(new JsonObject(ar.result().body().toString()).put(STATUS, SUCCESS));
+                        }
+                        else
+                        {
+                            ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        }
+                    });
+                });
+            } catch(ClassCastException | NullPointerException e)
+            {
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+            }
+        });
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -83,14 +111,14 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                            ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                         }
                     });
                 });
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -109,13 +137,13 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -135,13 +163,13 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -165,14 +193,14 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                            ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                         }
                     });
                 });
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -195,13 +223,13 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -228,14 +256,14 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                            ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                         }
                     });
                 });
 
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -253,12 +281,12 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -278,12 +306,12 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -307,13 +335,13 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                            ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                         }
                     });
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -335,17 +363,17 @@ public class ApiEngine extends AbstractVerticle
                         }
                         else
                         {
-                            ctx.response().setStatusCode(404).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Discovery profile: " + discProfileId + " not found!")).toString());
+                            ctx.response().setStatusCode(404).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Discovery profile: " + discProfileId + " not found!")).toString());
                         }
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -380,13 +408,13 @@ public class ApiEngine extends AbstractVerticle
                         {
                             LOGGER.debug(ar.cause().getMessage());
 
-                            ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(ar.cause().getMessage());
+                            ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(ar.cause().getMessage());
                         }
                     });
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error in running discovery").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error in running discovery").put(ERR_MESSAGE, REQ_BODY_ERROR).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -408,13 +436,13 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
 
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -431,12 +459,12 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
 
@@ -455,15 +483,14 @@ public class ApiEngine extends AbstractVerticle
                     }
                     else
                     {
-                        ctx.response().setStatusCode(500).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
+                        ctx.response().setStatusCode(500).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, 500)).toString());
                     }
                 });
             } catch(ClassCastException | NullPointerException e)
             {
-                ctx.response().setStatusCode(400).putHeader("Content-Type", "application/json").end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
+                ctx.response().setStatusCode(400).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, BAD_REQUEST).put(ERR_STATUS_CODE, 400)).toString());
             }
         });
-
 
         server.requestHandler(mainRouter).listen(8080, res -> {
 
