@@ -36,15 +36,15 @@ public class ApiEngine extends AbstractVerticle
 
         var router = Router.router(vertx);
 
-        var credentialRouter = Router.router(vertx);
+        var credential = Router.router(vertx);
 
-        var discoveryRouter = Router.router(vertx);
+        var discovery = Router.router(vertx);
 
-        var provisionRouter = Router.router(vertx);
+        var provision = Router.router(vertx);
 
-        var metricsRouter = Router.router(vertx);
+        var metrics = Router.router(vertx);
 
-        var snmpRouter = Router.router(vertx);
+        var snmp = Router.router(vertx);
 
         // FOR HANDLING FAILURES
         router.route().failureHandler(errorHandler());
@@ -52,19 +52,19 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // CREDENTIAL PROFILE SUB-ROUTER
-        router.route("/credential/*").subRouter(credentialRouter);
+        router.route("/credential/*").subRouter(credential);
 
         // DISCOVERY PROFILE SUB-ROUTER
-        router.route("/discovery/*").subRouter(discoveryRouter);
+        router.route("/discovery/*").subRouter(discovery);
 
         // PROVISION SUB-ROUTER
-        router.route("/provision/*").subRouter(provisionRouter);
+        router.route("/provision/*").subRouter(provision);
 
         // METRICS SUB-ROUTER
-        router.route("/metrics/*").subRouter(metricsRouter);
+        router.route("/metrics/*").subRouter(metrics);
 
         // NETWORK DEVICE - SNMP
-        metricsRouter.route("/snmp/*").subRouter(snmpRouter);
+        metrics.route("/snmp/*").subRouter(snmp);
 
         //--------------------------------------------------------------------------------------------------------------
 
@@ -77,7 +77,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET STORED INTERFACE DATA - /metrics/snmp/get-data
-        snmpRouter.route(HttpMethod.GET, "/get-data").handler(routingContext -> {
+        snmp.route(HttpMethod.GET, "/get-data").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -109,7 +109,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET AVAILABLE INTERFACES - /metrics/snmp/get-interfaces
-        snmpRouter.route(HttpMethod.GET, "/get-interfaces").handler(routingContext -> {
+        snmp.route(HttpMethod.GET, "/get-interfaces").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -143,7 +143,7 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // CREATE CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.POST, "/add").handler(routingContext -> {
+        credential.route(HttpMethod.POST, "/add").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -176,7 +176,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET-ALL CREDENTIAL PROFILES
-        credentialRouter.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
+        credential.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -196,7 +196,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.GET, "/get/:credProfileId").handler(routingContext -> {
+        credential.route(HttpMethod.GET, "/get/:credProfileId").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -218,7 +218,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // UPDATE CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.PUT, "/update/:credProfileId").handler(routingContext -> {
+        credential.route(HttpMethod.PUT, "/update/:credProfileId").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -253,7 +253,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // DELETE CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.DELETE, "/delete/:credProfileId").handler(routingContext -> {
+        credential.route(HttpMethod.DELETE, "/delete/:credProfileId").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -280,7 +280,7 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // CREATE DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.POST, "/add").handler(routingContext -> {
+        discovery.route(HttpMethod.POST, "/add").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -315,7 +315,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET ALL DISCOVERY PROFILES
-        discoveryRouter.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
+        discovery.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -334,7 +334,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.GET, "/get/:discProfileId").handler(routingContext -> {
+        discovery.route(HttpMethod.GET, "/get/:discProfileId").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -355,7 +355,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // UPDATE DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.PUT, "/update/:discProfileId").handler(routingContext -> {
+        discovery.route(HttpMethod.PUT, "/update/:discProfileId").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -388,7 +388,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // DELETE DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.DELETE, "/delete/:discProfileId").handler(routingContext -> {
+        discovery.route(HttpMethod.DELETE, "/delete/:discProfileId").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -418,7 +418,7 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // RUN DISCOVERY
-        discoveryRouter.route(HttpMethod.POST, "/run").handler(routingContext -> {
+        discovery.route(HttpMethod.POST, "/run").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -467,7 +467,7 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // REQUEST TO PROVISION DEVICE
-        provisionRouter.route(HttpMethod.POST, "/add/:discProfileId").handler(routingContext -> {
+        provision.route(HttpMethod.POST, "/add/:discProfileId").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -489,7 +489,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET ALL PROVISION DEVICES LIST
-        provisionRouter.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
+        provision.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
@@ -507,7 +507,7 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // REMOVE PROVISION/ STOP POLLING
-        provisionRouter.route(HttpMethod.DELETE, "/stop/:discProfileId").handler(routingContext -> {
+        provision.route(HttpMethod.DELETE, "/stop/:discProfileId").handler(routingContext -> {
 
             LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
