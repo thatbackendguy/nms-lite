@@ -1,5 +1,6 @@
 package com.motadata.utils;
 
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,5 +73,19 @@ public class Utils
         LOGGER.debug("{} device is DOWN!", objectIp);
 
         return false;
+    }
+
+    public static boolean validateRequestBody(JsonObject requestObject)
+    {
+        for(String key : requestObject.fieldNames())
+        {
+            var value = requestObject.getValue(key);
+
+            if(value == null || (value instanceof String && ((String) value).isEmpty()))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 }

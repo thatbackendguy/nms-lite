@@ -62,7 +62,7 @@ func main() {
 
 				if r := recover(); r != nil {
 
-					PluginEngineLogger.Error(fmt.Sprintf("error occurred!"))
+					PluginEngineLogger.Error(fmt.Sprintf("some error occurred!, reason : %v", r))
 
 					context[utils.Status] = utils.Failed
 
@@ -79,9 +79,13 @@ func main() {
 
 						if strings.EqualFold(requestType, Discovery) {
 
+							PluginEngineLogger.Trace(fmt.Sprintf("Discovery request: %v", context[snmp.ObjectIp]))
+
 							snmp.Discovery(context, &errors)
 
 						} else {
+
+							PluginEngineLogger.Trace(fmt.Sprintf("Collect request: %v", context[snmp.ObjectIp]))
 
 							snmp.Collect(context, &errors)
 

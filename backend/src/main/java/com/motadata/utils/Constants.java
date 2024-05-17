@@ -1,7 +1,5 @@
 package com.motadata.utils;
 
-import org.slf4j.Logger;
-
 public class Constants
 {
     private Constants() {}
@@ -146,7 +144,7 @@ public class Constants
 
     public static final String INVALID_TABLE = "Invalid table name!";
 
-    public static final String REQUEST_BODY_ERROR = "Invalid request body!";
+    public static final String INVALID_REQUEST_BODY = "Invalid request body!";
 
     public static final String EMPTY_STRING = "";
 
@@ -155,4 +153,12 @@ public class Constants
     public static final String CREDENTIALS = "credentials";
 
     public static final String INCORRECT_DATATYPE = "Invalid datatype, Bad request!";
+
+    public static final String EVENT_NAME = "event.name";
+
+    public static final String GET_INTERFACES = "get.interfaces";
+
+    public static final String GET_INTERFACE_METRICS = "get.interface.metrics";
+
+
 }

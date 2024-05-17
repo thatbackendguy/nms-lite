@@ -1,6 +1,7 @@
 package com.motadata.engine;
 
 import com.motadata.utils.Config;
+import com.motadata.utils.Utils;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -82,17 +83,59 @@ public class ApiEngine extends AbstractVerticle
 
             routingContext.request().bodyHandler(buffer -> {
 
-                eventBus.request(GET_EVENT, buffer.toJsonObject().put(TABLE_NAME, NETWORK_INTERFACE_TABLE), messageAsyncResult -> {
+                var requestObject = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INTERFACE_TABLE).put(EVENT_NAME, GET_INTERFACE_METRICS);
 
-                    if(messageAsyncResult.succeeded())
-                    {
-                        routingContext.json(new JsonObject(messageAsyncResult.result().body().toString()).put(STATUS, SUCCESS));
-                    }
-                    else
-                    {
-                        routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, messageAsyncResult.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
-                    }
-                });
+                if(Utils.validateRequestBody(requestObject))
+                {
+                    eventBus.request(GET_EVENT, requestObject, messageAsyncResult -> {
+
+                        if(messageAsyncResult.succeeded())
+                        {
+                            routingContext.json(new JsonObject(messageAsyncResult.result().body().toString()).put(STATUS, SUCCESS));
+                        }
+                        else
+                        {
+                            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, messageAsyncResult.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                        }
+                    });
+                }
+                else
+                {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, INVALID_REQUEST_BODY).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                }
+
+            });
+
+        });
+
+        // GET AVAILABLE INTERFACES - /metrics/snmp/get-interfaces
+        snmpRouter.route(HttpMethod.GET, "/get-interfaces").handler(routingContext -> {
+
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+
+            routingContext.request().bodyHandler(buffer -> {
+
+                var requestObject = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INTERFACE_TABLE).put(EVENT_NAME, GET_INTERFACES);
+
+                if(Utils.validateRequestBody(requestObject))
+                {
+                    eventBus.request(GET_EVENT, requestObject, messageAsyncResult -> {
+
+                        if(messageAsyncResult.succeeded())
+                        {
+                            routingContext.json(new JsonObject(messageAsyncResult.result().body().toString()).put(STATUS, SUCCESS));
+                        }
+                        else
+                        {
+                            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, messageAsyncResult.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                        }
+                    });
+                }
+                else
+                {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, INVALID_REQUEST_BODY).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                }
+
             });
 
         });
@@ -100,45 +143,52 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // CREATE CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+        credentialRouter.route(HttpMethod.POST, "/add").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            ctx.request().bodyHandler(buffer -> {
+            routingContext.request().bodyHandler(buffer -> {
 
-                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE);
+                var reqJSON = buffer.toJsonObject().put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE);
 
-                eventBus.request(INSERT_EVENT, reqJSON, ar -> {
+                if(Utils.validateRequestBody(reqJSON))
+                {
+                    eventBus.request(INSERT_EVENT, reqJSON, asyncResult -> {
 
-                    if(ar.succeeded())
-                    {
-                        if(ar.result().body().equals(SUCCESS))
+                        if(asyncResult.succeeded())
                         {
-                            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile added successfully!"));
+                            var resultObj = new JsonObject(asyncResult.result().body().toString());
+
+                            routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, String.format("Credential profile added successfully! ID: %d", resultObj.getInteger(CREDENTIAL_PROFILE_ID))));
                         }
-                    }
-                    else
-                    {
-                        ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
-                    }
-                });
+                        else
+                        {
+                            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, asyncResult.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                        }
+                    });
+                }
+                else
+                {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, INVALID_REQUEST_BODY).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                }
+
             });
         });
 
         // GET-ALL CREDENTIAL PROFILES
-        credentialRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+        credentialRouter.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
             eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE), ar -> {
 
                 if(ar.succeeded())
                 {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profiles fetched successfully!").put("result", ar.result().body()));
+                    routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profiles fetched successfully!").put("result", ar.result().body()));
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
             });
 
@@ -146,21 +196,21 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.GET, "/get/:credProfileId").handler(ctx -> {
+        credentialRouter.route(HttpMethod.GET, "/get/:credProfileId").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            var credProfileId = ctx.request().getParam("credProfileId");
+            var credProfileId = routingContext.request().getParam("credProfileId");
 
             eventBus.request(GET_EVENT, new JsonObject().put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE).put(CREDENTIAL_PROFILE_ID, credProfileId), ar -> {
 
                 if(ar.succeeded())
                 {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile fetched successfully!").put(RESULT, ar.result().body()));
+                    routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile fetched successfully!").put(RESULT, ar.result().body()));
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
             });
 
@@ -168,38 +218,46 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // UPDATE CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.PUT, "/update/:credProfileId").handler(ctx -> {
+        credentialRouter.route(HttpMethod.PUT, "/update/:credProfileId").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            var credProfileId = ctx.request().getParam("credProfileId");
+            var credProfileId = routingContext.request().getParam("credProfileId");
 
-            ctx.request().bodyHandler(buffer -> {
+            routingContext.request().bodyHandler(buffer -> {
 
-                JsonObject reqJSON = buffer.toJsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId).put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE);
+                var reqJSON = buffer.toJsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId).put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE);
 
-                eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
+                if(Utils.validateRequestBody(reqJSON))
+                {
+                    eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
 
-                    if(ar.succeeded())
-                    {
-                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile updated successfully!").put("result", ar.result().body()));
-                    }
-                    else
-                    {
-                        ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
-                    }
-                });
+                        if(ar.succeeded())
+                        {
+                            routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile updated successfully!").put("result", ar.result().body()));
+                        }
+                        else
+                        {
+                            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                        }
+                    });
+                }
+                else
+                {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, INVALID_REQUEST_BODY).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                }
+
             });
 
 
         });
 
         // DELETE CREDENTIAL PROFILE
-        credentialRouter.route(HttpMethod.DELETE, "/delete/:credProfileId").handler(ctx -> {
+        credentialRouter.route(HttpMethod.DELETE, "/delete/:credProfileId").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            var credProfileId = ctx.request().getParam("credProfileId");
+            var credProfileId = routingContext.request().getParam("credProfileId");
 
             eventBus.request(DELETE_EVENT, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId).put(TABLE_NAME, CREDENTIAL_PROFILE_TABLE), ar -> {
 
@@ -207,12 +265,12 @@ public class ApiEngine extends AbstractVerticle
                 {
                     if(ar.result().body().equals(SUCCESS))
                     {
-                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile: " + credProfileId + " deleted successfully!"));
+                        routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Credential profile: " + credProfileId + " deleted successfully!"));
                     }
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
             });
 
@@ -222,122 +280,136 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // CREATE DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.POST, "/add").handler(ctx -> {
+        discoveryRouter.route(HttpMethod.POST, "/add").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            ctx.request().bodyHandler(buffer -> {
+            routingContext.request().bodyHandler(buffer -> {
 
-                JsonObject reqJSON = buffer.toJsonObject().put(TABLE_NAME, DISCOVERY_PROFILE_TABLE);
+                var reqJSON = buffer.toJsonObject().put(TABLE_NAME, DISCOVERY_PROFILE_TABLE);
 
-                eventBus.request(INSERT_EVENT, reqJSON, ar -> {
+                if(Utils.validateRequestBody(reqJSON))
+                {
 
-                    if(ar.succeeded())
-                    {
-                        if(ar.result().body().equals(SUCCESS))
+                    eventBus.request(INSERT_EVENT, reqJSON, asyncResult -> {
+
+                        if(asyncResult.succeeded())
                         {
-                            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile added successfully!"));
+                            var resultObj = new JsonObject(asyncResult.result().body().toString());
+
+                            routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, String.format("Discovery profile added successfully! ID: %d", resultObj.getInteger(DISCOVERY_PROFILE_ID))));
                         }
-                    }
-                    else
-                    {
-                        ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
-                    }
-                });
+                        else
+                        {
+                            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Insertion Error").put(ERR_MESSAGE, asyncResult.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                        }
+                    });
+                }
+                else
+                {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, INVALID_REQUEST_BODY).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                }
             });
 
 
         });
 
         // GET ALL DISCOVERY PROFILES
-        discoveryRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+        discoveryRouter.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
             eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, DISCOVERY_PROFILE_TABLE), ar -> {
 
                 if(ar.succeeded())
                 {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profiles fetched successfully!").put("discovery.profiles", ar.result().body()));
+                    routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profiles fetched successfully!").put("discovery.profiles", ar.result().body()));
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
             });
 
         });
 
         // GET DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.GET, "/get/:discProfileId").handler(ctx -> {
+        discoveryRouter.route(HttpMethod.GET, "/get/:discProfileId").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            var discProfileId = ctx.request().getParam("discProfileId");
+            var discProfileId = routingContext.request().getParam("discProfileId");
 
-            eventBus.request(GET_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId).put(TABLE_NAME, DISCOVERY_PROFILE_TABLE), ar -> {
+            eventBus.request(GET_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId).put(TABLE_NAME, DISCOVERY_PROFILE_TABLE), asyncResult -> {
 
-                if(ar.succeeded())
+                if(asyncResult.succeeded())
                 {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile fetched successfully!").put(RESULT, ar.result().body()));
+                    routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile fetched successfully!").put(RESULT, asyncResult.result().body()));
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, asyncResult.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
             });
 
         });
 
         // UPDATE DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.PUT, "/update/:discProfileId").handler(ctx -> {
+        discoveryRouter.route(HttpMethod.PUT, "/update/:discProfileId").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            var discProfileId = ctx.request().getParam("discProfileId");
+            var discProfileId = routingContext.request().getParam("discProfileId");
 
-            ctx.request().bodyHandler(buffer -> {
+            routingContext.request().bodyHandler(buffer -> {
 
                 var reqJSON = buffer.toJsonObject().put(DISCOVERY_PROFILE_ID, discProfileId).put(TABLE_NAME, DISCOVERY_PROFILE_TABLE);
 
-                eventBus.request(UPDATE_EVENT, reqJSON, ar -> {
+                if(Utils.validateRequestBody(reqJSON))
+                {
+                    eventBus.request(UPDATE_EVENT, reqJSON, asyncResult -> {
 
-                    if(ar.succeeded())
-                    {
-                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile updated successfully!").put("result", ar.result().body()));
-                    }
-                    else
-                    {
-                        ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
-                    }
-                });
+                        if(asyncResult.succeeded())
+                        {
+                            routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile updated successfully!").put("result", asyncResult.result().body()));
+                        }
+                        else
+                        {
+                            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error updating data").put(ERR_MESSAGE, asyncResult.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                        }
+                    });
+                }
+                else
+                {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data").put(ERR_MESSAGE, INVALID_REQUEST_BODY).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                }
             });
 
         });
 
         // DELETE DISCOVERY PROFILE
-        discoveryRouter.route(HttpMethod.DELETE, "/delete/:discProfileId").handler(ctx -> {
+        discoveryRouter.route(HttpMethod.DELETE, "/delete/:discProfileId").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            var discProfileId = ctx.request().getParam("discProfileId");
+            var discProfileId = routingContext.request().getParam("discProfileId");
 
-            eventBus.request(DELETE_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId).put(TABLE_NAME, DISCOVERY_PROFILE_TABLE), ar -> {
+            eventBus.request(DELETE_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId).put(TABLE_NAME, DISCOVERY_PROFILE_TABLE), asyncResult -> {
 
-                if(ar.succeeded())
+                if(asyncResult.succeeded())
                 {
-                    if(ar.result().body().equals(SUCCESS))
+                    if(asyncResult.result().body().equals(SUCCESS))
                     {
-                        ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile: " + discProfileId + " deleted successfully!"));
+                        routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery profile: " + discProfileId + " deleted successfully!"));
                     }
                     else
                     {
-                        ctx.response().setStatusCode(404).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Discovery profile: " + discProfileId + " not found!")).toString());
+                        routingContext.response().setStatusCode(404).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_STATUS_CODE, 404).put(ERR_MESSAGE, "Discovery profile: " + discProfileId + " not found!")).toString());
                     }
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Deletion Error").put(ERR_MESSAGE, asyncResult.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
             });
 
@@ -346,9 +418,9 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // RUN DISCOVERY
-        discoveryRouter.route(HttpMethod.POST, "/run").handler(ctx -> {
+        discoveryRouter.route(HttpMethod.POST, "/run").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
                 /* Example:
                  [
@@ -362,7 +434,7 @@ public class ApiEngine extends AbstractVerticle
                      },
                  ]
                 */
-            ctx.request().bodyHandler(buffer -> {
+            routingContext.request().bodyHandler(buffer -> {
 
                 var reqArray = buffer.toJsonArray();
 
@@ -377,7 +449,7 @@ public class ApiEngine extends AbstractVerticle
                         LOGGER.trace("Execute Blocking initiated\t{}", encodedString);
 
                         eventBus.request(RUN_DISCOVERY_EVENT, encodedString, res -> {
-                            ctx.json(new JsonArray(res.result().body().toString()));
+                            routingContext.json(new JsonArray(res.result().body().toString()));
                         });
 
                     }
@@ -385,7 +457,7 @@ public class ApiEngine extends AbstractVerticle
                     {
                         LOGGER.debug(ar.cause().getMessage());
 
-                        ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(ar.cause().getMessage());
+                        routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(ar.cause().getMessage());
                     }
                 });
             });
@@ -395,21 +467,21 @@ public class ApiEngine extends AbstractVerticle
         //--------------------------------------------------------------------------------------------------------------
 
         // REQUEST TO PROVISION DEVICE
-        provisionRouter.route(HttpMethod.POST, "/add/:discProfileId").handler(ctx -> {
+        provisionRouter.route(HttpMethod.POST, "/add/:discProfileId").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            var discProfileId = ctx.request().getParam("discProfileId");
+            var discProfileId = routingContext.request().getParam("discProfileId");
 
             eventBus.request(UPDATE_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, Integer.parseInt(discProfileId)).put(TABLE_NAME, PROVISION_DEVICE), ar -> {
 
                 if(ar.succeeded())
                 {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provisioned successfully!"));
+                    routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provisioned successfully!"));
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
 
             });
@@ -417,46 +489,46 @@ public class ApiEngine extends AbstractVerticle
         });
 
         // GET ALL PROVISION DEVICES LIST
-        provisionRouter.route(HttpMethod.GET, "/get-all").handler(ctx -> {
+        provisionRouter.route(HttpMethod.GET, "/get-all").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
             eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, GET_PROVISIONED_DEVICES_EVENT), ar -> {
                 if(ar.succeeded())
                 {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Provisioned devices fetched successfully!").put(RESULT, ar.result().body()));
+                    routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Provisioned devices fetched successfully!").put(RESULT, ar.result().body()));
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
             });
 
         });
 
         // REMOVE PROVISION/ STOP POLLING
-        provisionRouter.route(HttpMethod.DELETE, "/stop/:discProfileId").handler(ctx -> {
+        provisionRouter.route(HttpMethod.DELETE, "/stop/:discProfileId").handler(routingContext -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            var discProfileId = ctx.request().getParam("discProfileId");
+            var discProfileId = routingContext.request().getParam("discProfileId");
 
             eventBus.request(STOP_POLLING_EVENT, discProfileId, ar -> {
                 if(ar.succeeded())
                 {
-                    ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provision stopped successfully!"));
+                    routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provision stopped successfully!"));
                 }
                 else
                 {
-                    ctx.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
                 }
             });
 
         });
 
-        server.requestHandler(router).listen(res -> {
+        server.requestHandler(router).listen(httpServerAsyncResult -> {
 
-            if(res.succeeded())
+            if(httpServerAsyncResult.succeeded())
             {
                 LOGGER.info(String.format("HTTP Server is now listening on http://%s:%d/", Config.HOST, Config.PORT));
 
@@ -466,7 +538,7 @@ public class ApiEngine extends AbstractVerticle
             {
                 LOGGER.info("Failed to start the API Engine, port unavailable!");
 
-                startPromise.fail(res.cause());
+                startPromise.fail(httpServerAsyncResult.cause());
             }
         });
 

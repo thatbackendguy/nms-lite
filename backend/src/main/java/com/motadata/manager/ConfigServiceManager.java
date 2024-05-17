@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import static com.motadata.utils.Constants.*;
@@ -57,6 +58,10 @@ public class ConfigServiceManager extends AbstractVerticle
 
     private final String METRICS_SELECT_QUERY = "SELECT * FROM configDB.network_interface where `object.ip`=? and `interface.index`=? order by `poll.time` desc limit 1;";
 
+    private final String MAPPED_PROFILES_DELETE_QUERY = "DELETE FROM `configDB`.`profile_mapping` WHERE `discovery.profile.id`=?;";
+
+    private final String AVAILABLE_INTERFACES_SELECT_QUERY = "SELECT distinct(`interface.index`),`interface.name` FROM configDB.network_interface where `object.ip`=?;";
+
     @Override
     public void start(Promise<Void> startPromise)
     {
@@ -68,7 +73,7 @@ public class ConfigServiceManager extends AbstractVerticle
             {
                 if(jsonObjectMessage.body().getString(TABLE_NAME).equals(DISCOVERY_PROFILE_TABLE))
                 {
-                    try(var conn = Utils.getConnection(); var insertDiscoveryProfile = conn.prepareStatement(DISCOVERY_PROFILE_INSERT_QUERY))
+                    try(var conn = Utils.getConnection(); var insertDiscoveryProfile = conn.prepareStatement(DISCOVERY_PROFILE_INSERT_QUERY, PreparedStatement.RETURN_GENERATED_KEYS))
                     {
                         insertDiscoveryProfile.setString(1, jsonObjectMessage.body().getString(DISCOVERY_NAME));
                         insertDiscoveryProfile.setString(2, jsonObjectMessage.body().getString(OBJECT_IP));
@@ -76,11 +81,20 @@ public class ConfigServiceManager extends AbstractVerticle
 
                         var rowsInserted = insertDiscoveryProfile.executeUpdate();
 
+                        int discovreyProfileId = 0;
+
                         if(rowsInserted > 0)
                         {
+                            var rs = insertDiscoveryProfile.getGeneratedKeys();
+
+                            if(rs.next())
+                            {
+                                discovreyProfileId = rs.getInt(1);
+                            }
+
                             LOGGER.trace(ROWS_INSERTED_CONTAINER, rowsInserted, jsonObjectMessage.body().getString(TABLE_NAME));
 
-                            jsonObjectMessage.reply(SUCCESS);
+                            jsonObjectMessage.reply(new JsonObject().put(DISCOVERY_PROFILE_ID, discovreyProfileId));
                         }
 
 
@@ -93,8 +107,10 @@ public class ConfigServiceManager extends AbstractVerticle
                 }
                 else if(jsonObjectMessage.body().getString(TABLE_NAME).equals(CREDENTIAL_PROFILE_TABLE))
                 {
-                    try(var conn = Utils.getConnection(); var insertCredentialProfile = conn.prepareStatement(CREDENTIAL_PROFILE_INSERT_QUERY))
+                    try(var conn = Utils.getConnection(); var insertCredentialProfile = conn.prepareStatement(CREDENTIAL_PROFILE_INSERT_QUERY, PreparedStatement.RETURN_GENERATED_KEYS))
                     {
+                        int credentialProfileId = 0;
+
                         insertCredentialProfile.setString(1, jsonObjectMessage.body().getString(CREDENTIAL_NAME));
                         insertCredentialProfile.setString(2, jsonObjectMessage.body().getString(PROTOCOL));
                         insertCredentialProfile.setString(3, jsonObjectMessage.body().getString(VERSION));
@@ -104,9 +120,16 @@ public class ConfigServiceManager extends AbstractVerticle
 
                         if(rowsInserted > 0)
                         {
+                            var rs = insertCredentialProfile.getGeneratedKeys();
+
+                            if(rs.next())
+                            {
+                                credentialProfileId = rs.getInt(1);
+                            }
+
                             LOGGER.trace(ROWS_INSERTED_CONTAINER, rowsInserted, jsonObjectMessage.body().getString(TABLE_NAME));
 
-                            jsonObjectMessage.reply(SUCCESS);
+                            jsonObjectMessage.reply(new JsonObject().put(CREDENTIAL_PROFILE_ID, credentialProfileId));
                         }
 
                     } catch(SQLException sqlException)
@@ -125,7 +148,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -233,7 +256,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -298,38 +321,84 @@ public class ConfigServiceManager extends AbstractVerticle
                 {
                     jsonObjectMessage.body().remove(TABLE_NAME);
 
-                    try(var conn = Utils.getConnection(); var getMetrics = conn.prepareStatement(METRICS_SELECT_QUERY))
+                    if(jsonObjectMessage.body().getString(EVENT_NAME).equals(GET_INTERFACE_METRICS))
                     {
-                        getMetrics.setString(1, jsonObjectMessage.body().getString(OBJECT_IP));
+                        jsonObjectMessage.body().remove(EVENT_NAME);
 
-                        getMetrics.setInt(2, jsonObjectMessage.body().getInteger(INTERFACE_INDEX));
-
-                        var record = getMetrics.executeQuery();
-
-                        if(!record.isBeforeFirst())
+                        try(var conn = Utils.getConnection(); var getMetrics = conn.prepareStatement(METRICS_SELECT_QUERY))
                         {
-                            jsonObjectMessage.fail(HttpResponseStatus.NOT_FOUND.code(), "No records found for object.ip: " + jsonObjectMessage.body().getString(OBJECT_IP) + " and interface.index: " + jsonObjectMessage.body().getInteger(INTERFACE_INDEX));
-                        }
+                            getMetrics.setString(1, jsonObjectMessage.body().getString(OBJECT_IP));
 
-                        while(record.next())
+                            getMetrics.setInt(2, jsonObjectMessage.body().getInteger(INTERFACE_INDEX));
+
+                            var record = getMetrics.executeQuery();
+
+                            if(!record.isBeforeFirst())
+                            {
+                                jsonObjectMessage.fail(HttpResponseStatus.NOT_FOUND.code(), "No records found for object.ip: " + jsonObjectMessage.body().getString(OBJECT_IP) + " and interface.index: " + jsonObjectMessage.body().getInteger(INTERFACE_INDEX));
+                            }
+
+                            while(record.next())
+                            {
+                                jsonObjectMessage.body().put(RESULT, new JsonObject().put(INTERFACE_INDEX, record.getInt(INTERFACE_INDEX)).put(INTERFACE_NAME, record.getString(INTERFACE_NAME)).put(INTERFACE_DESCRIPTION, record.getString(INTERFACE_DESCRIPTION)).put(INTERFACE_ALIAS, record.getString(INTERFACE_ALIAS)).put(INTERFACE_PHYSICAL_ADDRESS, record.getString(INTERFACE_PHYSICAL_ADDRESS)).put(INTERFACE_OPERATIONAL_STATUS, record.getInt(INTERFACE_OPERATIONAL_STATUS)).put(INTERFACE_ADMIN_STATUS, record.getInt(INTERFACE_ADMIN_STATUS)).put(INTERFACE_SENT_ERROR_PACKET, record.getInt(INTERFACE_SENT_ERROR_PACKET)).put(INTERFACE_RECEIVED_ERROR_PACKET, record.getInt(INTERFACE_RECEIVED_ERROR_PACKET)).put(INTERFACE_SENT_OCTETS, record.getInt(INTERFACE_SENT_OCTETS)).put(INTERFACE_RECEIVED_OCTETS, record.getInt(INTERFACE_RECEIVED_OCTETS)).put(INTERFACE_SPEED, record.getInt(INTERFACE_SPEED)).put(POLL_TIME, record.getString(POLL_TIME)));
+                            }
+
+                        } catch(SQLException sqlException)
                         {
-                            jsonObjectMessage.body().put(RESULT, new JsonObject().put(INTERFACE_INDEX, record.getInt(INTERFACE_INDEX)).put(INTERFACE_NAME, record.getString(INTERFACE_NAME)).put(INTERFACE_DESCRIPTION, record.getString(INTERFACE_DESCRIPTION)).put(INTERFACE_ALIAS, record.getString(INTERFACE_ALIAS)).put(INTERFACE_PHYSICAL_ADDRESS, record.getString(INTERFACE_PHYSICAL_ADDRESS)).put(INTERFACE_OPERATIONAL_STATUS, record.getInt(INTERFACE_OPERATIONAL_STATUS)).put(INTERFACE_ADMIN_STATUS, record.getInt(INTERFACE_ADMIN_STATUS)).put(INTERFACE_SENT_ERROR_PACKET, record.getInt(INTERFACE_SENT_ERROR_PACKET)).put(INTERFACE_RECEIVED_ERROR_PACKET, record.getInt(INTERFACE_RECEIVED_ERROR_PACKET)).put(INTERFACE_SENT_OCTETS, record.getInt(INTERFACE_SENT_OCTETS)).put(INTERFACE_RECEIVED_OCTETS, record.getInt(INTERFACE_RECEIVED_OCTETS)).put(INTERFACE_SPEED, record.getInt(INTERFACE_SPEED)).put(POLL_TIME, record.getString(POLL_TIME)));
+                            LOGGER.error(ERROR_CONTAINER, sqlException.getMessage());
+
+                            jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), sqlException.getMessage());
                         }
+                        if(!jsonObjectMessage.body().isEmpty())
+                        {
+                            jsonObjectMessage.reply(jsonObjectMessage.body());
+                        }
+                        else
+                        {
+                            jsonObjectMessage.fail(HttpResponseStatus.NOT_FOUND.code(), "Metrics not found for " + jsonObjectMessage.body().getString(OBJECT_IP));
+                        }
+                    }
+                    else if(jsonObjectMessage.body().getString(EVENT_NAME).equals(GET_INTERFACES))
+                    {
+                        jsonObjectMessage.body().remove(EVENT_NAME);
 
-                    } catch(SQLException sqlException)
-                    {
-                        LOGGER.error(ERROR_CONTAINER, sqlException.getMessage());
+                        try(var conn = Utils.getConnection(); var getInterfaces = conn.prepareStatement(AVAILABLE_INTERFACES_SELECT_QUERY))
+                        {
+                            var resultObject = new JsonArray();
 
-                        jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), sqlException.getMessage());
+                            getInterfaces.setString(1, jsonObjectMessage.body().getString(OBJECT_IP));
+
+                            var interfaces = getInterfaces.executeQuery();
+
+                            if(!interfaces.isBeforeFirst())
+                            {
+                                jsonObjectMessage.fail(HttpResponseStatus.NOT_FOUND.code(), "No interfaces found for object.ip: " + jsonObjectMessage.body().getString(OBJECT_IP) + " and interface.index: " + jsonObjectMessage.body().getInteger(INTERFACE_INDEX));
+                            }
+
+                            while(interfaces.next())
+                            {
+                                resultObject.add(new JsonObject().put(INTERFACE_INDEX, interfaces.getInt(INTERFACE_INDEX)).put(INTERFACE_NAME, interfaces.getString(INTERFACE_NAME)));
+                            }
+
+                            jsonObjectMessage.body().put(RESULT, resultObject);
+
+                        } catch(SQLException sqlException)
+                        {
+                            LOGGER.error(ERROR_CONTAINER, sqlException.getMessage());
+
+                            jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), sqlException.getMessage());
+                        }
+                        if(!jsonObjectMessage.body().isEmpty())
+                        {
+                            jsonObjectMessage.reply(jsonObjectMessage.body());
+                        }
+                        else
+                        {
+                            jsonObjectMessage.fail(HttpResponseStatus.NOT_FOUND.code(), "Interfaces not found for " + jsonObjectMessage.body().getString(OBJECT_IP));
+                        }
                     }
-                    if(!jsonObjectMessage.body().isEmpty())
-                    {
-                        jsonObjectMessage.reply(jsonObjectMessage.body());
-                    }
-                    else
-                    {
-                        jsonObjectMessage.fail(HttpResponseStatus.NOT_FOUND.code(), "Metrics not found for " + jsonObjectMessage.body().getString(OBJECT_IP));
-                    }
+
+
                 }
                 else
                 {
@@ -340,7 +409,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -426,7 +495,7 @@ public class ConfigServiceManager extends AbstractVerticle
                     {
                         var discoveryProfile = getDiscoveryProfile(jsonObjectMessage.body().getInteger(DISCOVERY_PROFILE_ID));
 
-                        if(discoveryProfile.getInteger(IS_PROVISIONED) == FALSE && discoveryProfile.getInteger(IS_PROVISIONED)== TRUE)
+                        if(discoveryProfile.getInteger(IS_PROVISIONED) == FALSE && discoveryProfile.getInteger(IS_DISCOVERED) == TRUE)
                         {
                             updateDiscoveryProfile.setInt(1, 1);
 
@@ -471,7 +540,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -485,8 +554,13 @@ public class ConfigServiceManager extends AbstractVerticle
 
                 if(jsonObjectMessage.body().getString(TABLE_NAME).equals(DISCOVERY_PROFILE_TABLE))
                 {
-                    try(var conn = Utils.getConnection(); var deleteDiscoveryProfile = conn.prepareStatement(DISCOVER_PROFILE_DELETE_QUERY))
+                    try(var conn = Utils.getConnection(); var deleteDiscoveryProfile = conn.prepareStatement(DISCOVER_PROFILE_DELETE_QUERY); var deleteMappedProfiles = conn.prepareStatement(MAPPED_PROFILES_DELETE_QUERY))
                     {
+
+                        deleteMappedProfiles.setInt(1, Integer.parseInt(jsonObjectMessage.body().getString(DISCOVERY_PROFILE_ID)));
+
+                        deleteMappedProfiles.executeUpdate();
+
                         deleteDiscoveryProfile.setInt(1, Integer.parseInt(jsonObjectMessage.body().getString(DISCOVERY_PROFILE_ID)));
 
                         var rowsDeleted = deleteDiscoveryProfile.executeUpdate();
@@ -564,7 +638,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -634,7 +708,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 jsonArrayMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                jsonArrayMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                jsonArrayMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 jsonArrayMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -703,7 +777,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                jsonObjectMessage.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -752,7 +826,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 msg.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                msg.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                msg.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 msg.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -813,7 +887,7 @@ public class ConfigServiceManager extends AbstractVerticle
                 polledData.fail(HttpResponseStatus.BAD_REQUEST.code(), INCORRECT_DATATYPE);
             } catch(NullPointerException nullPointerException)
             {
-                polledData.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                polledData.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
             } catch(Exception exception)
             {
                 polledData.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), exception.getMessage());
@@ -865,7 +939,7 @@ public class ConfigServiceManager extends AbstractVerticle
 
             } catch(NullPointerException nullPointerException)
             {
-                msg.fail(HttpResponseStatus.BAD_REQUEST.code(), REQUEST_BODY_ERROR);
+                msg.fail(HttpResponseStatus.BAD_REQUEST.code(), INVALID_REQUEST_BODY);
 
             } catch(Exception exception)
             {
