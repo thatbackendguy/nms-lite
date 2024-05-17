@@ -31,16 +31,16 @@ public class PollingEngine extends AbstractVerticle
             {
                 LOGGER.trace("Polling started, requesting for provision devices...");
 
-                eventBus.request(GET_PROVISIONED_DEVICES_EVENT, EMPTY_STRING, ar -> {
+                eventBus.request(GET_PROVISIONED_DEVICES_EVENT, EMPTY_STRING, asyncResult -> {
                     try
                     {
-                        if(ar.succeeded())
+                        if(asyncResult.succeeded())
                         {
-                            if(!ar.result().body().toString().isEmpty())
+                            if(!asyncResult.result().body().toString().isEmpty())
                             {
-                                LOGGER.trace("polling context build success: {}", ar.result().body().toString());
+                                LOGGER.trace("polling context build success: {}", asyncResult.result().body().toString());
 
-                                var encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
+                                var encodedString = Base64.getEncoder().encodeToString(asyncResult.result().body().toString().getBytes());
 
                                 LOGGER.trace("Polling initiated\t{}", encodedString);
 
@@ -87,18 +87,18 @@ public class PollingEngine extends AbstractVerticle
                         }
                         else
                         {
-                            LOGGER.warn(ar.cause().getMessage());
+                            LOGGER.warn(asyncResult.cause().getMessage());
                         }
 
-                    } catch(InterruptedException | IOException err)
+                    } catch(InterruptedException | IOException exception)
                     {
-                        LOGGER.error("Error while polling context: {}", err.getMessage());
+                        LOGGER.error("Error while polling context: {}", exception.getMessage());
                     }
                 });
 
-            } catch(Exception e)
+            } catch(Exception exception)
             {
-                LOGGER.error("Exception occurred in polling: {}", e.getMessage(), e);
+                LOGGER.error("Exception occurred in polling: {}", exception.getMessage(), exception);
             }
         });
 

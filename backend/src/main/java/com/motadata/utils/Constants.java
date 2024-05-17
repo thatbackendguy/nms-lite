@@ -76,7 +76,7 @@ public class Constants
 
     public static final String IS_DISCOVERED = "is.discovered";
 
-    public static final String MAKE_DISCOVERY_CONTEXT_EVENT = "make.disc.context";
+    public static final String MAKE_DISCOVERY_CONTEXT_EVENT = "make.discovery.context";
 
     public static final String DISCOVERY = "Discovery";
 
@@ -99,8 +99,6 @@ public class Constants
     public static final String NETWORK_INTERFACE_TABLE = "network_interface";
 
     public static final String CREDENTIAL_PROFILE_TABLE = "credential_profile";
-
-    public static final String PROFILE_MAPPING_TABLE = "profile_mapping";
 
     public static final String GET_PROVISIONED_DEVICES_EVENT = "get.provisioned.devices";
 
@@ -150,11 +148,7 @@ public class Constants
 
     public static final String REQUEST_BODY_ERROR = "Invalid request body!";
 
-    public static final String BAD_REQUEST = "Bad request";
-
     public static final String EMPTY_STRING = "";
-
-    public static final String EVENT_NAME = "event.name";
 
     public static final String PROVISION_DEVICE = "provision.device";
 
