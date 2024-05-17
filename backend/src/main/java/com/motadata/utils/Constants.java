@@ -159,4 +159,6 @@ public class Constants
     public static final String PROVISION_DEVICE = "provision.device";
 
     public static final String CREDENTIALS = "credentials";
+
+    public static final String INCORRECT_DATATYPE = "Invalid datatype, Bad request!";
 }

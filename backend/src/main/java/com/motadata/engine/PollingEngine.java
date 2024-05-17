@@ -4,6 +4,8 @@ import com.motadata.utils.Config;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +45,6 @@ public class PollingEngine extends AbstractVerticle
                                 LOGGER.trace("Polling initiated\t{}", encodedString);
 
 
-
                                 var processBuilder = new ProcessBuilder("/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine", encodedString);
 
                                 processBuilder.redirectErrorStream(true);
@@ -79,7 +80,7 @@ public class PollingEngine extends AbstractVerticle
 
                                     LOGGER.trace(decodedString);
 
-                                    eventBus.send(STORE_POLLED_DATA_EVENT, decodedString);
+                                    eventBus.send(STORE_POLLED_DATA_EVENT, new JsonArray(decodedString));
                                 }
 
                             }
