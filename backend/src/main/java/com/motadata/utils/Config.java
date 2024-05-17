@@ -16,7 +16,7 @@ public class Config
 
     public static int PORT = 8080;
 
-    public static String DATABASE_URI = "jdbc:mysql://localhost:3306/nmsDB";
+    public static String DATABASE_URI = "jdbc:mysql://localhost:3306/configDB";
 
     public static String DATABASE_USERNAME = "root";
 
@@ -41,7 +41,6 @@ public class Config
         DATABASE_PASSWORD = config.getString(Constants.DATABASE_PASSWORD);
 
         POLLING_INTERVAL = config.getLong(Constants.POLLING_INTERVAL);
-
 
     }
 

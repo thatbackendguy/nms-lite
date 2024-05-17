@@ -19,7 +19,7 @@ public class ConfigServiceManager extends AbstractVerticle
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigServiceManager.class);
 
-    private final String CREDENTIAL_PROFILE_INSERT_QUERY = "INSERT INTO `nmsDB`.`credential_profile` (`credential.name`, `protocol`, `version`, `community`) VALUES (?,?,?,?);";
+    private final String CREDENTIAL_PROFILE_INSERT_QUERY = "INSERT INTO `configDB`.`credential_profile` (`credential.name`, `protocol`, `version`, `community`) VALUES (?,?,?,?);";
 
     private final String CREDENTIAL_PROFILE_SELECT_QUERY = "SELECT * FROM `credential_profile` where `credential.profile.id`=?;";
 
@@ -27,7 +27,7 @@ public class ConfigServiceManager extends AbstractVerticle
 
     private final String CREDENTIAL_PROFILE_UPDATE_QUERY = "UPDATE `credential_profile` SET `version` = ?, `community` = ? WHERE `credential.profile.id` = ?;";
 
-    private final String DISCOVERY_PROFILE_INSERT_QUERY = "INSERT INTO `nmsDB`.`discovery_profile` (`discovery.name`,`object.ip`,`port`) VALUES (?,?,?);";
+    private final String DISCOVERY_PROFILE_INSERT_QUERY = "INSERT INTO `configDB`.`discovery_profile` (`discovery.name`,`object.ip`,`port`) VALUES (?,?,?);";
 
     private final String DISCOVERY_PROFILE_SELECT_QUERY = "SELECT * FROM `discovery_profile` WHERE `discovery.profile.id` = ?";
 
@@ -43,9 +43,9 @@ public class ConfigServiceManager extends AbstractVerticle
 
     private final String DISCOVER_PROFILE_DELETE_QUERY = "DELETE FROM `discovery_profile` WHERE `discovery.profile.id` = ?;";
 
-    private final String PROFILE_MAPPING_INSERT_QUERY = "INSERT INTO `nmsDB`.`profile_mapping` (`discovery.profile.id`,`credential.profile.id`) VALUES (?,?);";
+    private final String PROFILE_MAPPING_INSERT_QUERY = "INSERT INTO `configDB`.`profile_mapping` (`discovery.profile.id`,`credential.profile.id`) VALUES (?,?);";
 
-    private final String PROFILE_MAPPING_UNIQUE_CREDENTIAL_PROFILE_IDS_QUERY = "SELECT distinct(`credential.profile.id`) FROM nmsDB.profile_mapping where `discovery.profile.id`=?;";
+    private final String PROFILE_MAPPING_UNIQUE_CREDENTIAL_PROFILE_IDS_QUERY = "SELECT distinct(`credential.profile.id`) FROM configDB.profile_mapping where `discovery.profile.id`=?;";
 
     private final String PROFILE_MAPPING_SELECT_ALL_QUERY = "SELECT pm.`discovery.profile.id`, pm.`credential.profile.id`, cp.`credential.name`, cp.`protocol`, cp.`version`, cp.`community`, dp.`discovery.name`, dp.`object.ip`, dp.`port`, dp.`is.provisioned`, dp.`is.discovered`, cp.`version` FROM profile_mapping pm JOIN credential_profile cp ON pm.`credential.profile.id` = cp.`credential.profile.id` JOIN discovery_profile dp ON pm.`discovery.profile.id` = dp.`discovery.profile.id`;";
 
@@ -53,9 +53,9 @@ public class ConfigServiceManager extends AbstractVerticle
 
     private final String METRICS_INSERT_QUERY = "INSERT INTO network_interface (`object.ip`,`interface.index`,`interface.name`,`interface.operational.status`,`interface.admin.status`,`interface.description`,`interface.sent.error.packet`,`interface.received.error.packet`,`interface.sent.octets`,`interface.received.octets`,`interface.speed`,`interface.alias`,`interface.physical.address`,`poll.time`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
-    private final String PROVISIONED_DEVICES_SELECT_ALL_QUERY = "SELECT `object.ip` FROM nmsDB.discovery_profile where `is.provisioned`=1;";
+    private final String PROVISIONED_DEVICES_SELECT_ALL_QUERY = "SELECT `object.ip` FROM configDB.discovery_profile where `is.provisioned`=1;";
 
-    private final String METRICS_SELECT_QUERY = "SELECT * FROM nmsDB.network_interface where `object.ip`=? and `interface.index`=? order by `poll.time` desc limit 1;";
+    private final String METRICS_SELECT_QUERY = "SELECT * FROM configDB.network_interface where `object.ip`=? and `interface.index`=? order by `poll.time` desc limit 1;";
 
     @Override
     public void start(Promise<Void> startPromise)
@@ -426,7 +426,7 @@ public class ConfigServiceManager extends AbstractVerticle
                     {
                         var discoveryProfile = getDiscoveryProfile(jsonObjectMessage.body().getInteger(DISCOVERY_PROFILE_ID));
 
-                        if(discoveryProfile.getInteger(IS_PROVISIONED) == FALSE)
+                        if(discoveryProfile.getInteger(IS_PROVISIONED) == FALSE && discoveryProfile.getInteger(IS_PROVISIONED)== TRUE)
                         {
                             updateDiscoveryProfile.setInt(1, 1);
 
@@ -449,9 +449,9 @@ public class ConfigServiceManager extends AbstractVerticle
                         }
                         else
                         {
-                            LOGGER.trace("Device: {} already provisioned", jsonObjectMessage.body().getString(DISCOVERY_PROFILE_ID));
+                            LOGGER.trace("Device: {} already provisioned or not discovered", jsonObjectMessage.body().getString(DISCOVERY_PROFILE_ID));
 
-                            jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), "Device = " + jsonObjectMessage.body().getString(DISCOVERY_PROFILE_ID) + " already provisioned!");
+                            jsonObjectMessage.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), "Device = " + jsonObjectMessage.body().getString(DISCOVERY_PROFILE_ID) + " already provisioned or not discovered!");
                         }
 
 
