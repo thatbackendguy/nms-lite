@@ -36,6 +36,7 @@ func write(level, directory, component string, message interface{}) {
 	defer file.Close()
 
 	_, err = file.WriteString(fmt.Sprintf("%s %s %s\n", currentTime.Format("2006-01-02 15:04:05.999999999"), level, message))
+
 	if err != nil {
 		return
 	}

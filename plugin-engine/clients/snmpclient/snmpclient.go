@@ -13,6 +13,8 @@ var logger = utils.NewLogger(utils.LogFilesPath+"/clients", "snmpclient")
 
 func Init(objectIp string, community string, port uint16, version g.SnmpVersion) (*g.GoSNMP, error) {
 
+	logger.Trace(fmt.Sprintf("Initializing SNMP client: %s", objectIp))
+
 	GoSNMP := &g.GoSNMP{
 		Target:    objectIp,
 		Community: community,
@@ -22,9 +24,13 @@ func Init(objectIp string, community string, port uint16, version g.SnmpVersion)
 		Timeout:   time.Duration(3) * time.Second,
 	}
 
+	logger.Trace(fmt.Sprintf("Establihing SNMP connection on: %s", objectIp))
+
 	err := GoSNMP.Connect()
 
 	if err != nil {
+
+		logger.Error(fmt.Sprintf("failed to connect to %s: %v", objectIp, err))
 
 		return nil, fmt.Errorf("failed to connect to %s: %v", objectIp, err)
 
@@ -36,6 +42,8 @@ func Init(objectIp string, community string, port uint16, version g.SnmpVersion)
 func Close(GoSNMP *g.GoSNMP) error {
 
 	if GoSNMP.Conn != nil {
+
+		logger.Trace(fmt.Sprintf("Closing SNMP connection: %s", GoSNMP.Target))
 
 		return GoSNMP.Conn.Close()
 
@@ -59,21 +67,21 @@ func Get(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, er
 
 	if err != nil {
 
-		logger.Error(err.Error())
+		logger.Error(fmt.Sprintf("Device: %s\nError: %s", GoSNMP.Target, err.Error()))
 
 		return nil, err
 	}
 
 	if packet.Error != 0 {
 
-		logger.Error(packet.Error.String())
+		logger.Error(fmt.Sprintf("Device: %s\nError: %s", GoSNMP.Target, packet.Error.String()))
 
 		return nil, fmt.Errorf("SNMP error: %s", packet.Error)
 	}
 
 	if len(packet.Variables) != len(oidMap) {
 
-		logger.Error("unexpected number of SNMP variables returned")
+		logger.Error(fmt.Sprintf("unexpected number of SNMP variables returned for: %s", GoSNMP.Target))
 
 		return nil, fmt.Errorf("unexpected number of SNMP variables returned")
 	}
@@ -100,6 +108,9 @@ func Get(oidMap map[string]string, GoSNMP *g.GoSNMP) (map[string]interface{}, er
 		}
 
 	}
+
+	logger.Trace(fmt.Sprintf("GET(): %v", resultMap))
+
 	return resultMap, nil
 }
 
@@ -137,7 +148,7 @@ func Walk(oids map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 
 		if err != nil {
 
-			logger.Error(err.Error())
+			logger.Error(fmt.Sprintf("Device: %s\nError: %s", GoSNMP.Target, err.Error()))
 
 			return nil, err
 		}
@@ -149,7 +160,7 @@ func Walk(oids map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 		interfacesDetails = append(interfacesDetails, interfaceData)
 	}
 
-	logger.Debug(interfacesDetails)
+	logger.Trace(fmt.Sprintf("WALK(): %v", interfacesDetails))
 
 	return interfacesDetails, nil
 }
