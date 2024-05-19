@@ -43,19 +43,19 @@ public class Discovery
 
         subRouter.route(HttpMethod.GET, URL_SEPARATOR).handler(this::getAllDiscoveries);
 
-        subRouter.route(HttpMethod.GET,   URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::getDiscovery);
+        subRouter.route(HttpMethod.GET, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::getDiscovery);
 
-        subRouter.route(HttpMethod.GET,   URL_SEPARATOR + RUN + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::runDiscovery);
+        subRouter.route(HttpMethod.POST, URL_SEPARATOR + RUN).handler(this::runDiscovery);
 
-        subRouter.route(HttpMethod.PUT,   URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::updateDiscovery);
+        subRouter.route(HttpMethod.PUT, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::updateDiscovery);
 
-        subRouter.route(HttpMethod.DELETE,   URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::deleteDiscovery);
+        subRouter.route(HttpMethod.DELETE, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::deleteDiscovery);
 
-        subRouter.route(HttpMethod.GET,   URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::provisionDevice);
+        subRouter.route(HttpMethod.GET, URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::provisionDevice);
 
-        subRouter.route(HttpMethod.GET,   URL_SEPARATOR + PROVISION).handler(this::getProvisionedDevices);
+        subRouter.route(HttpMethod.GET, URL_SEPARATOR + PROVISION).handler(this::getProvisionedDevices);
 
-        subRouter.route(HttpMethod.DELETE,   URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::unProvisionDevice);
+        subRouter.route(HttpMethod.DELETE, URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::unProvisionDevice);
     }
 
     public void addDiscovery(RoutingContext routingContext)
@@ -214,38 +214,50 @@ public class Discovery
         LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
                 /* Example:
-                 [{"discovery.profile.id": 2,"credentials": [1,2,3,4,5]},{"discovery.profile.id": 3,"credentials": [9,4,5]}
+                 [{"discovery.profile.id": 2,"credentials": [1,2,3,4,5]}]
                 */
         routingContext.request().bodyHandler(buffer -> {
 
-            var reqArray = buffer.toJsonArray();
+            var requestObjects = buffer.toJsonArray();
 
-            eventBus.request(MAKE_DISCOVERY_CONTEXT_EVENT, reqArray, ar -> {
+            var contexts = new JsonArray();
 
-                if(ar.succeeded())
+            for(var object : requestObjects)
+            {
+                var monitor = new JsonObject(object.toString());
+//TDOD: working on run discovery
+                var discoveryProfile = ConfigDB.read(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, monitor.getString(DISCOVERY_PROFILE_ID))));
+                System.out.println(discoveryProfile);
+
+                if(!discoveryProfile.isEmpty() && Utils.pingCheck(discoveryProfile.getString(OBJECT_IP)))
                 {
-                    LOGGER.debug("context build success: {}", ar.result().body().toString());
+                    discoveryProfile.put(REQUEST_TYPE, DISCOVERY).put(PLUGIN_NAME, NETWORK);
 
-                    String encodedString = Base64.getEncoder().encodeToString(ar.result().body().toString().getBytes());
+                    if(ConfigDB.validCredentials.containsKey(Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))
+                    {
+                        // device already discovered
+                    }
 
-                    LOGGER.trace("Execute Blocking initiated\t{}", encodedString);
+                    var credentialProfileIds = monitor.getJsonArray(CREDENTIAL_PROFILE_IDS);
 
-                    eventBus.request(RUN_DISCOVERY_EVENT, encodedString, res -> {
-                        routingContext.json(new JsonArray(res.result().body().toString()));
-                    });
+                    var credentialProfiles = new JsonArray();
 
+                    for(var credentialId : credentialProfileIds)
+                    {
+                        var credentialProfile = ConfigDB.read(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, monitor.getString(CREDENTIAL_PROFILE_ID)))).getJsonObject(RESULT);
+
+                        credentialProfiles.add(credentialProfile);
+                    }
+
+                    discoveryProfile.put(CREDENTIALS, credentialProfiles);
+
+                    contexts.add(discoveryProfile);
                 }
-                else
-                {
-                    LOGGER.debug(ar.cause().getMessage());
+            }
 
-                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(ar.cause().getMessage());
-                }
-            });
+            eventBus.send(RUN_DISCOVERY_EVENT,contexts);
         });
-
     }
-
     public void provisionDevice(RoutingContext routingContext)
     {
 

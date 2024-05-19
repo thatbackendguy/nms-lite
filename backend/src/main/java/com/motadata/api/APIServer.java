@@ -32,8 +32,6 @@ public class APIServer extends AbstractVerticle
 
         new Discovery().init(router);
 
-        new Metrics().init(router);
-
         // FOR HANDLING FAILURES
         router.route().failureHandler(errorHandler());
 

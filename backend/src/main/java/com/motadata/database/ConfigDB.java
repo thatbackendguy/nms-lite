@@ -22,6 +22,8 @@ public class ConfigDB
 
     private static final ConcurrentHashMap<Long,JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
+    public static final ConcurrentHashMap<Long,JsonObject> validCredentials = new ConcurrentHashMap<>();
+
     public static JsonObject create(JsonObject request)
     {
         LOGGER.trace("Create request: {}", request);

@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"plugin-engine/global"
+	"plugin-engine/logger"
 	"plugin-engine/plugins/snmp"
 	"plugin-engine/utils"
 	"strings"
 	"sync"
 )
 
-var PluginEngineLogger = utils.NewLogger(utils.LogFilesPath, utils.SystemLoggerName)
+var PluginEngineLogger = logger.NewLogger(global.LogFilesPath, global.SystemLoggerName)
 
 const (
 	RequestType   = "request.type"
@@ -64,7 +66,7 @@ func main() {
 
 					PluginEngineLogger.Error(fmt.Sprintf("some error occurred!, reason : %v", r))
 
-					context[utils.Status] = utils.Failed
+					context[global.Status] = global.Failed
 
 				}
 			}(context, contexts)
@@ -97,19 +99,19 @@ func main() {
 				}
 			}
 
-			context[utils.Error] = errors
+			context[global.Error] = errors
 
-			if _, ok := context[utils.Result]; ok {
+			if _, ok := context[global.Result]; ok {
 
-				if len(context[utils.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
+				if len(context[global.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
 
-					context[utils.Status] = utils.Failed
+					context[global.Status] = global.Failed
 
 				} else {
-					context[utils.Status] = utils.Success
+					context[global.Status] = global.Success
 				}
 			} else {
-				context[utils.Status] = utils.Failed
+				context[global.Status] = global.Failed
 			}
 
 		}(context)

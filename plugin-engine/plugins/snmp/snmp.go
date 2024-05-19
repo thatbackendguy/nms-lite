@@ -3,7 +3,8 @@ package snmp
 import (
 	"github.com/gosnmp/gosnmp"
 	"plugin-engine/clients/snmpclient"
-	"plugin-engine/utils"
+	"plugin-engine/global"
+	logger2 "plugin-engine/logger"
 	"time"
 )
 
@@ -62,10 +63,10 @@ var tabularOids = map[string]string{
 	InterfaceReceivedOctetsKey:      ".1.3.6.1.2.1.2.2.1.10",
 	InterfaceSpeedKey:               ".1.3.6.1.2.1.2.2.1.5",
 	InterfaceAliasKey:               ".1.3.6.1.2.1.31.1.1.1.18",
-	utils.InterfacePhysicalAddress:  ".1.3.6.1.2.1.2.2.1.6",
+	global.InterfacePhysicalAddress: ".1.3.6.1.2.1.2.2.1.6",
 }
 
-var logger = utils.NewLogger(utils.LogFilesPath+"/plugins", "snmp")
+var logger = logger2.NewLogger(global.LogFilesPath+"/plugins", "snmp")
 
 func Discovery(context map[string]interface{}, errors *[]map[string]interface{}) {
 
@@ -81,11 +82,11 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 			*errors = append(*errors, map[string]interface{}{
 
-				utils.Error: "credentials not found",
+				global.Error: "credentials not found",
 
-				utils.ErrorCode: "SNMP01",
+				global.ErrorCode: "SNMP01",
 
-				utils.ErrorMsg: "error connecting to SNMP agent",
+				global.ErrorMsg: "error connecting to SNMP agent",
 			})
 
 			logger.Error("error connecting to SNMP agent. reason: credentials not found")
@@ -102,11 +103,11 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 		if err != nil {
 			*errors = append(*errors, map[string]interface{}{
 
-				utils.Error: "connection error",
+				global.Error: "connection error",
 
-				utils.ErrorCode: "SNMP01",
+				global.ErrorCode: "SNMP01",
 
-				utils.ErrorMsg: err.Error(),
+				global.ErrorMsg: err.Error(),
 			})
 
 			logger.Error("error connecting from " + context[ObjectIp].(string) + " to SNMP agent. reason: " + err.Error())
@@ -121,11 +122,11 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 		if err != nil {
 			*errors = append(*errors, map[string]interface{}{
 
-				utils.Error: "invalid credentials/ connection timed out",
+				global.Error: "invalid credentials/ connection timed out",
 
-				utils.ErrorCode: "SNMP01",
+				global.ErrorCode: "SNMP01",
 
-				utils.ErrorMsg: err.Error(),
+				global.ErrorMsg: err.Error(),
 			})
 
 			logger.Error("error connecting from " + context[ObjectIp].(string) + " to SNMP agent. reason: " + err.Error())
@@ -133,7 +134,7 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 		if len(results) > 0 {
 
-			context[utils.Result] = results
+			context[global.Result] = results
 
 			context[CredProfileId] = int(credential.(map[string]interface{})[CredProfileId].(float64))
 
@@ -157,11 +158,11 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 
 		*errors = append(*errors, map[string]interface{}{
 
-			utils.Error: err.Error(),
+			global.Error: err.Error(),
 
-			utils.ErrorCode: "SNMP01",
+			global.ErrorCode: "SNMP01",
 
-			utils.ErrorMsg: "error connecting to SNMP agent",
+			global.ErrorMsg: "error connecting to SNMP agent",
 		})
 
 		logger.Error("error connecting to SNMP agent: " + err.Error())
@@ -175,11 +176,11 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 
 		*errors = append(*errors, map[string]interface{}{
 
-			utils.Error: err.Error(),
+			global.Error: err.Error(),
 
-			utils.ErrorCode: "SNMP02",
+			global.ErrorCode: "SNMP02",
 
-			utils.ErrorMsg: "error in collecting objects!",
+			global.ErrorMsg: "error in collecting objects!",
 		})
 
 		logger.Error("error in discovery of device: " + err.Error())
@@ -189,7 +190,7 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 
 	if len(results) > 0 {
 
-		context[utils.Result] = map[string]interface{}{
+		context[global.Result] = map[string]interface{}{
 
 			Interface: results,
 		}

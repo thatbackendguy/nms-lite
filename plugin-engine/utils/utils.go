@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"plugin-engine/global"
+	logger2 "plugin-engine/logger"
 )
 
-var logger = NewLogger(LogFilesPath, SystemLoggerName)
+var logger = logger2.NewLogger(global.LogFilesPath, global.SystemLoggerName)
 
 func SendResponse(context []map[string]interface{}) {
 
