@@ -11,11 +11,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class Utils
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
+
+    private static final AtomicLong counter = new AtomicLong(0);
 
     public static Connection getConnection()
     {
@@ -88,5 +91,10 @@ public class Utils
             }
         }
         return true;
+    }
+
+    public static long getId()
+    {
+        return counter.incrementAndGet();
     }
 }

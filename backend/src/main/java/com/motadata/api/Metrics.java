@@ -1,5 +1,6 @@
-package com.motadata.api.handler;
+package com.motadata.api;
 
+import com.motadata.Bootstrap;
 import com.motadata.utils.Utils;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
@@ -9,29 +10,33 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-import static com.motadata.api.ApiRouter.LOGGER;
+import static com.motadata.api.APIServer.LOGGER;
 import static com.motadata.contants.Constants.*;
 
-public class MetricsHandler implements RoutesHandler
+public class Metrics
 {
     private final EventBus eventBus;
 
     private final Vertx vertx;
 
-    public MetricsHandler(Vertx vertx, EventBus eventBus)
-    {
-        this.vertx = vertx;
+    private final Router subRouter;
 
-        this.eventBus = eventBus;
+    public Metrics()
+    {
+        this.vertx = Bootstrap.getVertx();
+
+        this.eventBus = Bootstrap.getVertx().eventBus();
+
+        this.subRouter = Router.router(vertx);
     }
 
-    @Override
-    public void setupRoutes(Router router)
+    public void init(Router router)
     {
+        router.route("/metrics/*").subRouter(subRouter);
 
-        router.route(HttpMethod.GET, METRICS_ROUTE + URL_SEPARATOR + "data").handler(this::getMetricsData);
+        subRouter.route(HttpMethod.GET, URL_SEPARATOR + "data").handler(this::getMetricsData);
 
-        router.route(HttpMethod.GET, METRICS_ROUTE + URL_SEPARATOR + "interfaces").handler(this::getDeviceInterfacesData);
+        subRouter.route(HttpMethod.GET, URL_SEPARATOR + "interfaces").handler(this::getDeviceInterfacesData);
     }
 
     public void getMetricsData(RoutingContext routingContext)
@@ -40,7 +45,7 @@ public class MetricsHandler implements RoutesHandler
 
         routingContext.request().bodyHandler(buffer -> {
 
-            var requestObject = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INTERFACE_TABLE).put(EVENT_NAME, GET_INTERFACE_METRICS);
+            var requestObject = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INTERFACE).put(EVENT_NAME, GET_INTERFACE_METRICS);
 
             if(Utils.validateRequestBody(requestObject))
             {
@@ -70,7 +75,7 @@ public class MetricsHandler implements RoutesHandler
 
         routingContext.request().bodyHandler(buffer -> {
 
-            var requestObject = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INTERFACE_TABLE).put(EVENT_NAME, GET_INTERFACES);
+            var requestObject = buffer.toJsonObject().put(TABLE_NAME, NETWORK_INTERFACE).put(EVENT_NAME, GET_INTERFACES);
 
             if(Utils.validateRequestBody(requestObject))
             {

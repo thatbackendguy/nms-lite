@@ -92,11 +92,11 @@ public class Constants
 
     public static final String POST_DISCOVERY_SUCCESS_EVENT = "post.discovery.success";
 
-    public static final String DISCOVERY_PROFILE_TABLE = "discovery_profile";
+    public static final String DISCOVERY_PROFILE = "discovery_profile";
 
-    public static final String NETWORK_INTERFACE_TABLE = "network_interface";
+    public static final String NETWORK_INTERFACE = "network_interface";
 
-    public static final String CREDENTIAL_PROFILE_TABLE = "credential_profile";
+    public static final String CREDENTIAL_PROFILE = "credential_profile";
 
     public static final String GET_PROVISIONED_DEVICES_EVENT = "get.provisioned.devices";
 
@@ -174,11 +174,7 @@ public class Constants
 
     public static final String CREDENTIAL_PROFILE_ID_PARAMS = "credentialProfileId";
 
-    public static final String DISCOVERY_ROUTE = "/discovery";
-
-    public static final String CREDENTIAL_ROUTE = "/credential";
-
-    public static final String METRICS_ROUTE = "/metrics";
+    public static final String DATA = "data";
 
 
 }

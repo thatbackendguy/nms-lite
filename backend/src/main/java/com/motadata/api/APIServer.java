@@ -1,9 +1,6 @@
 package com.motadata.api;
 
 import com.motadata.Config;
-import com.motadata.api.handler.CredentialHandler;
-import com.motadata.api.handler.DiscoveryHandler;
-import com.motadata.api.handler.MetricsHandler;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerOptions;
@@ -15,9 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import static com.motadata.contants.Constants.*;
 
-public class ApiRouter extends AbstractVerticle
+public class APIServer extends AbstractVerticle
 {
-    public static final Logger LOGGER = LoggerFactory.getLogger(ApiRouter.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(APIServer.class);
 
     private ErrorHandler errorHandler()
     {
@@ -29,15 +26,13 @@ public class ApiRouter extends AbstractVerticle
     {
         var server = vertx.createHttpServer(new HttpServerOptions().setHost(Config.HOST).setPort(Config.PORT));
 
-        var eventBus = vertx.eventBus();
-
         var router = Router.router(vertx);
 
-        new CredentialHandler(vertx, eventBus).setupRoutes(router);
+        new Credential().init(router);
 
-        new DiscoveryHandler(vertx, eventBus).setupRoutes(router);
+        new Discovery().init(router);
 
-        new MetricsHandler(vertx, eventBus).setupRoutes(router);
+        new Metrics().init(router);
 
         // FOR HANDLING FAILURES
         router.route().failureHandler(errorHandler());
@@ -54,15 +49,15 @@ public class ApiRouter extends AbstractVerticle
 
             if(httpServerAsyncResult.succeeded())
             {
-                LOGGER.info(String.format("HTTP Server is now listening on http://%s:%d/", Config.HOST, Config.PORT));
-
                 startPromise.complete();
+
+                LOGGER.info(String.format("HTTP Server is now listening on http://%s:%d/", Config.HOST, Config.PORT));
             }
             else
             {
-                LOGGER.info("Failed to start the API Engine, port unavailable!");
-
                 startPromise.fail(httpServerAsyncResult.cause());
+
+                LOGGER.info("Failed to start the API Engine, port unavailable!");
             }
         });
     }

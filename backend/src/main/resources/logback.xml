@@ -71,7 +71,7 @@
     </logger>
 
     <!-- ApiEngine -->
-    <logger name="com.motadata.api.ApiRouter" level="TRACE" additivity="false">
+    <logger name="com.motadata.api.APIServer" level="TRACE" additivity="false">
         <appender-ref ref="API_ENGINE_LOGS"/>
     </logger>
 
