@@ -1,14 +1,19 @@
 package com.motadata;
 
-import com.motadata.engine.ApiEngine;
+import com.motadata.api.ApiRouter;
 import com.motadata.engine.DiscoveryEngine;
 import com.motadata.engine.PollingEngine;
 import com.motadata.manager.ConfigServiceManager;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Bootstrap
 {
@@ -18,53 +23,33 @@ public class Bootstrap
     {
         var vertx = Vertx.vertx();
 
-        vertx.deployVerticle(ConfigServiceManager.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), configServiceManagerHandler -> {
+        var workerOptions = new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER);
 
-            if(configServiceManagerHandler.succeeded())
-            {
-                LOGGER.info("Config Service Manager is up and running");
+        deployVerticle(vertx, ConfigServiceManager.class.getName(), workerOptions)
+                .compose(id -> {
+                    LOGGER.info("Config Service Manager is up and running");
 
-                vertx.deployVerticle(DiscoveryEngine.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), discoveryEngineHandler -> {
+                    return deployVerticle(vertx, DiscoveryEngine.class.getName(), workerOptions);
+                })
+                .compose(id -> {
+                    LOGGER.info("Discovery engine is up and running");
 
-                    if(discoveryEngineHandler.succeeded())
-                    {
-                        LOGGER.info("Discovery engine is up and running");
+                    return deployVerticle(vertx, PollingEngine.class.getName(), workerOptions);
+                })
+                .compose(id -> {
+                    LOGGER.info("Polling engine is up and running");
 
-                        vertx.deployVerticle(PollingEngine.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER), pollingEngineHandler -> {
+                    return deployVerticle(vertx, ApiRouter.class.getName(), new DeploymentOptions());
+                })
+                .onSuccess(id -> {
+                    LOGGER.info("API engine is up and running");
+                })
+                .onFailure(err -> LOGGER.error("Deployment failed: {}", err.getMessage()));
 
-                            if(pollingEngineHandler.succeeded())
-                            {
-                                LOGGER.info("Polling engine is up and running");
+    }
 
-                                vertx.deployVerticle(ApiEngine.class.getName(), apiEngineHandler -> {
-
-                                    if(apiEngineHandler.succeeded())
-                                    {
-                                        LOGGER.info("API engine is up and running");
-                                    }
-                                    else
-                                    {
-                                        LOGGER.error(apiEngineHandler.cause().getMessage());
-                                    }
-                                });
-                            }
-                            else
-                            {
-                                LOGGER.error(pollingEngineHandler.cause().getMessage());
-                            }
-                        });
-                    }
-                    else
-                    {
-                        LOGGER.error(discoveryEngineHandler.cause().getMessage());
-                    }
-                });
-            }
-            else
-            {
-                LOGGER.error(configServiceManagerHandler.cause().getMessage());
-            }
-        });
-
+    private static Future<String> deployVerticle(Vertx vertx, String verticleName, DeploymentOptions options)
+    {
+        return vertx.deployVerticle(verticleName, options);
     }
 }

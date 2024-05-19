@@ -1,11 +1,10 @@
 package com.motadata.engine;
 
-import com.motadata.utils.Config;
+import com.motadata.Config;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,7 @@ import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
-import static com.motadata.utils.Constants.*;
+import static com.motadata.contants.Constants.*;
 
 public class PollingEngine extends AbstractVerticle
 {
@@ -44,8 +43,7 @@ public class PollingEngine extends AbstractVerticle
 
                                 LOGGER.trace("Polling initiated\t{}", encodedString);
 
-
-                                var processBuilder = new ProcessBuilder("/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine", encodedString);
+                                var processBuilder = new ProcessBuilder(GO_PLUGIN_ENGINE_PATH, encodedString);
 
                                 processBuilder.redirectErrorStream(true);
 

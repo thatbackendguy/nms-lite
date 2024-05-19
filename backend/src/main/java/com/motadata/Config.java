@@ -1,5 +1,6 @@
-package com.motadata.utils;
+package com.motadata;
 
+import com.motadata.contants.Constants;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

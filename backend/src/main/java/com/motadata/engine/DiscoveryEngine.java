@@ -14,8 +14,7 @@ import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
-import static com.motadata.utils.Constants.*;
-import static com.motadata.utils.Constants.CREDENTIAL_PROFILE_ID;
+import static com.motadata.contants.Constants.*;
 
 public class DiscoveryEngine extends AbstractVerticle
 {
@@ -29,7 +28,7 @@ public class DiscoveryEngine extends AbstractVerticle
         eventBus.localConsumer(RUN_DISCOVERY_EVENT, msg -> {
             try
             {
-                var processBuilder = new ProcessBuilder("/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine", msg.body().toString());
+                var processBuilder = new ProcessBuilder(GO_PLUGIN_ENGINE_PATH, msg.body().toString());
 
                 processBuilder.redirectErrorStream(true);
 

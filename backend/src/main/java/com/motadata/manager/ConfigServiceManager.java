@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import static com.motadata.utils.Constants.*;
+import static com.motadata.contants.Constants.*;
 
 public class ConfigServiceManager extends AbstractVerticle
 {
@@ -895,7 +895,7 @@ public class ConfigServiceManager extends AbstractVerticle
         });
 
         // REMOVE PROVISIONED DEVICE
-        eventBus.localConsumer(STOP_POLLING_EVENT, msg -> {
+        eventBus.localConsumer(UNPROVISION_DEVICE, msg -> {
             try
             {
                 var discProfileId = Integer.parseInt(msg.body().toString());

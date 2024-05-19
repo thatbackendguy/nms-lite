@@ -1,0 +1,69 @@
+package com.motadata.api;
+
+import com.motadata.Config;
+import com.motadata.api.handler.CredentialHandler;
+import com.motadata.api.handler.DiscoveryHandler;
+import com.motadata.api.handler.MetricsHandler;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.ErrorHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.motadata.contants.Constants.*;
+
+public class ApiRouter extends AbstractVerticle
+{
+    public static final Logger LOGGER = LoggerFactory.getLogger(ApiRouter.class);
+
+    private ErrorHandler errorHandler()
+    {
+        return ErrorHandler.create(vertx);
+    }
+
+    @Override
+    public void start(Promise<Void> startPromise) throws Exception
+    {
+        var server = vertx.createHttpServer(new HttpServerOptions().setHost(Config.HOST).setPort(Config.PORT));
+
+        var eventBus = vertx.eventBus();
+
+        var router = Router.router(vertx);
+
+        new CredentialHandler(vertx, eventBus).setupRoutes(router);
+
+        new DiscoveryHandler(vertx, eventBus).setupRoutes(router);
+
+        new MetricsHandler(vertx, eventBus).setupRoutes(router);
+
+        // FOR HANDLING FAILURES
+        router.route().failureHandler(errorHandler());
+
+        // GET: "/"
+        router.route(URL_SEPARATOR).handler(ctx -> {
+
+            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+
+            ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
+        });
+
+        server.requestHandler(router).listen(httpServerAsyncResult -> {
+
+            if(httpServerAsyncResult.succeeded())
+            {
+                LOGGER.info(String.format("HTTP Server is now listening on http://%s:%d/", Config.HOST, Config.PORT));
+
+                startPromise.complete();
+            }
+            else
+            {
+                LOGGER.info("Failed to start the API Engine, port unavailable!");
+
+                startPromise.fail(httpServerAsyncResult.cause());
+            }
+        });
+    }
+}

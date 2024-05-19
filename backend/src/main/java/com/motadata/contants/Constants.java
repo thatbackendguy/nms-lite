@@ -1,4 +1,4 @@
-package com.motadata.utils;
+package com.motadata.contants;
 
 public class Constants
 {
@@ -102,7 +102,7 @@ public class Constants
 
     public static final String STORE_POLLED_DATA_EVENT = "store.polled.data";
 
-    public static final String STOP_POLLING_EVENT = "polling.stop";
+    public static final String UNPROVISION_DEVICE = "unprovision.device";
 
     public static final String INTERFACE_INDEX = "interface.index";
 
@@ -159,6 +159,26 @@ public class Constants
     public static final String GET_INTERFACES = "get.interfaces";
 
     public static final String GET_INTERFACE_METRICS = "get.interface.metrics";
+
+    public static final String URL_SEPARATOR = "/";
+
+    public static final String COLON_SEPARATOR = ":";
+
+    public static final String PROVISION = "provision";
+
+    public static final String RUN = "run";
+
+    public static final String GO_PLUGIN_ENGINE_PATH = "/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine";
+
+    public static final String DISCOVERY_PROFILE_ID_PARAMS = "discoveryProfileId";
+
+    public static final String CREDENTIAL_PROFILE_ID_PARAMS = "credentialProfileId";
+
+    public static final String DISCOVERY_ROUTE = "/discovery";
+
+    public static final String CREDENTIAL_ROUTE = "/credential";
+
+    public static final String METRICS_ROUTE = "/metrics";
 
 
 }

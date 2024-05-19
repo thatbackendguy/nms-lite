@@ -4,5 +4,5 @@
   "database.uri": "jdbc:mysql://localhost:3306/configDB",
   "database.username": "root",
   "database.password": "Root@1010",
-  "polling.interval": 300000
+  "polling.interval": 30000
 }
