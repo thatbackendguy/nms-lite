@@ -1,5 +1,6 @@
 {
   "host": "127.0.0.1",
   "port": 8080,
-  "polling.interval": 30000
+  "polling.interval": 30000,
+  "go.plugin.path": "/home/yash/Documents/GitHub/nms-lite/backend/pluginEngine/plugin-engine"
 }

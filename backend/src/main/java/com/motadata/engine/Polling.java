@@ -25,33 +25,37 @@ public class Polling extends AbstractVerticle
         var vertx = Bootstrap.getVertx();
 
         vertx.setPeriodic(Config.POLLING_INTERVAL, timerId -> {
-
-            var context = new JsonArray();
-
-            for(var discoveryProfileId : ConfigDB.provisionedDevices.values())
+            try
             {
-                var discoveryProfile = ConfigDB.discoveredDevices.get(discoveryProfileId);
 
-                if(discoveryProfile != null)
+                var context = new JsonArray();
+
+                for(var monitor : ConfigDB.provisionedDevices.values())
                 {
-                    context.add(discoveryProfile.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
+                    if(monitor != null)
+                    {
+                        context.add(monitor.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
+                    }
                 }
-            }
 
-            var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
+                var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
-            var results = Utils.spawnPluginEngine(encodedString);
+                var results = Utils.spawnPluginEngine(encodedString);
 
-            for(var result : results)
+                for(var result : results)
+                {
+                    var monitor = new JsonObject(result.toString());
+
+                    LOGGER.trace(monitor.toString());
+
+                    if(monitor.getString(STATUS).equals(SUCCESS))
+                    {
+                        Utils.writeToFile(vertx, monitor).onComplete(event -> LOGGER.trace("Result written to file"));
+                    }
+                }
+            } catch(Exception exception)
             {
-                var monitor = new JsonObject(result.toString());
-
-                LOGGER.trace(monitor.toString());
-
-                if(monitor.getString(STATUS).equals(SUCCESS))
-                {
-                    Utils.writeToFile(vertx, monitor).onComplete(event -> LOGGER.trace("Result written to file"));
-                }
+                LOGGER.error(ERROR_CONTAINER, exception.getMessage());
             }
         });
 

@@ -13,18 +13,16 @@ import static com.motadata.constants.Constants.*;
 
 public class ConfigDB
 {
-    private ConfigDB()
-    {}
+    public static final ConcurrentHashMap<Long, JsonObject> provisionedDevices = new ConcurrentHashMap<>();
 
     static final Logger LOGGER = LoggerFactory.getLogger(ConfigDB.class);
 
-    private static final ConcurrentHashMap<Long,JsonObject> credentialProfiles = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, JsonObject> credentialProfiles = new ConcurrentHashMap<>();
 
-    private static final ConcurrentHashMap<Long,JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
-    public static final ConcurrentHashMap<Long,JsonObject> discoveredDevices = new ConcurrentHashMap<>();
-
-    public static final ConcurrentHashMap<Long,Long> provisionedDevices = new ConcurrentHashMap<>();
+    private ConfigDB()
+    {}
 
     public static JsonObject create(JsonObject request)
     {
@@ -38,13 +36,14 @@ public class ConfigDB
 
             switch(request.getString(REQUEST_TYPE))
             {
-                case CREDENTIAL_PROFILE -> {
+                case CREDENTIAL_PROFILE ->
+                {
 
                     for(var credentialProfile : credentialProfiles.values())
                     {
                         if(data.getString(CREDENTIAL_NAME).equals(credentialProfile.getString(CREDENTIAL_NAME)))
                         {
-                            response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code()).put(ERR_MESSAGE, String.format("error in saving %s, because credentialProfile name is already used",request.getString(REQUEST_TYPE))));
+                            response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code()).put(ERR_MESSAGE, String.format("error in saving %s, because credentialProfile name is already used", request.getString(REQUEST_TYPE))));
 
                             return response;
                         }
@@ -54,18 +53,18 @@ public class ConfigDB
 
                     credentialProfiles.put(id, data);
 
-                    response.put(CREDENTIAL_PROFILE_ID, id).put(MESSAGE,"Credential profile created successfully");
-
+                    response.put(CREDENTIAL_PROFILE_ID, id).put(MESSAGE, "Credential profile created successfully");
 
 
                 }
-                case DISCOVERY_PROFILE -> {
+                case DISCOVERY_PROFILE ->
+                {
 
                     for(var discoveryProfile : discoveryProfiles.values())
                     {
                         if(data.getString(DISCOVERY_NAME).equals(discoveryProfile.getString(DISCOVERY_NAME)))
                         {
-                            response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code()).put(ERR_MESSAGE, String.format("error in saving %s, because discovery name is already used",request.getString(REQUEST_TYPE))));
+                            response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code()).put(ERR_MESSAGE, String.format("error in saving %s, because discovery name is already used", request.getString(REQUEST_TYPE))));
 
                             return response;
                         }
@@ -75,14 +74,13 @@ public class ConfigDB
 
                     discoveryProfiles.put(id, data);
 
-                    response.put(DISCOVERY_PROFILE_ID, id).put(MESSAGE,"Discovery profile created successfully");
+                    response.put(DISCOVERY_PROFILE_ID, id).put(MESSAGE, "Discovery profile created successfully");
 
 
                 }
             }
 
-        }
-        catch(Exception exception)
+        } catch(Exception exception)
         {
             response.put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing INSERT operation"));
 
@@ -104,7 +102,8 @@ public class ConfigDB
 
             switch(request.getString(REQUEST_TYPE))
             {
-                case CREDENTIAL_PROFILE -> {
+                case CREDENTIAL_PROFILE ->
+                {
                     if(data == null)
                     {
                         var credentialObjects = new JsonArray();
@@ -125,7 +124,8 @@ public class ConfigDB
                     }
 
                 }
-                case DISCOVERY_PROFILE -> {
+                case DISCOVERY_PROFILE ->
+                {
                     if(data == null)
                     {
                         var discoveryObjects = new JsonArray();
@@ -145,36 +145,16 @@ public class ConfigDB
                         }
                     }
                 }
-                case DISCOVERED_DEVICES-> {
-                    if(data == null)
-                    {
-                        var discoveredObjects = new JsonArray();
 
-                        for(var id : discoveredDevices.keySet())
-                        {
-                            discoveredObjects.add(new JsonObject().put(id.toString(), discoveredDevices.get(id)));
-                        }
-
-                        response.put(RESULT, discoveredObjects);
-                    }
-                    else
-                    {
-                        if(discoveredDevices.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
-                        {
-                            response.put(RESULT, discoveredDevices.get(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))));
-                        }
-                    }
-                }
             }
-        }
-        catch(Exception exception)
+
+        } catch(Exception exception)
         {
             response.put(STATUS, FAILED);
 
             response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing GET operation"));
 
             LOGGER.error(exception.getMessage());
-
         }
 
         return response;
@@ -192,45 +172,46 @@ public class ConfigDB
 
             switch(request.getString(REQUEST_TYPE))
             {
-                case CREDENTIAL_PROFILE -> {
+                case CREDENTIAL_PROFILE ->
+                {
 
                     if(credentialProfiles.containsKey(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))))
                     {
                         var credential = credentialProfiles.get(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID)));
 
-                        credential.put(VERSION,data.getString(VERSION));
+                        credential.put(VERSION, data.getString(VERSION));
 
-                        credential.put(SNMP_COMMUNITY,data.getString(SNMP_COMMUNITY));
+                        credential.put(SNMP_COMMUNITY, data.getString(SNMP_COMMUNITY));
 
-                        response.put(MESSAGE,"Credential profile updated successfully!");
+                        response.put(MESSAGE, "Credential profile updated successfully!");
                     }
                     else
                     {
-                        response.put(ERROR, new JsonObject().put(ERROR, "Error in updating credential profile").put(ERR_STATUS_CODE, HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s",data.getString(CREDENTIAL_PROFILE_ID))));
+                        response.put(ERROR, new JsonObject().put(ERROR, "Error in updating credential profile").put(ERR_STATUS_CODE, HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(CREDENTIAL_PROFILE_ID))));
                     }
                 }
-                case DISCOVERY_PROFILE -> {
+                case DISCOVERY_PROFILE ->
+                {
 
                     if(discoveryProfiles.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
                     {
                         var discoveryProfile = discoveryProfiles.get(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID)));
 
-                        discoveryProfile.put(PORT,data.getInteger(PORT));
+                        discoveryProfile.put(PORT, data.getInteger(PORT));
 
-                        discoveryProfile.put(OBJECT_IP,data.getString(OBJECT_IP));
+                        discoveryProfile.put(OBJECT_IP, data.getString(OBJECT_IP));
 
-                        response.put(MESSAGE,"Discovery profile updated successfully!");
+                        response.put(MESSAGE, "Discovery profile updated successfully!");
                     }
                     else
                     {
-                        response.put(ERROR, new JsonObject().put(ERROR, "Error in updating discovery profile").put(ERR_STATUS_CODE, HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s",data.getString(DISCOVERY_PROFILE_ID))));
+                        response.put(ERROR, new JsonObject().put(ERROR, "Error in updating discovery profile").put(ERR_STATUS_CODE, HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(DISCOVERY_PROFILE_ID))));
                     }
                 }
             }
 
 
-        }
-        catch(Exception exception)
+        } catch(Exception exception)
         {
             response.put(STATUS, FAILED);
 
@@ -255,36 +236,43 @@ public class ConfigDB
             switch(request.getString(REQUEST_TYPE))
             {
 
-                case CREDENTIAL_PROFILE -> {
+                case CREDENTIAL_PROFILE ->
+                {
 
                     if(credentialProfiles.containsKey(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))))
                     {
                         credentialProfiles.remove(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID)));
 
-                        response.put(MESSAGE,"Credential profile deleted successfully!");
+                        response.put(MESSAGE, "Credential profile deleted successfully!");
                     }
                     else
                     {
-                        response.put(ERROR, new JsonObject().put(ERROR, "Error in deleting credential profile").put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s",data.getString(CREDENTIAL_PROFILE_ID))));
+                        response.put(ERROR, new JsonObject().put(ERROR, "Error in deleting credential profile").put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(CREDENTIAL_PROFILE_ID))));
                     }
                 }
 
-                case DISCOVERY_PROFILE -> {
+                case DISCOVERY_PROFILE ->
+                {
 
-                    if(discoveryProfiles.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
+                    var discoveryProfileId = Long.parseLong(data.getString(DISCOVERY_PROFILE_ID));
+
+                    if(discoveryProfiles.containsKey(discoveryProfileId))
                     {
-                        discoveryProfiles.remove(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID)));
+                        var credentialProfileId = Long.parseLong(discoveryProfiles.get(discoveryProfileId).getString(CREDENTIAL_PROFILE_ID));
 
-                        response.put(MESSAGE,"Discovery profile deleted successfully!");
+                        Utils.decrementCounter(credentialProfileId);
+
+                        discoveryProfiles.remove(discoveryProfileId);
+
+                        response.put(MESSAGE, "Discovery profile deleted successfully!");
                     }
                     else
                     {
-                        response.put(ERROR, new JsonObject().put(ERROR, "Error in deleting discovery profile").put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s",data.getString(DISCOVERY_PROFILE_ID))));
+                        response.put(ERROR, new JsonObject().put(ERROR, "Error in deleting discovery profile").put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(DISCOVERY_PROFILE_ID))));
                     }
                 }
             }
-        }
-        catch(Exception exception)
+        } catch(Exception exception)
         {
             response.put(STATUS, FAILED);
 

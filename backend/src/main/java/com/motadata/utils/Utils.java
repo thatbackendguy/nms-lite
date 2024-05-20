@@ -1,5 +1,6 @@
 package com.motadata.utils;
 
+import com.motadata.config.Config;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -14,7 +15,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Base64;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.motadata.constants.Constants.*;
@@ -22,6 +26,8 @@ import static com.motadata.constants.Constants.*;
 
 public class Utils
 {
+    private static final ConcurrentMap<Long, AtomicInteger> counters = new ConcurrentHashMap<>();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 
     private static final AtomicLong counter = new AtomicLong(0);
@@ -49,19 +55,65 @@ public class Utils
     {
         Promise<Void> promise = Promise.promise();
 
-        var fileName = data.getString(OBJECT_IP, "localhost") + ".txt";
+        var objectIp = data.getString(OBJECT_IP, "localhost");
 
-        var buffer = Buffer.buffer(data.encodePrettily());
+        var mainDirName = "metrics-result";
 
-        vertx.fileSystem().openBlocking(fileName, new OpenOptions().setAppend(true).setCreate(true)).write(buffer).onComplete(handler -> {
-            LOGGER.info("Content written to file");
+        var ipDirName = mainDirName + "/" + objectIp;
 
-            promise.complete();
+        var result = data.getJsonObject("result");
 
-        }).onFailure(handler -> {
-            LOGGER.warn("Error occurred while opening the file {}", handler.getCause().toString());
+        var interfaces = result.getJsonArray("interface");
 
-            promise.fail(handler.getCause());
+        vertx.fileSystem().mkdirs(ipDirName, mkdirsResult -> {
+            if(mkdirsResult.succeeded())
+            {
+                LOGGER.info("Created directory: {}", ipDirName);
+
+                for(Object interfaceObj : interfaces)
+                {
+                    var interfaceJson = new JsonObject(interfaceObj.toString());
+
+                    var interfaceName = interfaceJson.getString(INTERFACE_NAME).replace("/", "-").replace(".", "-");
+
+                    var fileName = ipDirName + "/" + interfaceName + ".txt";
+
+                    vertx.fileSystem().open(fileName, new OpenOptions().setAppend(true).setCreate(true), openResult -> {
+                        if(openResult.succeeded())
+                        {
+                            var file = openResult.result();
+
+                            var buffer = Buffer.buffer(interfaceJson.encodePrettily() + "\n");
+
+                            file.write(buffer, writeResult -> {
+                                if(writeResult.succeeded())
+                                {
+                                    LOGGER.info("Content appended to file: {}", fileName);
+
+                                    file.close();
+                                }
+                                else
+                                {
+                                    LOGGER.warn("Error occurred while writing to file {}: {}", fileName, writeResult.cause().getMessage());
+                                    file.close();
+                                }
+                            });
+                        }
+                        else
+                        {
+                            LOGGER.warn("Error occurred while opening file {}: {}", fileName, openResult.cause().getMessage());
+                        }
+                    });
+                }
+
+                promise.complete();
+            }
+            else
+            {
+                LOGGER.warn("Error occurred while creating directory {}: {}", ipDirName, mkdirsResult.cause().getMessage());
+
+                promise.fail(mkdirsResult.cause());
+            }
         });
 
         return promise.future();
@@ -73,7 +125,7 @@ public class Utils
 
         try
         {
-            var processBuilder = new ProcessBuilder(GO_PLUGIN_ENGINE_PATH, encodedString).redirectErrorStream(true);
+            var processBuilder = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH, encodedString).redirectErrorStream(true);
 
             LOGGER.trace("Initiating process builder");
 
@@ -156,6 +208,35 @@ public class Utils
         LOGGER.debug("{} device is DOWN!", objectIp);
 
         return false;
+    }
+
+    public static int incrementCounter(long credentialProfileId)
+    {
+        return counters.computeIfAbsent(credentialProfileId, k -> new AtomicInteger(0)).incrementAndGet();
+    }
+
+    public static int decrementCounter(long credentialProfileId)
+    {
+        var counter = counters.get(credentialProfileId);
+
+        if(counter != null)
+        {
+            return counter.decrementAndGet();
+        }
+
+        return 0;
+    }
+
+    public static void resetCounter(long credentialProfileId)
+    {
+        counters.put(credentialProfileId, new AtomicInteger(0));
+    }
+
+    public static int getCounter(long credentialProfileId)
+    {
+        var counter = counters.get(credentialProfileId);
+
+        return counter != null ? counter.get() : 0;
     }
 
 }

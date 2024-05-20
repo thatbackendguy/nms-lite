@@ -1,7 +1,9 @@
 package com.motadata;
 
 import com.motadata.api.APIServer;
-import com.motadata.engine.*;
+import com.motadata.constants.Constants;
+import com.motadata.engine.Discovery;
+import com.motadata.engine.Polling;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
@@ -16,15 +18,24 @@ public class Bootstrap
 
     public static void main(String[] args)
     {
-        var workerOptions = new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER);
+        try
+        {
+            var workerOptions = new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER);
 
-        vertx.deployVerticle(Discovery.class.getName(), workerOptions)
+            vertx.deployVerticle(Discovery.class.getName(), workerOptions)
 
-                .compose(id->vertx.deployVerticle(Polling.class.getName(), workerOptions))
+                    .compose(id -> vertx.deployVerticle(Polling.class.getName(), workerOptions))
 
-                .compose(id -> vertx.deployVerticle(APIServer.class.getName()))
+                    .compose(id -> vertx.deployVerticle(APIServer.class.getName()))
 
-                .onFailure(err -> LOGGER.error("Deployment failed: {}", err.getMessage()));
+                    .onSuccess(handler -> LOGGER.info("All verticles deployed"))
+
+                    .onFailure(exception -> LOGGER.error("Deployment failed: {}", exception.getMessage()));
+
+        } catch(Exception exception)
+        {
+            LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
+        }
     }
 
     public static Vertx getVertx()

@@ -168,9 +168,11 @@ public class Constants
 
     public static final String RUN = "run";
 
-    public static final String GO_PLUGIN_ENGINE_PATH = "/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine";
+    public static final String GO_PLUGIN_ENGINE_PATH = "go.plugin.path";
 
     public static final String DISCOVERY_PROFILE_ID_PARAMS = "discoveryProfileId";
+
+    public static final String PROVISION_ID_PARAMS = "provisionId";
 
     public static final String CREDENTIAL_PROFILE_ID_PARAMS = "credentialProfileId";
 

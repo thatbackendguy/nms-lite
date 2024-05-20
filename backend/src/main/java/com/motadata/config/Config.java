@@ -21,6 +21,8 @@ public class Config
 
     public static long POLLING_INTERVAL;
 
+    public static String GO_PLUGIN_ENGINE_PATH;
+
     static
     {
         var config = loadConfig();
@@ -30,6 +32,8 @@ public class Config
         PORT = config.getInteger(Constants.PORT, 8080);
 
         POLLING_INTERVAL = config.getLong(Constants.POLLING_INTERVAL, 300_000L);
+
+        GO_PLUGIN_ENGINE_PATH = config.getString(Constants.GO_PLUGIN_ENGINE_PATH, System.getProperty("user.dir") + "/pluginEngine/plugin-engine");
 
     }
 

@@ -21,26 +21,39 @@ public class Discovery extends AbstractVerticle
         var eventBus = Bootstrap.getVertx().eventBus();
 
         eventBus.localConsumer(RUN_DISCOVERY_EVENT, msg -> {
-
-            var results = Utils.spawnPluginEngine(msg.body().toString());
-
-            for(var result : results)
+            try
             {
-                var monitor = new JsonObject(result.toString());
 
-                LOGGER.trace(monitor.toString());
+                var results = Utils.spawnPluginEngine(msg.body().toString());
 
-                if(monitor.getString(STATUS).equals(SUCCESS))
+                for(var result : results)
                 {
-                    if(!ConfigDB.discoveredDevices.containsKey(Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))
+                    var monitor = new JsonObject(result.toString());
+
+                    LOGGER.trace(monitor.toString());
+
+                    if(monitor.getString(STATUS).equals(SUCCESS))
                     {
-                        var credentialProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, monitor.getString(CREDENTIAL_PROFILE_ID)))).getJsonObject(RESULT).put(CREDENTIAL_PROFILE_ID, monitor.getString(CREDENTIAL_PROFILE_ID));
 
-                        ConfigDB.discoveredDevices.put(Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID)), new JsonObject().put(OBJECT_IP, monitor.getString(OBJECT_IP)).put(PORT, monitor.getInteger(PORT)).put(VERSION, credentialProfile.getString(VERSION)).put(SNMP_COMMUNITY, credentialProfile.getString(SNMP_COMMUNITY)));
+                        var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))).getJsonObject(RESULT);
 
-                        LOGGER.trace("Discovered monitor saved to database");
+                        if(!discoveryProfile.getBoolean(IS_DISCOVERED, false))
+                        {
+                            var credentialProfileId = Long.parseLong(monitor.getString(CREDENTIAL_PROFILE_ID));
+
+                            discoveryProfile.put(IS_DISCOVERED, true);
+
+                            discoveryProfile.put(CREDENTIAL_PROFILE_ID, credentialProfileId);
+
+                            Utils.incrementCounter(credentialProfileId);
+                        }
+
+                        LOGGER.trace("Monitor status updated");
                     }
                 }
+            } catch(Exception exception)
+            {
+                LOGGER.error(ERROR_CONTAINER, exception.getMessage());
             }
         });
 
