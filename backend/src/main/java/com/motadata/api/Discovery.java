@@ -359,23 +359,28 @@ public class Discovery
     {
         try
         {
+            var response = new JsonObject();
+
             LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
             var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
 
-            var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERED_DEVICES).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId)));
+            var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId))).getJsonObject(RESULT);
 
-            if(response.isEmpty())
+            if(discoveryProfile != null)
             {
-                response.put(STATUS, FAILED).put(ERROR, "No discovery result found for ID: " + discProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
-            }
-            else if(response.containsKey(ERROR))
-            {
-                response.put(STATUS, FAILED);
+                if(discoveryProfile.getJsonObject(RESULT).getBoolean(IS_DISCOVERED, false))
+                {
+                    response.put(STATUS, SUCCESS).put(MESSAGE,"Device discovered successfully");
+                }
+                else
+                {
+                    response.put(STATUS, FAILED).put(ERROR, "No discovery result found for ID: " + discProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
+                }
             }
             else
             {
-                response.put(STATUS, SUCCESS);
+                response.put(STATUS, FAILED).put(ERROR, "No discovery result found for ID: " + discProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
             }
 
             routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());

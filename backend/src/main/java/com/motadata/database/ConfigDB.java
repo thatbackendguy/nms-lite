@@ -258,9 +258,12 @@ public class ConfigDB
 
                     if(discoveryProfiles.containsKey(discoveryProfileId))
                     {
-                        var credentialProfileId = Long.parseLong(discoveryProfiles.get(discoveryProfileId).getString(CREDENTIAL_PROFILE_ID));
+                        if(discoveryProfiles.get(discoveryProfileId).containsKey(CREDENTIAL_PROFILE_ID))
+                        {
+                            var credentialProfileId = Long.parseLong(discoveryProfiles.get(discoveryProfileId).getString(CREDENTIAL_PROFILE_ID));
 
-                        Utils.decrementCounter(credentialProfileId);
+                            Utils.decrementCounter(credentialProfileId);
+                        }
 
                         discoveryProfiles.remove(discoveryProfileId);
 
@@ -276,7 +279,7 @@ public class ConfigDB
         {
             response.put(STATUS, FAILED);
 
-            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing UPDATE operation"));
+            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing DELETE operation"));
 
             LOGGER.error(exception.getMessage());
 
