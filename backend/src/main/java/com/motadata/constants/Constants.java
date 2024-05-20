@@ -1,4 +1,4 @@
-package com.motadata.contants;
+package com.motadata.constants;
 
 public class Constants
 {

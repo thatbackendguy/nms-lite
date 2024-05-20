@@ -12,7 +12,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 import static com.motadata.api.APIServer.LOGGER;
-import static com.motadata.contants.Constants.*;
+import static com.motadata.constants.Constants.*;
 
 public class Credential
 {
@@ -49,7 +49,7 @@ public class Credential
 
     public void addCredential(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         routingContext.request().bodyHandler(buffer -> {
 
@@ -91,7 +91,7 @@ public class Credential
 
     public void getAllCredentials(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE));
 
@@ -111,7 +111,7 @@ public class Credential
 
     public void getCredential(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var credProfileId = routingContext.request().getParam(CREDENTIAL_PROFILE_ID_PARAMS);
 
@@ -131,7 +131,7 @@ public class Credential
 
     public void updateCredential(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var credProfileId = routingContext.request().getParam(CREDENTIAL_PROFILE_ID_PARAMS);
 
@@ -174,7 +174,7 @@ public class Credential
 
     public void deleteCredential(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var credProfileId = routingContext.request().getParam(CREDENTIAL_PROFILE_ID_PARAMS);
 

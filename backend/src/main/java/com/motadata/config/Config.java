@@ -1,6 +1,6 @@
-package com.motadata;
+package com.motadata.config;
 
-import com.motadata.contants.Constants;
+import com.motadata.constants.Constants;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public class Config
 
         PORT = config.getInteger(Constants.PORT, 8080);
 
-        POLLING_INTERVAL = config.getLong(Constants.POLLING_INTERVAL, 30_000L);
+        POLLING_INTERVAL = config.getLong(Constants.POLLING_INTERVAL, 300_000L);
 
     }
 

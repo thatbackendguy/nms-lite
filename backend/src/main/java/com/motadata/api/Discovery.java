@@ -2,7 +2,6 @@ package com.motadata.api;
 
 import com.motadata.Bootstrap;
 import com.motadata.database.ConfigDB;
-import com.motadata.utils.ProcessUtils;
 import com.motadata.utils.Utils;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
@@ -17,7 +16,7 @@ import java.util.Base64;
 
 import static com.motadata.api.APIServer.LOGGER;
 
-import static com.motadata.contants.Constants.*;
+import static com.motadata.constants.Constants.*;
 
 public class Discovery
 {
@@ -46,24 +45,24 @@ public class Discovery
 
         subRouter.route(HttpMethod.GET, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::getDiscovery);
 
-        subRouter.route(HttpMethod.POST, URL_SEPARATOR + RUN).handler(this::runDiscovery);
-
-        subRouter.route(HttpMethod.GET, URL_SEPARATOR + RESULT + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::getDiscoveryResult);
-
         subRouter.route(HttpMethod.PUT, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::updateDiscovery);
 
         subRouter.route(HttpMethod.DELETE, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::deleteDiscovery);
 
+        subRouter.route(HttpMethod.POST, URL_SEPARATOR + RUN).handler(this::runDiscovery);
+
+        subRouter.route(HttpMethod.GET, URL_SEPARATOR + RESULT + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::getDiscoveryResult);
+
         subRouter.route(HttpMethod.POST, URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::provisionDevice);
 
-        //        subRouter.route(HttpMethod.GET, URL_SEPARATOR + PROVISION).handler(this::getProvisionedDevices);
+//        subRouter.route(HttpMethod.GET, URL_SEPARATOR + PROVISION).handler(this::getProvisionedDevices);
 
         //        subRouter.route(HttpMethod.DELETE, URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::unProvisionDevice);
     }
 
     public void addDiscovery(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         routingContext.request().bodyHandler(buffer -> {
 
@@ -133,7 +132,7 @@ public class Discovery
 
     public void getAllDiscoveries(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE));
 
@@ -157,7 +156,7 @@ public class Discovery
 
     public void getDiscovery(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
 
@@ -181,7 +180,7 @@ public class Discovery
 
     public void updateDiscovery(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
 
@@ -225,7 +224,7 @@ public class Discovery
 
     public void deleteDiscovery(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
 
@@ -249,7 +248,7 @@ public class Discovery
 
     public void runDiscovery(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
                 /* Example:
                  [{"discovery.profile.id": 2,"credentials": [1,2,3,4,5]}]
@@ -265,18 +264,11 @@ public class Discovery
                 {
                     var monitor = new JsonObject(object.toString());
 
-                    //TODO: working on run discovery
-
                     var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, monitor.getString(DISCOVERY_PROFILE_ID)))).getJsonObject(RESULT).put(DISCOVERY_PROFILE_ID, monitor.getString(DISCOVERY_PROFILE_ID));
 
-                    if(!discoveryProfile.isEmpty() && ProcessUtils.pingCheck(discoveryProfile.getString(OBJECT_IP)))
+                    if(!discoveryProfile.isEmpty() && Utils.pingCheck(discoveryProfile.getString(OBJECT_IP)))
                     {
                         discoveryProfile.put(REQUEST_TYPE, DISCOVERY).put(PLUGIN_NAME, NETWORK);
-
-                        if(ConfigDB.validCredentials.containsKey(Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))
-                        {
-                            // TODO: device already discovered
-                        }
 
                         var credentialProfileIds = discoveryProfile.getJsonArray(CREDENTIALS);
 
@@ -313,7 +305,7 @@ public class Discovery
 
     public void getDiscoveryResult(RoutingContext routingContext)
     {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
 
@@ -338,7 +330,7 @@ public class Discovery
     public void provisionDevice(RoutingContext routingContext)
     {
 
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
         var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
 
@@ -378,7 +370,7 @@ public class Discovery
 
     //    public void unProvisionDevice(RoutingContext routingContext)
     //    {
-    //        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+    //        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
     //
     //        var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
     //
@@ -397,7 +389,7 @@ public class Discovery
     //    public void getProvisionedDevices(RoutingContext routingContext)
     //    {
     //
-    //        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+    //        LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
     //
     //        eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, GET_PROVISIONED_DEVICES_EVENT), ar -> {
     //            if(ar.succeeded())

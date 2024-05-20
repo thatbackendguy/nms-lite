@@ -1,6 +1,6 @@
 package com.motadata.api;
 
-import com.motadata.Config;
+import com.motadata.config.Config;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerOptions;
@@ -10,7 +10,7 @@ import io.vertx.ext.web.handler.ErrorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.motadata.contants.Constants.*;
+import static com.motadata.constants.Constants.*;
 
 public class APIServer extends AbstractVerticle
 {
@@ -38,7 +38,7 @@ public class APIServer extends AbstractVerticle
         // GET: "/"
         router.route(URL_SEPARATOR).handler(ctx -> {
 
-            LOGGER.info(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+            LOGGER.trace(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
             ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
         });

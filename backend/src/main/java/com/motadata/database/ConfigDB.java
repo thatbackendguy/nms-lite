@@ -8,9 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.motadata.contants.Constants.*;
+import static com.motadata.constants.Constants.*;
 
 public class ConfigDB
 {
@@ -23,7 +22,7 @@ public class ConfigDB
 
     private static final ConcurrentHashMap<Long,JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
-    public static final ConcurrentHashMap<Long,JsonObject> validCredentials = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<Long,JsonObject> discoveredDevices = new ConcurrentHashMap<>();
 
     public static final ConcurrentHashMap<Long,Long> provisionedDevices = new ConcurrentHashMap<>();
 
@@ -151,18 +150,18 @@ public class ConfigDB
                     {
                         var discoveredObjects = new JsonArray();
 
-                        for(var id : validCredentials.keySet())
+                        for(var id : discoveredDevices.keySet())
                         {
-                            discoveredObjects.add(new JsonObject().put(id.toString(), validCredentials.get(id)));
+                            discoveredObjects.add(new JsonObject().put(id.toString(), discoveredDevices.get(id)));
                         }
 
                         response.put(RESULT, discoveredObjects);
                     }
                     else
                     {
-                        if(validCredentials.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
+                        if(discoveredDevices.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
                         {
-                            response.put(RESULT, validCredentials.get(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))));
+                            response.put(RESULT, discoveredDevices.get(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))));
                         }
                     }
                 }

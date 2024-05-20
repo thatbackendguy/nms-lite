@@ -96,7 +96,7 @@
 <!--    </logger>-->
 
 <!--    &lt;!&ndash; Config &ndash;&gt;-->
-<!--    <logger name="com.motadata.Config" level="TRACE" additivity="false">-->
+<!--    <logger name="com.motadata.config.Config" level="TRACE" additivity="false">-->
 <!--        <appender-ref ref="UTILS_LOGS"/>-->
 <!--    </logger>-->
 

@@ -22,7 +22,7 @@ public class Bootstrap
 
                 .compose(id->vertx.deployVerticle(Polling.class.getName(), workerOptions))
 
-                .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions().setInstances(4)))
+                .compose(id -> vertx.deployVerticle(APIServer.class.getName()))
 
                 .onFailure(err -> LOGGER.error("Deployment failed: {}", err.getMessage()));
     }

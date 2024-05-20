@@ -1,9 +1,8 @@
 package com.motadata.engine;
 
 import com.motadata.Bootstrap;
-import com.motadata.Config;
+import com.motadata.config.Config;
 import com.motadata.database.ConfigDB;
-import com.motadata.utils.ProcessUtils;
 import com.motadata.utils.Utils;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -14,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Base64;
 
-import static com.motadata.contants.Constants.*;
+import static com.motadata.constants.Constants.*;
 
 public class Polling extends AbstractVerticle
 {
@@ -27,12 +26,11 @@ public class Polling extends AbstractVerticle
 
         vertx.setPeriodic(Config.POLLING_INTERVAL, timerId -> {
 
-
             var context = new JsonArray();
 
             for(var discoveryProfileId : ConfigDB.provisionedDevices.values())
             {
-                var discoveryProfile = ConfigDB.validCredentials.get(discoveryProfileId);
+                var discoveryProfile = ConfigDB.discoveredDevices.get(discoveryProfileId);
 
                 if(discoveryProfile != null)
                 {
@@ -42,7 +40,7 @@ public class Polling extends AbstractVerticle
 
             var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
-            var results = ProcessUtils.spawnPluginEngine(encodedString);
+            var results = Utils.spawnPluginEngine(encodedString);
 
             for(var result : results)
             {
