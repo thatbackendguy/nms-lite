@@ -49,6 +49,8 @@ public class APIServer extends AbstractVerticle
             {
                 startPromise.complete();
 
+                LOGGER.info("API Server is up and running");
+
                 LOGGER.info(String.format("HTTP Server is now listening on http://%s:%d/", Config.HOST, Config.PORT));
             }
             else
@@ -58,5 +60,11 @@ public class APIServer extends AbstractVerticle
                 LOGGER.info("Failed to start the API Engine, port unavailable!");
             }
         });
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception
+    {
+        stopPromise.complete();
     }
 }

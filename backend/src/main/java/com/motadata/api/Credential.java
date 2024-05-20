@@ -93,7 +93,7 @@ public class Credential
     {
         LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-        var response = ConfigDB.read(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE));
+        var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE));
 
         if(response.getJsonArray(RESULT).isEmpty())
         {
@@ -115,7 +115,7 @@ public class Credential
 
         var credProfileId = routingContext.request().getParam(CREDENTIAL_PROFILE_ID_PARAMS);
 
-        var response = ConfigDB.read(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId)));
+        var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId)));
 
         if(response.isEmpty())
         {

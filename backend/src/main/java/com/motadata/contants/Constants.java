@@ -90,7 +90,7 @@ public class Constants
 
     public static final String RUN_DISCOVERY_EVENT = "discovery.run";
 
-    public static final String POST_DISCOVERY_SUCCESS_EVENT = "post.discovery.success";
+    public static final String DISCOVERED_DEVICES = "discovered.device";
 
     public static final String DISCOVERY_PROFILE = "discovery_profile";
 

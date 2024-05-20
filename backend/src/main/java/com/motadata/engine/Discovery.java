@@ -1,6 +1,8 @@
 package com.motadata.engine;
 
 import com.motadata.Bootstrap;
+import com.motadata.database.ConfigDB;
+import com.motadata.utils.ProcessUtils;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
@@ -27,68 +29,37 @@ public class Discovery extends AbstractVerticle
         var eventBus = Bootstrap.getVertx().eventBus();
 
         eventBus.localConsumer(RUN_DISCOVERY_EVENT, msg -> {
-            try
+
+            var results = ProcessUtils.spawnPluginEngine(msg.body().toString());
+
+            for(var result : results)
             {
-                var processBuilder = new ProcessBuilder(GO_PLUGIN_ENGINE_PATH, msg.body().toString());
+                var monitor = new JsonObject(result.toString());
 
-                processBuilder.redirectErrorStream(true);
+                LOGGER.trace(monitor.toString());
 
-                LOGGER.trace("Initiating process builder");
-
-                LOGGER.trace(msg.body().toString());
-
-                var process = processBuilder.start();
-
-                var isCompleted = process.waitFor(25, TimeUnit.SECONDS); // Wait for 25 seconds
-
-                if(!isCompleted)
+                if(monitor.getString(STATUS).equals(SUCCESS))
                 {
-                    process.destroyForcibly();
-
-                    LOGGER.error("Discovery failed, Timed out");
-                }
-                else
-                {
-                    var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-                    String line;
-
-                    var processBuffer = Buffer.buffer();
-
-                    while((line = reader.readLine()) != null)
+                    if(!ConfigDB.validCredentials.containsKey(Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))
                     {
-                        processBuffer.appendString(line);
+                        var credentialProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, monitor.getString(CREDENTIAL_PROFILE_ID)))).getJsonObject(RESULT).put(CREDENTIAL_PROFILE_ID, monitor.getString(CREDENTIAL_PROFILE_ID));
+
+                        ConfigDB.validCredentials.put(Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID)), new JsonObject().put(OBJECT_IP, monitor.getString(OBJECT_IP)).put(PORT, monitor.getInteger(PORT)).put(VERSION, credentialProfile.getString(VERSION)).put(SNMP_COMMUNITY, credentialProfile.getString(SNMP_COMMUNITY)));
+
+                        LOGGER.trace("Discovered monitor saved to database");
                     }
-
-                    LOGGER.trace("Process completed, Decoding & sending result...");
-
-                    var decodedString = new String(Base64.getDecoder().decode(processBuffer.toString()));
-
-                    LOGGER.trace(decodedString);
-
-                    var results = new JsonArray(decodedString);
-
-                    for(var result : results)
-                    {
-                        var monitor = new JsonObject(result.toString());
-
-                        if(monitor.getString(STATUS).equals(SUCCESS))
-                        {
-                            eventBus.send(POST_DISCOVERY_SUCCESS_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, monitor.getInteger(DISCOVERY_PROFILE_ID)).put(CREDENTIAL_PROFILE_ID, monitor.getInteger(CREDENTIAL_PROFILE_ID)));
-                        }
-                    }
-//                    msg.reply(decodedString);
-                    System.out.println(decodedString);
                 }
-
-            } catch(IOException | InterruptedException err)
-            {
-                msg.fail(500, err.getMessage());
             }
         });
 
         startPromise.complete();
 
         LOGGER.info("Discovery engine started");
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception
+    {
+        stopPromise.complete();
     }
 }

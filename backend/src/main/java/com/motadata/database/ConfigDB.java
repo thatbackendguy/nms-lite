@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.motadata.contants.Constants.*;
 
@@ -23,6 +24,8 @@ public class ConfigDB
     private static final ConcurrentHashMap<Long,JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
     public static final ConcurrentHashMap<Long,JsonObject> validCredentials = new ConcurrentHashMap<>();
+
+    public static final ConcurrentHashMap<Long,Long> provisionedDevices = new ConcurrentHashMap<>();
 
     public static JsonObject create(JsonObject request)
     {
@@ -90,7 +93,7 @@ public class ConfigDB
         return response;
     }
 
-    public static JsonObject read(JsonObject request)
+    public static JsonObject get(JsonObject request)
     {
         var response = new JsonObject();
 
@@ -122,7 +125,6 @@ public class ConfigDB
                         }
                     }
 
-
                 }
                 case DISCOVERY_PROFILE -> {
                     if(data == null)
@@ -143,8 +145,26 @@ public class ConfigDB
                             response.put(RESULT, discoveryProfiles.get(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))));
                         }
                     }
+                }
+                case DISCOVERED_DEVICES-> {
+                    if(data == null)
+                    {
+                        var discoveredObjects = new JsonArray();
 
+                        for(var id : validCredentials.keySet())
+                        {
+                            discoveredObjects.add(new JsonObject().put(id.toString(), validCredentials.get(id)));
+                        }
 
+                        response.put(RESULT, discoveredObjects);
+                    }
+                    else
+                    {
+                        if(validCredentials.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
+                        {
+                            response.put(RESULT, validCredentials.get(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))));
+                        }
+                    }
                 }
             }
         }
@@ -152,11 +172,12 @@ public class ConfigDB
         {
             response.put(STATUS, FAILED);
 
-            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing INSERT operation"));
+            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing GET operation"));
 
             LOGGER.error(exception.getMessage());
 
         }
+
         return response;
     }
 

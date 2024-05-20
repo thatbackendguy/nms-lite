@@ -1,12 +1,8 @@
 package com.motadata;
 
 import com.motadata.api.APIServer;
-//import com.motadata.engine.DiscoveryEngine;
-//import com.motadata.engine.PollingEngine;
-//import com.motadata.manager.ConfigServiceManager;
-import com.motadata.engine.Discovery;
+import com.motadata.engine.*;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -23,27 +19,12 @@ public class Bootstrap
         var workerOptions = new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER);
 
         vertx.deployVerticle(Discovery.class.getName(), workerOptions)
-//                .compose(id -> {
-//                    LOGGER.info("Config Service Manager is up and running");
-//
-//                    return vertx.deployVerticle(DiscoveryEngine.class.getName(), workerOptions);
-//                })
-//                .compose(id -> {
-//                    LOGGER.info("Discovery engine is up and running");
-//
-//                    return vertx.deployVerticle(PollingEngine.class.getName(), workerOptions);
-//                })
-                .compose(id -> {
-                    LOGGER.info("Polling engine is up and running");
 
-                    return vertx.deployVerticle(APIServer.class.getName());
-                })
-                .onSuccess(id -> {
-                    LOGGER.info("API engine is up and running");
-                })
+                .compose(id->vertx.deployVerticle(Polling.class.getName(), workerOptions))
+
+                .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions().setInstances(4)))
+
                 .onFailure(err -> LOGGER.error("Deployment failed: {}", err.getMessage()));
-
-//        vertx.deployVerticle(APIServer.class.getName());
     }
 
     public static Vertx getVertx()

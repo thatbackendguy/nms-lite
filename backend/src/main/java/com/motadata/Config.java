@@ -15,33 +15,21 @@ public class Config
     private Config()
     {}
 
-    public static int PORT = 8080;
+    public static String HOST;
 
-    public static String DATABASE_URI = "jdbc:mysql://localhost:3306/configDB";
+    public static int PORT;
 
-    public static String DATABASE_USERNAME = "root";
-
-    public static String DATABASE_PASSWORD = "Root@1010";
-
-    public static String HOST = "127.0.0.1";
-
-    public static long POLLING_INTERVAL = 300000;
+    public static long POLLING_INTERVAL;
 
     static
     {
         var config = loadConfig();
 
-        HOST = config.getString(Constants.HOST);
+        HOST = config.getString(Constants.HOST, "127.0.0.1");
 
-        PORT = config.getInteger(Constants.PORT);
+        PORT = config.getInteger(Constants.PORT, 8080);
 
-        DATABASE_URI = config.getString(Constants.DATABASE_URI);
-
-        DATABASE_USERNAME = config.getString(Constants.DATABASE_USERNAME);
-
-        DATABASE_PASSWORD = config.getString(Constants.DATABASE_PASSWORD);
-
-        POLLING_INTERVAL = config.getLong(Constants.POLLING_INTERVAL);
+        POLLING_INTERVAL = config.getLong(Constants.POLLING_INTERVAL, 30_000L);
 
     }
 
@@ -55,10 +43,9 @@ public class Config
 
             return new JsonObject(jsonText);
 
-        }
-        catch(IOException e)
+        } catch(IOException e)
         {
-            LOGGER.error("Error reading configuration file: ",e);
+            LOGGER.error("Error reading configuration file: ", e);
 
             return new JsonObject();
         }

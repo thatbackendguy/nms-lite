@@ -2,6 +2,7 @@ package com.motadata.api;
 
 import com.motadata.Bootstrap;
 import com.motadata.database.ConfigDB;
+import com.motadata.utils.ProcessUtils;
 import com.motadata.utils.Utils;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
@@ -47,15 +48,17 @@ public class Discovery
 
         subRouter.route(HttpMethod.POST, URL_SEPARATOR + RUN).handler(this::runDiscovery);
 
+        subRouter.route(HttpMethod.GET, URL_SEPARATOR + RESULT + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::getDiscoveryResult);
+
         subRouter.route(HttpMethod.PUT, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::updateDiscovery);
 
         subRouter.route(HttpMethod.DELETE, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::deleteDiscovery);
 
-        subRouter.route(HttpMethod.GET, URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::provisionDevice);
+        subRouter.route(HttpMethod.POST, URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::provisionDevice);
 
-        subRouter.route(HttpMethod.GET, URL_SEPARATOR + PROVISION).handler(this::getProvisionedDevices);
+        //        subRouter.route(HttpMethod.GET, URL_SEPARATOR + PROVISION).handler(this::getProvisionedDevices);
 
-        subRouter.route(HttpMethod.DELETE, URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::unProvisionDevice);
+        //        subRouter.route(HttpMethod.DELETE, URL_SEPARATOR + PROVISION + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::unProvisionDevice);
     }
 
     public void addDiscovery(RoutingContext routingContext)
@@ -64,26 +67,53 @@ public class Discovery
 
         routingContext.request().bodyHandler(buffer -> {
 
-            var reqJSON = buffer.toJsonObject();
+            var requestBody = buffer.toJsonObject();
 
             var response = new JsonObject();
 
-            if(reqJSON.containsKey(DISCOVERY_NAME) && reqJSON.containsKey(OBJECT_IP) && reqJSON.containsKey(PORT))
+            if(requestBody.containsKey(DISCOVERY_NAME) && requestBody.containsKey(OBJECT_IP) && requestBody.containsKey(PORT) && requestBody.containsKey(CREDENTIALS))
             {
-                if(Utils.validateRequestBody(reqJSON))
+                if(Utils.validateRequestBody(requestBody))
                 {
-                    var object = new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, reqJSON);
+                    var areCredentialsValid = false;
 
-                    response = ConfigDB.create(object);
-
-                    if(response.containsKey(ERROR))
+                    for(var credentialProfileId : requestBody.getJsonArray(CREDENTIALS))
                     {
-                        response.put(STATUS, FAILED);
+                        var entries = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credentialProfileId)));
+
+                        if(entries.containsKey(RESULT))
+                        {
+                            areCredentialsValid = true;
+                        }
+                        else
+                        {
+                            areCredentialsValid = false;
+
+                            break;
+                        }
+
+                    }
+
+                    if(areCredentialsValid)
+                    {
+                        var object = new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, requestBody);
+
+                        response = ConfigDB.create(object);
+
+                        if(response.containsKey(ERROR))
+                        {
+                            response.put(STATUS, FAILED);
+                        }
+                        else
+                        {
+                            response.put(STATUS, SUCCESS);
+                        }
                     }
                     else
                     {
-                        response.put(STATUS, SUCCESS);
+                        response.put(STATUS, FAILED).put(ERROR, "Error in creating discovery profile").put(ERR_MESSAGE, "One or more credential profiles not found!").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                     }
+
                 }
                 else
                 {
@@ -105,13 +135,17 @@ public class Discovery
     {
         LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-        var response = ConfigDB.read(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE));
+        var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE));
 
         if(response.getJsonArray(RESULT).isEmpty())
         {
             response.remove(RESULT);
 
             response.put(STATUS, FAILED).put(ERROR, "No discovery profiles found").put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
+        }
+        else if(response.containsKey(ERROR))
+        {
+            response.put(STATUS, FAILED);
         }
         else
         {
@@ -127,11 +161,15 @@ public class Discovery
 
         var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
 
-        var response = ConfigDB.read(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId)));
+        var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId)));
 
         if(response.isEmpty())
         {
             response.put(STATUS, FAILED).put(ERROR, "No discovery profile found for ID: " + discProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
+        }
+        else if(response.containsKey(ERROR))
+        {
+            response.put(STATUS, FAILED);
         }
         else
         {
@@ -222,42 +260,81 @@ public class Discovery
 
             var contexts = new JsonArray();
 
-            for(var object : requestObjects)
-            {
-                var monitor = new JsonObject(object.toString());
-//TDOD: working on run discovery
-                var discoveryProfile = ConfigDB.read(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, monitor.getString(DISCOVERY_PROFILE_ID))));
-                System.out.println(discoveryProfile);
-
-                if(!discoveryProfile.isEmpty() && Utils.pingCheck(discoveryProfile.getString(OBJECT_IP)))
+            vertx.executeBlocking(handler -> {
+                for(var object : requestObjects)
                 {
-                    discoveryProfile.put(REQUEST_TYPE, DISCOVERY).put(PLUGIN_NAME, NETWORK);
+                    var monitor = new JsonObject(object.toString());
 
-                    if(ConfigDB.validCredentials.containsKey(Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))
+                    //TODO: working on run discovery
+
+                    var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, monitor.getString(DISCOVERY_PROFILE_ID)))).getJsonObject(RESULT).put(DISCOVERY_PROFILE_ID, monitor.getString(DISCOVERY_PROFILE_ID));
+
+                    if(!discoveryProfile.isEmpty() && ProcessUtils.pingCheck(discoveryProfile.getString(OBJECT_IP)))
                     {
-                        // device already discovered
+                        discoveryProfile.put(REQUEST_TYPE, DISCOVERY).put(PLUGIN_NAME, NETWORK);
+
+                        if(ConfigDB.validCredentials.containsKey(Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))
+                        {
+                            // TODO: device already discovered
+                        }
+
+                        var credentialProfileIds = discoveryProfile.getJsonArray(CREDENTIALS);
+
+                        var credentialProfiles = new JsonArray();
+
+                        for(var credentialId : credentialProfileIds)
+                        {
+                            var credentialProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credentialId))).getJsonObject(RESULT).put(CREDENTIAL_PROFILE_ID, credentialId);
+
+                            credentialProfiles.add(credentialProfile);
+                        }
+
+                        discoveryProfile.put(CREDENTIALS, credentialProfiles);
+
+                        contexts.add(discoveryProfile);
                     }
-
-                    var credentialProfileIds = monitor.getJsonArray(CREDENTIAL_PROFILE_IDS);
-
-                    var credentialProfiles = new JsonArray();
-
-                    for(var credentialId : credentialProfileIds)
-                    {
-                        var credentialProfile = ConfigDB.read(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, monitor.getString(CREDENTIAL_PROFILE_ID)))).getJsonObject(RESULT);
-
-                        credentialProfiles.add(credentialProfile);
-                    }
-
-                    discoveryProfile.put(CREDENTIALS, credentialProfiles);
-
-                    contexts.add(discoveryProfile);
                 }
-            }
 
-            eventBus.send(RUN_DISCOVERY_EVENT,contexts);
+                var encodedString = Base64.getEncoder().encodeToString(contexts.toString().getBytes());
+
+                eventBus.send(RUN_DISCOVERY_EVENT, encodedString);
+
+                handler.complete();
+            }, resultHandler -> {
+                if(resultHandler.succeeded())
+                {
+                    LOGGER.trace("Discovery context sent to discovery engine");
+                }
+            });
+
+            routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Discovery ran successfully!").toString());
         });
     }
+
+    public void getDiscoveryResult(RoutingContext routingContext)
+    {
+        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+
+        var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
+
+        var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERED_DEVICES).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId)));
+
+        if(response.isEmpty())
+        {
+            response.put(STATUS, FAILED).put(ERROR, "No discovery result found for ID: " + discProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
+        }
+        else if(response.containsKey(ERROR))
+        {
+            response.put(STATUS, FAILED);
+        }
+        else
+        {
+            response.put(STATUS, SUCCESS);
+        }
+
+        routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
+    }
+
     public void provisionDevice(RoutingContext routingContext)
     {
 
@@ -265,54 +342,73 @@ public class Discovery
 
         var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
 
-        eventBus.request(UPDATE_EVENT, new JsonObject().put(DISCOVERY_PROFILE_ID, Integer.parseInt(discProfileId)).put(TABLE_NAME, PROVISION_DEVICE), ar -> {
+        var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId)));
 
-            if(ar.succeeded())
+        if(response.isEmpty())
+        {
+            response.put(STATUS, FAILED).put(ERROR, "No discovery profile found for ID: " + discProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
+        }
+        else if(response.containsKey(ERROR))
+        {
+            response.put(STATUS, FAILED);
+        }
+        else
+        {
+            for(var values: ConfigDB.provisionedDevices.values())
             {
-                routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provisioned successfully!"));
-            }
-            else
-            {
-                routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error provisioning device").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+                if(Long.parseLong(discProfileId) == values)
+                {
+                    routingContext.response().setStatusCode(HttpResponseStatus.CONFLICT.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR,"Unable to provision device").put(ERR_MESSAGE,"Device already provisioned").put(ERR_STATUS_CODE,HttpResponseStatus.CONFLICT.code()).toString());
+
+                    return;
+                }
             }
 
-        });
+            var provisionId = Utils.getId();
 
+            ConfigDB.provisionedDevices.put(provisionId,Long.parseLong(discProfileId));
+
+            routingContext.response().setStatusCode(HttpResponseStatus.OK.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE,String.format("Device provisioned successfully! Provision ID: %d",provisionId)).toString());
+
+            return;
+        }
+
+        routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
     }
 
-    public void unProvisionDevice(RoutingContext routingContext)
-    {
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
-
-        var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
-
-        eventBus.request(UNPROVISION_DEVICE, discProfileId, ar -> {
-            if(ar.succeeded())
-            {
-                routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provision stopped successfully!"));
-            }
-            else
-            {
-                routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
-            }
-        });
-    }
-
-    public void getProvisionedDevices(RoutingContext routingContext)
-    {
-
-        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
-
-        eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, GET_PROVISIONED_DEVICES_EVENT), ar -> {
-            if(ar.succeeded())
-            {
-                routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Provisioned devices fetched successfully!").put(RESULT, ar.result().body()));
-            }
-            else
-            {
-                routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
-            }
-        });
-
-    }
+    //    public void unProvisionDevice(RoutingContext routingContext)
+    //    {
+    //        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+    //
+    //        var discProfileId = routingContext.request().getParam(DISCOVERY_PROFILE_ID_PARAMS);
+    //
+    //        eventBus.request(UNPROVISION_DEVICE, discProfileId, ar -> {
+    //            if(ar.succeeded())
+    //            {
+    //                routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Device provision stopped successfully!"));
+    //            }
+    //            else
+    //            {
+    //                routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error stopping provision").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+    //            }
+    //        });
+    //    }
+    //
+    //    public void getProvisionedDevices(RoutingContext routingContext)
+    //    {
+    //
+    //        LOGGER.info(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+    //
+    //        eventBus.request(GET_ALL_EVENT, new JsonObject().put(TABLE_NAME, GET_PROVISIONED_DEVICES_EVENT), ar -> {
+    //            if(ar.succeeded())
+    //            {
+    //                routingContext.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Provisioned devices fetched successfully!").put(RESULT, ar.result().body()));
+    //            }
+    //            else
+    //            {
+    //                routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, "Error fetching data from DB").put(ERR_MESSAGE, ar.cause().getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())).toString());
+    //            }
+    //        });
+    //
+    //    }
 }

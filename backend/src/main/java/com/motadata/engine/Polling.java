@@ -1,0 +1,70 @@
+package com.motadata.engine;
+
+import com.motadata.Bootstrap;
+import com.motadata.Config;
+import com.motadata.database.ConfigDB;
+import com.motadata.utils.ProcessUtils;
+import com.motadata.utils.Utils;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Base64;
+
+import static com.motadata.contants.Constants.*;
+
+public class Polling extends AbstractVerticle
+{
+    private static final Logger LOGGER = LoggerFactory.getLogger(Polling.class);
+
+    @Override
+    public void start(Promise<Void> startPromise) throws Exception
+    {
+        var vertx = Bootstrap.getVertx();
+
+        vertx.setPeriodic(Config.POLLING_INTERVAL, timerId -> {
+
+
+            var context = new JsonArray();
+
+            for(var discoveryProfileId : ConfigDB.provisionedDevices.values())
+            {
+                var discoveryProfile = ConfigDB.validCredentials.get(discoveryProfileId);
+
+                if(discoveryProfile != null)
+                {
+                    context.add(discoveryProfile.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
+                }
+            }
+
+            var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
+
+            var results = ProcessUtils.spawnPluginEngine(encodedString);
+
+            for(var result : results)
+            {
+                var monitor = new JsonObject(result.toString());
+
+                LOGGER.trace(monitor.toString());
+
+                if(monitor.getString(STATUS).equals(SUCCESS))
+                {
+                    Utils.writeToFile(vertx, monitor).onComplete(event -> LOGGER.trace("Result written to file"));
+                }
+            }
+        });
+
+        startPromise.complete();
+
+        LOGGER.info("Polling engine started successfully");
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception
+    {
+        stopPromise.complete();
+    }
+}
