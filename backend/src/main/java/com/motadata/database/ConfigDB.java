@@ -13,6 +13,7 @@ import static com.motadata.constants.Constants.*;
 
 public class ConfigDB
 {
+
     public static final ConcurrentHashMap<Long, JsonObject> provisionedDevices = new ConcurrentHashMap<>();
 
     static final Logger LOGGER = LoggerFactory.getLogger(ConfigDB.class);
@@ -22,10 +23,13 @@ public class ConfigDB
     private static final ConcurrentHashMap<Long, JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
     private ConfigDB()
-    {}
+    {
+
+    }
 
     public static JsonObject create(JsonObject request)
     {
+
         LOGGER.trace("Create request: {}", request);
 
         var response = new JsonObject();
@@ -34,14 +38,14 @@ public class ConfigDB
         {
             var data = request.getJsonObject(DATA);
 
-            switch(request.getString(REQUEST_TYPE))
+            switch (request.getString(REQUEST_TYPE))
             {
                 case CREDENTIAL_PROFILE ->
                 {
 
-                    for(var credentialProfile : credentialProfiles.values())
+                    for (var credentialProfile : credentialProfiles.values())
                     {
-                        if(data.getString(CREDENTIAL_NAME).equals(credentialProfile.getString(CREDENTIAL_NAME)))
+                        if (data.getString(CREDENTIAL_NAME).equals(credentialProfile.getString(CREDENTIAL_NAME)))
                         {
                             response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code()).put(ERR_MESSAGE, String.format("error in saving %s, because credentialProfile name is already used", request.getString(REQUEST_TYPE))));
 
@@ -55,14 +59,13 @@ public class ConfigDB
 
                     response.put(CREDENTIAL_PROFILE_ID, id).put(MESSAGE, "Credential profile created successfully");
 
-
                 }
                 case DISCOVERY_PROFILE ->
                 {
 
-                    for(var discoveryProfile : discoveryProfiles.values())
+                    for (var discoveryProfile : discoveryProfiles.values())
                     {
-                        if(data.getString(DISCOVERY_NAME).equals(discoveryProfile.getString(DISCOVERY_NAME)))
+                        if (data.getString(DISCOVERY_NAME).equals(discoveryProfile.getString(DISCOVERY_NAME)))
                         {
                             response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code()).put(ERR_MESSAGE, String.format("error in saving %s, because discovery name is already used", request.getString(REQUEST_TYPE))));
 
@@ -76,11 +79,11 @@ public class ConfigDB
 
                     response.put(DISCOVERY_PROFILE_ID, id).put(MESSAGE, "Discovery profile created successfully");
 
-
                 }
             }
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             response.put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing INSERT operation"));
 
@@ -92,6 +95,7 @@ public class ConfigDB
 
     public static JsonObject get(JsonObject request)
     {
+
         var response = new JsonObject();
 
         LOGGER.trace("Read request: {}", request);
@@ -100,15 +104,15 @@ public class ConfigDB
         {
             var data = request.getJsonObject(DATA);
 
-            switch(request.getString(REQUEST_TYPE))
+            switch (request.getString(REQUEST_TYPE))
             {
                 case CREDENTIAL_PROFILE ->
                 {
-                    if(data == null)
+                    if (data == null)
                     {
                         var credentialObjects = new JsonArray();
 
-                        for(var id : credentialProfiles.keySet())
+                        for (var id : credentialProfiles.keySet())
                         {
                             credentialObjects.add(new JsonObject().put(id.toString(), credentialProfiles.get(id)));
                         }
@@ -117,7 +121,7 @@ public class ConfigDB
                     }
                     else
                     {
-                        if(credentialProfiles.containsKey(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))))
+                        if (credentialProfiles.containsKey(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))))
                         {
                             response.put(RESULT, credentialProfiles.get(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))));
                         }
@@ -126,11 +130,11 @@ public class ConfigDB
                 }
                 case DISCOVERY_PROFILE ->
                 {
-                    if(data == null)
+                    if (data == null)
                     {
                         var discoveryObjects = new JsonArray();
 
-                        for(var id : discoveryProfiles.keySet())
+                        for (var id : discoveryProfiles.keySet())
                         {
                             discoveryObjects.add(new JsonObject().put(id.toString(), discoveryProfiles.get(id)));
                         }
@@ -139,7 +143,7 @@ public class ConfigDB
                     }
                     else
                     {
-                        if(discoveryProfiles.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
+                        if (discoveryProfiles.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
                         {
                             response.put(RESULT, discoveryProfiles.get(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))));
                         }
@@ -148,7 +152,8 @@ public class ConfigDB
 
             }
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             response.put(STATUS, FAILED);
 
@@ -162,6 +167,7 @@ public class ConfigDB
 
     public static JsonObject update(JsonObject request)
     {
+
         var response = new JsonObject();
 
         LOGGER.trace("Update request: {}", request);
@@ -170,12 +176,12 @@ public class ConfigDB
         {
             var data = request.getJsonObject(DATA);
 
-            switch(request.getString(REQUEST_TYPE))
+            switch (request.getString(REQUEST_TYPE))
             {
                 case CREDENTIAL_PROFILE ->
                 {
 
-                    if(credentialProfiles.containsKey(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))))
+                    if (credentialProfiles.containsKey(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))))
                     {
                         var credential = credentialProfiles.get(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID)));
 
@@ -193,7 +199,7 @@ public class ConfigDB
                 case DISCOVERY_PROFILE ->
                 {
 
-                    if(discoveryProfiles.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
+                    if (discoveryProfiles.containsKey(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID))))
                     {
                         var discoveryProfile = discoveryProfiles.get(Long.parseLong(data.getString(DISCOVERY_PROFILE_ID)));
 
@@ -210,8 +216,8 @@ public class ConfigDB
                 }
             }
 
-
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             response.put(STATUS, FAILED);
 
@@ -225,6 +231,7 @@ public class ConfigDB
 
     public static JsonObject delete(JsonObject request)
     {
+
         var response = new JsonObject();
 
         LOGGER.trace("Delete request: {}", request);
@@ -233,13 +240,13 @@ public class ConfigDB
         {
             var data = request.getJsonObject(DATA);
 
-            switch(request.getString(REQUEST_TYPE))
+            switch (request.getString(REQUEST_TYPE))
             {
 
                 case CREDENTIAL_PROFILE ->
                 {
 
-                    if(credentialProfiles.containsKey(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))))
+                    if (credentialProfiles.containsKey(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID))))
                     {
                         credentialProfiles.remove(Long.parseLong(data.getString(CREDENTIAL_PROFILE_ID)));
 
@@ -256,9 +263,9 @@ public class ConfigDB
 
                     var discoveryProfileId = Long.parseLong(data.getString(DISCOVERY_PROFILE_ID));
 
-                    if(discoveryProfiles.containsKey(discoveryProfileId))
+                    if (discoveryProfiles.containsKey(discoveryProfileId))
                     {
-                        if(discoveryProfiles.get(discoveryProfileId).containsKey(CREDENTIAL_PROFILE_ID))
+                        if (discoveryProfiles.get(discoveryProfileId).containsKey(CREDENTIAL_PROFILE_ID))
                         {
                             var credentialProfileId = Long.parseLong(discoveryProfiles.get(discoveryProfileId).getString(CREDENTIAL_PROFILE_ID));
 
@@ -275,7 +282,8 @@ public class ConfigDB
                     }
                 }
             }
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             response.put(STATUS, FAILED);
 
@@ -286,4 +294,5 @@ public class ConfigDB
         }
         return response;
     }
+
 }

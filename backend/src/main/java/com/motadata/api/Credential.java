@@ -17,6 +17,7 @@ import static com.motadata.constants.Constants.*;
 
 public class Credential
 {
+
     private final EventBus eventBus;
 
     private final Vertx vertx;
@@ -25,6 +26,7 @@ public class Credential
 
     public Credential()
     {
+
         this.vertx = Bootstrap.getVertx();
 
         this.eventBus = Bootstrap.getVertx().eventBus();
@@ -50,25 +52,27 @@ public class Credential
 
     public void addCredential(RoutingContext routingContext)
     {
+
         try
         {
             LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
-            routingContext.request().bodyHandler(buffer -> {
+            routingContext.request().bodyHandler(buffer ->
+            {
 
                 var reqJSON = buffer.toJsonObject();
 
                 var response = new JsonObject();
 
-                if(reqJSON.containsKey(CREDENTIAL_NAME) && reqJSON.containsKey(VERSION) && reqJSON.containsKey(SNMP_COMMUNITY))
+                if (reqJSON.containsKey(CREDENTIAL_NAME) && reqJSON.containsKey(VERSION) && reqJSON.containsKey(SNMP_COMMUNITY))
                 {
-                    if(Utils.validateRequestBody(reqJSON))
+                    if (Utils.validateRequestBody(reqJSON))
                     {
                         var object = new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, reqJSON);
 
                         response = ConfigDB.create(object);
 
-                        if(response.containsKey(ERROR))
+                        if (response.containsKey(ERROR))
                         {
                             response.put(STATUS, FAILED);
                         }
@@ -91,7 +95,8 @@ public class Credential
 
             });
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
 
@@ -101,13 +106,14 @@ public class Credential
 
     public void getAllCredentials(RoutingContext routingContext)
     {
+
         try
         {
             LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
             var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE));
 
-            if(response.getJsonArray(RESULT).isEmpty())
+            if (response.getJsonArray(RESULT).isEmpty())
             {
                 response.remove(RESULT);
 
@@ -120,7 +126,8 @@ public class Credential
 
             routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
 
@@ -130,6 +137,7 @@ public class Credential
 
     public void getCredential(RoutingContext routingContext)
     {
+
         try
         {
             LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
@@ -138,7 +146,7 @@ public class Credential
 
             var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId)));
 
-            if(response.isEmpty())
+            if (response.isEmpty())
             {
                 response.put(STATUS, FAILED).put(ERROR, "No credential profile found for ID: " + credProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
             }
@@ -149,7 +157,8 @@ public class Credential
 
             routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
 
@@ -159,27 +168,29 @@ public class Credential
 
     public void updateCredential(RoutingContext routingContext)
     {
+
         try
         {
             LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
             var credProfileId = routingContext.request().getParam(CREDENTIAL_PROFILE_ID_PARAMS);
 
-            routingContext.request().bodyHandler(buffer -> {
+            routingContext.request().bodyHandler(buffer ->
+            {
 
                 var response = new JsonObject();
 
                 var reqJSON = buffer.toJsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId);
 
-                if(reqJSON.containsKey(VERSION) && reqJSON.containsKey(SNMP_COMMUNITY))
+                if (reqJSON.containsKey(VERSION) && reqJSON.containsKey(SNMP_COMMUNITY))
                 {
-                    if(Utils.validateRequestBody(reqJSON))
+                    if (Utils.validateRequestBody(reqJSON))
                     {
                         var object = new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, reqJSON);
 
                         response = ConfigDB.update(object);
 
-                        if(response.containsKey(ERROR) || response.isEmpty())
+                        if (response.containsKey(ERROR) || response.isEmpty())
                         {
                             response.put(STATUS, FAILED);
                         }
@@ -201,7 +212,8 @@ public class Credential
                 routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
             });
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
 
@@ -211,6 +223,7 @@ public class Credential
 
     public void deleteCredential(RoutingContext routingContext)
     {
+
         try
         {
             LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
@@ -219,15 +232,15 @@ public class Credential
 
             var response = new JsonObject();
 
-            if(Utils.getCounter(Long.parseLong(credProfileId)) == 0)
+            if (Utils.getCounter(Long.parseLong(credProfileId)) == 0)
             {
                 response = ConfigDB.delete(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId)));
 
-                if(response.isEmpty())
+                if (response.isEmpty())
                 {
                     response.put(STATUS, FAILED).put(ERROR, "No credential profile found for ID: " + credProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
                 }
-                else if(response.containsKey(ERROR))
+                else if (response.containsKey(ERROR))
                 {
                     response.put(STATUS, FAILED);
                 }
@@ -243,11 +256,13 @@ public class Credential
 
             routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
 
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
         }
     }
+
 }

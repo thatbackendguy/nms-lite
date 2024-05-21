@@ -18,6 +18,7 @@ import static com.motadata.constants.Constants.*;
 
 public class Provision
 {
+
     private final EventBus eventBus;
 
     private final Vertx vertx;
@@ -26,6 +27,7 @@ public class Provision
 
     public Provision()
     {
+
         this.vertx = Bootstrap.getVertx();
 
         this.eventBus = Bootstrap.getVertx().eventBus();
@@ -35,9 +37,10 @@ public class Provision
 
     public void init(Router router)
     {
+
         router.route("/provision/*").subRouter(subRouter);
 
-        subRouter.route(HttpMethod.GET, URL_SEPARATOR + "devices" ).handler(this::getProvisionedDevice);
+        subRouter.route(HttpMethod.GET, URL_SEPARATOR + "devices").handler(this::getProvisionedDevice);
 
         subRouter.route(HttpMethod.POST, URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS).handler(this::provisionDevice);
 
@@ -46,6 +49,7 @@ public class Provision
 
     public void getProvisionedDevice(RoutingContext routingContext)
     {
+
         try
         {
             var response = new JsonObject();
@@ -54,23 +58,23 @@ public class Provision
 
             var result = new JsonArray();
 
-            for(var device: ConfigDB.provisionedDevices.values())
+            for (var device : ConfigDB.provisionedDevices.values())
             {
                 result.add(device.getString(OBJECT_IP));
             }
 
-            if(result.isEmpty())
+            if (result.isEmpty())
             {
                 response.put(STATUS, FAILED).put(ERROR, "No provisioned devices found").put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
             }
             else
             {
-                response.put(STATUS,SUCCESS).put(RESULT,result);
+                response.put(STATUS, SUCCESS).put(RESULT, result);
             }
 
-            routingContext.response().putHeader(CONTENT_TYPE,APP_JSON).end(response.toString());
+            routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
         }
-        catch(Exception exception)
+        catch (Exception exception)
         {
             routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
 
@@ -81,6 +85,7 @@ public class Provision
 
     public void provisionDevice(RoutingContext routingContext)
     {
+
         try
         {
             LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
@@ -89,19 +94,19 @@ public class Provision
 
             var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId)));
 
-            if(response.isEmpty())
+            if (response.isEmpty())
             {
                 response.put(STATUS, FAILED).put(ERROR, "No discovery profile found for ID: " + discProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
             }
-            else if(response.containsKey(ERROR))
+            else if (response.containsKey(ERROR))
             {
                 response.put(STATUS, FAILED);
             }
             else
             {
-                for(var values : ConfigDB.provisionedDevices.values())
+                for (var values : ConfigDB.provisionedDevices.values())
                 {
-                    if(Long.parseLong(discProfileId) == values.getLong(DISCOVERY_PROFILE_ID))
+                    if (Long.parseLong(discProfileId) == values.getLong(DISCOVERY_PROFILE_ID))
                     {
                         routingContext.response().setStatusCode(HttpResponseStatus.CONFLICT.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Unable to provision device").put(ERR_MESSAGE, "Device already provisioned").put(ERR_STATUS_CODE, HttpResponseStatus.CONFLICT.code()).toString());
 
@@ -124,7 +129,8 @@ public class Provision
 
             routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
 
@@ -134,13 +140,14 @@ public class Provision
 
     public void unProvisionDevice(RoutingContext routingContext)
     {
+
         try
         {
             LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
 
             var provisionId = Long.parseLong(routingContext.request().getParam(PROVISION_ID_PARAMS));
 
-            if(ConfigDB.provisionedDevices.containsKey(provisionId))
+            if (ConfigDB.provisionedDevices.containsKey(provisionId))
             {
                 var credentialProfileId = Long.parseLong(ConfigDB.provisionedDevices.get(provisionId).getString(CREDENTIAL_PROFILE_ID));
 
@@ -155,7 +162,8 @@ public class Provision
             {
                 routingContext.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code()).putHeader(CONTENT_TYPE, APP_JSON).end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Unable to un-provision device").put(ERR_MESSAGE, "No provisioned device found").put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code()).toString());
             }
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
 

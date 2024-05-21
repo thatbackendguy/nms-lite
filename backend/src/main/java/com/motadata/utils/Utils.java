@@ -23,9 +23,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.motadata.constants.Constants.*;
 
-
 public class Utils
 {
+
     private static final ConcurrentMap<Long, AtomicInteger> counters = new ConcurrentHashMap<>();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
@@ -34,11 +34,12 @@ public class Utils
 
     public static boolean validateRequestBody(JsonObject requestObject)
     {
-        for(String key : requestObject.fieldNames())
+
+        for (String key : requestObject.fieldNames())
         {
             var value = requestObject.getValue(key);
 
-            if(value == null || (value instanceof String && ((String) value).isEmpty()))
+            if (value == null || ( value instanceof String && ( (String) value ).isEmpty() ))
             {
                 return false;
             }
@@ -48,11 +49,13 @@ public class Utils
 
     public static long getId()
     {
+
         return counter.incrementAndGet();
     }
 
     public static Future<Void> writeToFile(Vertx vertx, JsonObject data)
     {
+
         Promise<Void> promise = Promise.promise();
 
         var objectIp = data.getString(OBJECT_IP, "localhost");
@@ -65,12 +68,13 @@ public class Utils
 
         var interfaces = result.getJsonArray("interface");
 
-        vertx.fileSystem().mkdirs(ipDirName, mkdirsResult -> {
-            if(mkdirsResult.succeeded())
+        vertx.fileSystem().mkdirs(ipDirName, mkdirsResult ->
+        {
+            if (mkdirsResult.succeeded())
             {
                 LOGGER.info("Created directory: {}", ipDirName);
 
-                for(Object interfaceObj : interfaces)
+                for (Object interfaceObj : interfaces)
                 {
                     var interfaceJson = new JsonObject(interfaceObj.toString());
 
@@ -78,15 +82,17 @@ public class Utils
 
                     var fileName = ipDirName + "/" + interfaceName + ".txt";
 
-                    vertx.fileSystem().open(fileName, new OpenOptions().setAppend(true).setCreate(true), openResult -> {
-                        if(openResult.succeeded())
+                    vertx.fileSystem().open(fileName, new OpenOptions().setAppend(true).setCreate(true), openResult ->
+                    {
+                        if (openResult.succeeded())
                         {
                             var file = openResult.result();
 
                             var buffer = Buffer.buffer(interfaceJson.encodePrettily() + "\n");
 
-                            file.write(buffer, writeResult -> {
-                                if(writeResult.succeeded())
+                            file.write(buffer, writeResult ->
+                            {
+                                if (writeResult.succeeded())
                                 {
                                     LOGGER.trace("Content appended to file: {}", fileName);
 
@@ -122,6 +128,7 @@ public class Utils
 
     public static JsonArray spawnPluginEngine(String encodedString)
     {
+
         var decodedString = "[]";
 
         try
@@ -136,7 +143,7 @@ public class Utils
 
             var isCompleted = process.waitFor(25, TimeUnit.SECONDS); // Wait for 25 seconds
 
-            if(!isCompleted)
+            if (!isCompleted)
             {
                 process.destroyForcibly();
 
@@ -150,7 +157,7 @@ public class Utils
 
                 var processBuffer = Buffer.buffer();
 
-                while((line = reader.readLine()) != null)
+                while (( line = reader.readLine() ) != null)
                 {
                     processBuffer.appendString(line);
                 }
@@ -161,7 +168,8 @@ public class Utils
 
                 LOGGER.info(decodedString);
             }
-        } catch(IOException | InterruptedException exception)
+        }
+        catch (IOException | InterruptedException exception)
         {
             LOGGER.error(ERROR_CONTAINER, exception.getMessage());
         }
@@ -171,6 +179,7 @@ public class Utils
 
     public static boolean pingCheck(String objectIp)
     {
+
         try
         {
             var processBuilder = new ProcessBuilder("fping", objectIp, "-c3", "-q");
@@ -181,7 +190,7 @@ public class Utils
 
             var isCompleted = process.waitFor(5, TimeUnit.SECONDS); // Wait for 5 seconds
 
-            if(!isCompleted)
+            if (!isCompleted)
             {
                 process.destroyForcibly();
             }
@@ -191,17 +200,19 @@ public class Utils
 
                 String line;
 
-                while((line = reader.readLine()) != null)
+                while (( line = reader.readLine() ) != null)
                 {
-                    if(line.contains("/0%"))
+                    if (line.contains("/0%"))
                     {
+
                         LOGGER.debug("{} device is UP!", objectIp);
 
                         return true;
                     }
                 }
             }
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             LOGGER.error("Exception: {}", exception.getMessage());
         }
@@ -211,25 +222,26 @@ public class Utils
         return false;
     }
 
-    public static int incrementCounter(long credentialProfileId)
+    public static void incrementCounter(long credentialProfileId)
     {
-        return counters.computeIfAbsent(credentialProfileId, k -> new AtomicInteger(0)).incrementAndGet();
+
+        counters.computeIfAbsent(credentialProfileId, k -> new AtomicInteger(0)).incrementAndGet();
     }
 
-    public static int decrementCounter(long credentialProfileId)
+    public static void decrementCounter(long credentialProfileId)
     {
+
         var counter = counters.get(credentialProfileId);
 
-        if(counter != null)
+        if (counter != null)
         {
-            return counter.decrementAndGet();
+            counter.decrementAndGet();
         }
-
-        return 0;
     }
 
     public static int getCounter(long credentialProfileId)
     {
+
         var counter = counters.get(credentialProfileId);
 
         return counter != null ? counter.get() : 0;

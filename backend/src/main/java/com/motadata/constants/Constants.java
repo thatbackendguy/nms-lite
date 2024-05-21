@@ -2,7 +2,11 @@ package com.motadata.constants;
 
 public class Constants
 {
-    private Constants() {}
+
+    private Constants()
+    {
+
+    }
 
     public static final String HOST = "host";
 
@@ -75,8 +79,6 @@ public class Constants
     public static final String URL_SEPARATOR = "/";
 
     public static final String COLON_SEPARATOR = ":";
-
-    public static final String PROVISION = "provision";
 
     public static final String RUN = "run";
 

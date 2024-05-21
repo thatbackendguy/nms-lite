@@ -15,16 +15,19 @@ import static com.motadata.constants.Constants.*;
 
 public class APIServer extends AbstractVerticle
 {
+
     public static final Logger LOGGER = LoggerFactory.getLogger(APIServer.class);
 
     private ErrorHandler errorHandler()
     {
+
         return ErrorHandler.create(vertx);
     }
 
     @Override
     public void start(Promise<Void> startPromise)
     {
+
         try
         {
             var server = vertx.createHttpServer(new HttpServerOptions().setHost(Config.HOST).setPort(Config.PORT));
@@ -39,16 +42,18 @@ public class APIServer extends AbstractVerticle
             router.route().failureHandler(errorHandler());
 
             // GET: "/"
-            router.route(URL_SEPARATOR).handler(ctx -> {
+            router.route(URL_SEPARATOR).handler(ctx ->
+            {
 
                 LOGGER.trace(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
 
                 ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
             });
 
-            server.requestHandler(router).listen(httpServerAsyncResult -> {
+            server.requestHandler(router).listen(httpServerAsyncResult ->
+            {
 
-                if(httpServerAsyncResult.succeeded())
+                if (httpServerAsyncResult.succeeded())
                 {
                     startPromise.complete();
 
@@ -63,7 +68,8 @@ public class APIServer extends AbstractVerticle
                     LOGGER.info("Failed to start the API Engine, port unavailable!");
                 }
             });
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
         }
@@ -72,6 +78,8 @@ public class APIServer extends AbstractVerticle
     @Override
     public void stop(Promise<Void> stopPromise) throws Exception
     {
+
         stopPromise.complete();
     }
+
 }
