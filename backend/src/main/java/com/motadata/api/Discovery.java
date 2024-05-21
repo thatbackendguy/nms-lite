@@ -16,7 +16,6 @@ import io.vertx.ext.web.RoutingContext;
 import java.util.Base64;
 
 import static com.motadata.api.APIServer.LOGGER;
-
 import static com.motadata.constants.Constants.*;
 
 public class Discovery
@@ -73,51 +72,57 @@ public class Discovery
 
                 if(requestBody.containsKey(DISCOVERY_NAME) && requestBody.containsKey(OBJECT_IP) && requestBody.containsKey(PORT) && requestBody.containsKey(CREDENTIALS))
                 {
-                    if(Utils.validateRequestBody(requestBody))
+                    try
                     {
-                        var areCredentialsValid = false;
-
-                        for(var credentialProfileId : requestBody.getJsonArray(CREDENTIALS))
+                        if(Utils.validateRequestBody(requestBody) && requestBody.getInteger(PORT) > 0)
                         {
-                            var entries = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credentialProfileId)));
+                            var areCredentialsValid = false;
 
-                            if(entries.containsKey(RESULT))
+                            for(var credentialProfileId : requestBody.getJsonArray(CREDENTIALS))
                             {
-                                areCredentialsValid = true;
+                                var entries = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credentialProfileId)));
+
+                                if(entries.containsKey(RESULT))
+                                {
+                                    areCredentialsValid = true;
+                                }
+                                else
+                                {
+                                    areCredentialsValid = false;
+
+                                    break;
+                                }
+
+                            }
+
+                            if(areCredentialsValid)
+                            {
+                                var object = new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, requestBody);
+
+                                response = ConfigDB.create(object);
+
+                                if(response.containsKey(ERROR))
+                                {
+                                    response.put(STATUS, FAILED);
+                                }
+                                else
+                                {
+                                    response.put(STATUS, SUCCESS);
+                                }
                             }
                             else
                             {
-                                areCredentialsValid = false;
-
-                                break;
+                                response.put(STATUS, FAILED).put(ERROR, "Error in creating discovery profile").put(ERR_MESSAGE, "One or more credential profiles not found!").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                             }
 
-                        }
-
-                        if(areCredentialsValid)
-                        {
-                            var object = new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, requestBody);
-
-                            response = ConfigDB.create(object);
-
-                            if(response.containsKey(ERROR))
-                            {
-                                response.put(STATUS, FAILED);
-                            }
-                            else
-                            {
-                                response.put(STATUS, SUCCESS);
-                            }
                         }
                         else
                         {
-                            response.put(STATUS, FAILED).put(ERROR, "Error in creating discovery profile").put(ERR_MESSAGE, "One or more credential profiles not found!").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
+                            response.put(STATUS, FAILED).put(ERROR, "Error in creating discovery profile").put(ERR_MESSAGE, "Empty/negative values are not allowed").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                         }
-
-                    }
-                    else
+                    } catch(ClassCastException | NumberFormatException exception)
                     {
-                        response.put(STATUS, FAILED).put(ERROR, "Error in creating discovery profile").put(ERR_MESSAGE, "Empty values are not allowed").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
+                        response.put(STATUS, FAILED).put(ERROR, "Error in creating discovery profile").put(ERR_MESSAGE, "Port must be number").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                     }
                 }
                 else
@@ -132,6 +137,8 @@ public class Discovery
         } catch(Exception exception)
         {
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
+
+            routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
         }
     }
 
@@ -214,28 +221,34 @@ public class Discovery
 
                 var response = new JsonObject();
 
-                var reqJSON = buffer.toJsonObject().put(DISCOVERY_PROFILE_ID, discProfileId);
+                var requestBody = buffer.toJsonObject().put(DISCOVERY_PROFILE_ID, discProfileId);
 
-                if(reqJSON.containsKey(OBJECT_IP) && reqJSON.containsKey(PORT))
+                if(requestBody.containsKey(OBJECT_IP) && requestBody.containsKey(PORT))
                 {
-                    if(Utils.validateRequestBody(reqJSON))
+                    try
                     {
-                        var object = new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, reqJSON);
-
-                        response = ConfigDB.update(object);
-
-                        if(response.containsKey(ERROR) || response.isEmpty())
+                        if(Utils.validateRequestBody(requestBody) && requestBody.getInteger(PORT) > 0)
                         {
-                            response.put(STATUS, FAILED);
+                            var object = new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, requestBody);
+
+                            response = ConfigDB.update(object);
+
+                            if(response.containsKey(ERROR) || response.isEmpty())
+                            {
+                                response.put(STATUS, FAILED);
+                            }
+                            else
+                            {
+                                response.put(STATUS, SUCCESS);
+                            }
                         }
                         else
                         {
-                            response.put(STATUS, SUCCESS);
+                            response.put(STATUS, FAILED).put(ERROR, "Error in updating discovery profile").put(ERR_MESSAGE, "Empty values are not allowed").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                         }
-                    }
-                    else
+                    } catch(ClassCastException | NumberFormatException exception)
                     {
-                        response.put(STATUS, FAILED).put(ERROR, "Error in updating discovery profile").put(ERR_MESSAGE, "Empty values are not allowed").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
+                        response.put(STATUS, FAILED).put(ERROR, "Error in creating discovery profile").put(ERR_MESSAGE, "Port must be number").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                     }
                 }
                 else
@@ -371,7 +384,7 @@ public class Discovery
             {
                 if(discoveryProfile.getJsonObject(RESULT).getBoolean(IS_DISCOVERED, false))
                 {
-                    response.put(STATUS, SUCCESS).put(MESSAGE,"Device discovered successfully");
+                    response.put(STATUS, SUCCESS).put(MESSAGE, "Device discovered successfully");
                 }
                 else
                 {

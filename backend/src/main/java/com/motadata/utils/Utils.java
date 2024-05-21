@@ -227,11 +227,6 @@ public class Utils
         return 0;
     }
 
-    public static void resetCounter(long credentialProfileId)
-    {
-        counters.put(credentialProfileId, new AtomicInteger(0));
-    }
-
     public static int getCounter(long credentialProfileId)
     {
         var counter = counters.get(credentialProfileId);
