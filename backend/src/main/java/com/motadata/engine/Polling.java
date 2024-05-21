@@ -17,22 +17,25 @@ import static com.motadata.constants.Constants.*;
 
 public class Polling extends AbstractVerticle
 {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Polling.class);
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
+
         var vertx = Bootstrap.getVertx();
 
-        vertx.setPeriodic(Config.POLLING_INTERVAL, timerId -> {
+        vertx.setPeriodic(Config.POLLING_INTERVAL, timerId ->
+        {
             try
             {
 
                 var context = new JsonArray();
 
-                for(var monitor : ConfigDB.provisionedDevices.values())
+                for (var monitor : ConfigDB.provisionedDevices.values())
                 {
-                    if(monitor != null)
+                    if (monitor != null)
                     {
                         context.add(monitor.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
                     }
@@ -42,18 +45,19 @@ public class Polling extends AbstractVerticle
 
                 var results = Utils.spawnPluginEngine(encodedString);
 
-                for(var result : results)
+                for (var result : results)
                 {
                     var monitor = new JsonObject(result.toString());
 
                     LOGGER.trace(monitor.toString());
 
-                    if(monitor.getString(STATUS).equals(SUCCESS))
+                    if (monitor.getString(STATUS).equals(SUCCESS))
                     {
                         Utils.writeToFile(vertx, monitor).onComplete(event -> LOGGER.trace("Result written to file"));
                     }
                 }
-            } catch(Exception exception)
+            }
+            catch (Exception exception)
             {
                 LOGGER.error(ERROR_CONTAINER, exception.getMessage());
             }
@@ -67,6 +71,8 @@ public class Polling extends AbstractVerticle
     @Override
     public void stop(Promise<Void> stopPromise) throws Exception
     {
+
         stopPromise.complete();
     }
+
 }

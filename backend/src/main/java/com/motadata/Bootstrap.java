@@ -12,12 +12,14 @@ import org.slf4j.LoggerFactory;
 
 public class Bootstrap
 {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Bootstrap.class);
 
     private static final Vertx vertx = Vertx.vertx();
 
     public static void main(String[] args)
     {
+
         try
         {
             var workerOptions = new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER);
@@ -32,7 +34,8 @@ public class Bootstrap
 
                     .onFailure(exception -> LOGGER.error("Deployment failed: {}", exception.getMessage()));
 
-        } catch(Exception exception)
+        }
+        catch (Exception exception)
         {
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
         }
@@ -40,6 +43,8 @@ public class Bootstrap
 
     public static Vertx getVertx()
     {
+
         return vertx;
     }
+
 }

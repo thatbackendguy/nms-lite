@@ -10,10 +10,13 @@ import java.io.IOException;
 
 public class Config
 {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Config.class);
 
     private Config()
-    {}
+    {
+
+    }
 
     public static String HOST;
 
@@ -39,7 +42,8 @@ public class Config
 
     private static JsonObject loadConfig()
     {
-        try(var inputStream = new FileInputStream("config.json"))
+
+        try (var inputStream = new FileInputStream("config.json"))
         {
             var buffer = inputStream.readAllBytes();
 
@@ -47,7 +51,8 @@ public class Config
 
             return new JsonObject(jsonText);
 
-        } catch(IOException e)
+        }
+        catch (IOException e)
         {
             LOGGER.error("Error reading configuration file: ", e);
 

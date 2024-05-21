@@ -13,37 +13,40 @@ import static com.motadata.constants.Constants.*;
 
 public class Discovery extends AbstractVerticle
 {
+
     static final Logger LOGGER = LoggerFactory.getLogger(Discovery.class);
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
+
         var eventBus = Bootstrap.getVertx().eventBus();
 
-        eventBus.localConsumer(RUN_DISCOVERY_EVENT, msg -> {
+        eventBus.localConsumer(RUN_DISCOVERY_EVENT, msg ->
+        {
             try
             {
 
                 var results = Utils.spawnPluginEngine(msg.body().toString());
 
-                for(var result : results)
+                for (var result : results)
                 {
                     var monitor = new JsonObject(result.toString());
 
                     LOGGER.trace(monitor.toString());
 
-                    if(monitor.getString(STATUS).equals(SUCCESS))
+                    if (monitor.getString(STATUS).equals(SUCCESS))
                     {
 
                         var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))).getJsonObject(RESULT);
 
-                        if(!discoveryProfile.getBoolean(IS_DISCOVERED, false))
+                        if (!discoveryProfile.getBoolean(IS_DISCOVERED, false))
                         {
                             var credentialProfileId = Long.parseLong(monitor.getString(CREDENTIAL_PROFILE_ID));
 
                             discoveryProfile.put(IS_DISCOVERED, true);
 
-                            discoveryProfile.put(RESULT,monitor.getJsonObject(RESULT));
+                            discoveryProfile.put(RESULT, monitor.getJsonObject(RESULT));
 
                             discoveryProfile.put(CREDENTIAL_PROFILE_ID, credentialProfileId);
 
@@ -53,7 +56,8 @@ public class Discovery extends AbstractVerticle
                         LOGGER.trace("Monitor status updated");
                     }
                 }
-            } catch(Exception exception)
+            }
+            catch (Exception exception)
             {
                 LOGGER.error(ERROR_CONTAINER, exception.getMessage());
             }
@@ -67,6 +71,8 @@ public class Discovery extends AbstractVerticle
     @Override
     public void stop(Promise<Void> stopPromise) throws Exception
     {
+
         stopPromise.complete();
     }
+
 }
