@@ -43,6 +43,8 @@ public class Discovery extends AbstractVerticle
 
                             discoveryProfile.put(IS_DISCOVERED, true);
 
+                            discoveryProfile.put(RESULT,monitor.getJsonObject(RESULT));
+
                             discoveryProfile.put(CREDENTIAL_PROFILE_ID, credentialProfileId);
 
                             Utils.incrementCounter(credentialProfileId);
