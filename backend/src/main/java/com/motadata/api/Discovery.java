@@ -382,7 +382,7 @@ public class Discovery
 
             if(discoveryProfile != null)
             {
-                if(discoveryProfile.getJsonObject(RESULT).getBoolean(IS_DISCOVERED, false))
+                if(discoveryProfile.getBoolean(IS_DISCOVERED, false))
                 {
                     response.put(STATUS, SUCCESS).put(MESSAGE, "Device discovered successfully");
                 }

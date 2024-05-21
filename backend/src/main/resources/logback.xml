@@ -11,8 +11,8 @@
     </appender>
 
 <!--    &lt;!&ndash; File Appender for Bootstrap &ndash;&gt;-->
-<!--    <appender name="BOOTSTRAP_LOGS" class="ch.qos.logback.core.FileAppender">-->
-<!--        <file>logs/Bootstrap.log</file>-->
+<!--    <appender name="SYSTEM_LOGS" class="ch.qos.logback.core.FileAppender">-->
+<!--        <file>logs/System.log</file>-->
 <!--        <encoder>-->
 <!--            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>-->
 <!--        </encoder>-->
@@ -42,9 +42,9 @@
 <!--        </encoder>-->
 <!--    </appender>-->
 
-<!--    &lt;!&ndash; File Appender for ConfigServiceManager &ndash;&gt;-->
-<!--    <appender name="CONFIG_SERVICE_MANAGER_LOGS" class="ch.qos.logback.core.FileAppender">-->
-<!--        <file>logs/ConfigServiceManager.log</file>-->
+<!--    &lt;!&ndash; File Appender for ConfigDB &ndash;&gt;-->
+<!--    <appender name="CONFIG_DB_LOGS" class="ch.qos.logback.core.FileAppender">-->
+<!--        <file>logs/ConfigDB.log</file>-->
 <!--        <encoder>-->
 <!--            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>-->
 <!--        </encoder>-->
@@ -64,14 +64,26 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
-<!--    &lt;!&ndash; Bootstrap &ndash;&gt;-->
+<!--    &lt;!&ndash; System &ndash;&gt;-->
 <!--    <logger name="com.motadata.Bootstrap" level="TRACE" additivity="false">-->
-<!--        <appender-ref ref="BOOTSTRAP_LOGS"/>-->
+<!--        <appender-ref ref="SYSTEM_LOGS"/>-->
 <!--        <appender-ref ref="STDOUT"/>-->
+<!--    </logger>-->
+
+<!--    <logger name="com.motadata.config.Config" level="TRACE" additivity="false">-->
+<!--        <appender-ref ref="SYSTEM_LOGS"/>-->
 <!--    </logger>-->
 
 <!--    &lt;!&ndash; ApiEngine &ndash;&gt;-->
 <!--    <logger name="com.motadata.api.APIServer" level="TRACE" additivity="false">-->
+<!--        <appender-ref ref="API_ENGINE_LOGS"/>-->
+<!--    </logger>-->
+
+<!--    <logger name="com.motadata.api.Credential" level="TRACE" additivity="false">-->
+<!--        <appender-ref ref="API_ENGINE_LOGS"/>-->
+<!--    </logger>-->
+
+<!--    <logger name="com.motadata.api.Discovery" level="TRACE" additivity="false">-->
 <!--        <appender-ref ref="API_ENGINE_LOGS"/>-->
 <!--    </logger>-->
 
@@ -85,18 +97,13 @@
 <!--        <appender-ref ref="POLLING_ENGINE_LOGS"/>-->
 <!--    </logger>-->
 
-<!--    &lt;!&ndash; ConfigServiceManager &ndash;&gt;-->
-<!--    <logger name="com.motadata.manager.ConfigServiceManager" level="TRACE" additivity="false">-->
-<!--        <appender-ref ref="CONFIG_SERVICE_MANAGER_LOGS"/>-->
+<!--    &lt;!&ndash; ConfigDB &ndash;&gt;-->
+<!--    <logger name="com.motadata.database.ConfigDB" level="TRACE" additivity="false">-->
+<!--        <appender-ref ref="CONFIG_DB_LOGS"/>-->
 <!--    </logger>-->
 
 <!--    &lt;!&ndash; Utils &ndash;&gt;-->
 <!--    <logger name="com.motadata.utils.Utils" level="TRACE" additivity="false">-->
-<!--        <appender-ref ref="UTILS_LOGS"/>-->
-<!--    </logger>-->
-
-<!--    &lt;!&ndash; Config &ndash;&gt;-->
-<!--    <logger name="com.motadata.config.Config" level="TRACE" additivity="false">-->
 <!--        <appender-ref ref="UTILS_LOGS"/>-->
 <!--    </logger>-->
 

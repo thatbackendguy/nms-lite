@@ -88,13 +88,14 @@ public class Utils
                             file.write(buffer, writeResult -> {
                                 if(writeResult.succeeded())
                                 {
-                                    LOGGER.info("Content appended to file: {}", fileName);
+                                    LOGGER.trace("Content appended to file: {}", fileName);
 
                                     file.close();
                                 }
                                 else
                                 {
                                     LOGGER.warn("Error occurred while writing to file {}: {}", fileName, writeResult.cause().getMessage());
+
                                     file.close();
                                 }
                             });
@@ -121,7 +122,7 @@ public class Utils
 
     public static JsonArray spawnPluginEngine(String encodedString)
     {
-        var decodedString = "";
+        var decodedString = "[]";
 
         try
         {
