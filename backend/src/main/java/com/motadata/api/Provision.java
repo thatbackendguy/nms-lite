@@ -14,8 +14,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 import static com.motadata.constants.Constants.*;
+import static com.motadata.api.APIServer.LOGGER;
 
-public class Provision extends Discovery
+public class Provision
 {
 
     private final EventBus eventBus;
@@ -34,10 +35,10 @@ public class Provision extends Discovery
         this.provisionSubRouter = Router.router(vertx);
     }
 
-    public void init()
+    public void init(Router router)
     {
 
-        discoverySubRouter.route("/provision/*").subRouter(provisionSubRouter);
+        router.route("/provision/*").subRouter(provisionSubRouter);
 
         provisionSubRouter.route(HttpMethod.GET, URL_SEPARATOR + "devices").handler(this::getProvisionedDevice);
 

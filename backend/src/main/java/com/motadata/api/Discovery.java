@@ -12,12 +12,13 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import static com.motadata.api.APIServer.LOGGER;
 
 import java.util.Base64;
 
 import static com.motadata.constants.Constants.*;
 
-public class Discovery extends APIServer
+public class Discovery
 {
 
     private final EventBus eventBus;
@@ -36,12 +37,10 @@ public class Discovery extends APIServer
         this.discoverySubRouter = Router.router(vertx);
     }
 
-    public void init()
+    public void init(Router router)
     {
 
         router.route("/discovery/*").subRouter(discoverySubRouter);
-
-        new Provision().init();
 
         discoverySubRouter.route(HttpMethod.POST, URL_SEPARATOR).handler(this::addDiscovery);
 
@@ -61,6 +60,7 @@ public class Discovery extends APIServer
         discoverySubRouter.route(HttpMethod.GET, URL_SEPARATOR + RESULT + URL_SEPARATOR + COLON_SEPARATOR + DISCOVERY_PROFILE_ID_PARAMS)
                 .handler(this::getDiscoveryResult);
 
+        new Provision().init(discoverySubRouter);
     }
 
     private void addDiscovery(RoutingContext routingContext)

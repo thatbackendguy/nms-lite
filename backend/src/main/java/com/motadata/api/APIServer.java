@@ -18,7 +18,7 @@ public class APIServer extends AbstractVerticle
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(APIServer.class);
 
-    protected Router router = Router.router(vertx);
+
 
     private ErrorHandler errorHandler()
     {
@@ -34,9 +34,11 @@ public class APIServer extends AbstractVerticle
         {
             var server = vertx.createHttpServer(new HttpServerOptions().setHost(Config.HOST).setPort(Config.PORT));
 
-            new Credential().init();
+            var router = Router.router(vertx);
 
-            new Discovery().init();
+            new Credential().init(router);
+
+            new Discovery().init(router);
 
             // FOR HANDLING FAILURES
             router.route().failureHandler(errorHandler());
