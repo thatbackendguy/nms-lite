@@ -17,6 +17,7 @@ public class ProcessSpawner extends AbstractVerticle
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
+
         var vertx = Bootstrap.getVertx();
 
         var eventBus = vertx.eventBus();
@@ -41,11 +42,20 @@ public class ProcessSpawner extends AbstractVerticle
 
         eventBus.<String> localConsumer(POLL_METRICS_EVENT, msg ->
         {
-            vertx.executeBlocking(handler->{
+            vertx.executeBlocking(handler ->
+            {
+                try
+                {
 
-                var results = Utils.spawnPluginEngine(msg.body());
+                    var results = Utils.spawnPluginEngine(msg.body());
 
-                eventBus.send(PARSE_COLLECT_EVENT, results);
+                    eventBus.send(PARSE_COLLECT_EVENT, results);
+                }
+
+                catch (Exception exception)
+                {
+                    LOGGER.error(ERROR_CONTAINER, exception.getMessage());
+                }
             });
         });
 

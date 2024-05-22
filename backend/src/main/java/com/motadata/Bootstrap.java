@@ -23,13 +23,13 @@ public class Bootstrap
 
         try
         {
-            vertx.deployVerticle(Scheduler.class.getName())
+            vertx.deployVerticle(Scheduler.class.getName(), new DeploymentOptions().setInstances(1))
 
                     .compose(id -> vertx.deployVerticle(ProcessSpawner.class.getName()))
 
-                    .compose(id -> vertx.deployVerticle(ResponseParser.class.getName()))
+                    .compose(id -> vertx.deployVerticle(ResponseParser.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER)))
 
-                    .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions()))
+                    .compose(id -> vertx.deployVerticle(APIServer.class.getName()))
 
                     .onSuccess(handler -> LOGGER.info("All verticles deployed"))
 

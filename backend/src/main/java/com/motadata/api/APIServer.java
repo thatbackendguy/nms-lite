@@ -27,6 +27,7 @@ public class APIServer extends AbstractVerticle
     @Override
     public void start(Promise<Void> startPromise)
     {
+
         try
         {
             var router = Router.router(vertx);
