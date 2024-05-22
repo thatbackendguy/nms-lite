@@ -26,6 +26,7 @@ public class Polling extends AbstractVerticle
 
         var vertx = Bootstrap.getVertx();
 
+        // TODO: dont block set-periodic
         vertx.setPeriodic(Config.POLLING_INTERVAL, timerId ->
         {
             try

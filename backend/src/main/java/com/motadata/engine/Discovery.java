@@ -22,12 +22,12 @@ public class Discovery extends AbstractVerticle
 
         var eventBus = Bootstrap.getVertx().eventBus();
 
-        eventBus.localConsumer(RUN_DISCOVERY_EVENT, msg ->
+        eventBus.<String> localConsumer(RUN_DISCOVERY_EVENT, msg ->
         {
             try
             {
 
-                var results = Utils.spawnPluginEngine(msg.body().toString());
+                var results = Utils.spawnPluginEngine(msg.body());
 
                 for (var result : results)
                 {
@@ -38,7 +38,9 @@ public class Discovery extends AbstractVerticle
                     if (monitor.getString(STATUS).equals(SUCCESS))
                     {
 
-                        var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE).put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID))))).getJsonObject(RESULT);
+                        var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE)
+                                        .put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, Long.parseLong(monitor.getString(DISCOVERY_PROFILE_ID)))))
+                                .getJsonObject(RESULT);
 
                         if (!discoveryProfile.getBoolean(IS_DISCOVERED, false))
                         {

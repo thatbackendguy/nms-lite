@@ -12,17 +12,16 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-import static com.motadata.api.APIServer.LOGGER;
 import static com.motadata.constants.Constants.*;
 
-public class Credential
+public class Credential extends APIServer
 {
 
     private final EventBus eventBus;
 
     private final Vertx vertx;
 
-    private final Router subRouter;
+    private final Router credentialSubRouter;
 
     public Credential()
     {
@@ -31,31 +30,35 @@ public class Credential
 
         this.eventBus = Bootstrap.getVertx().eventBus();
 
-        this.subRouter = Router.router(vertx);
+        this.credentialSubRouter = Router.router(vertx);
     }
 
-    public void init(Router router)
+    public void init()
     {
 
-        router.route("/credential/*").subRouter(subRouter);
+        router.route("/credential/*").subRouter(credentialSubRouter);
 
-        subRouter.route(HttpMethod.POST, URL_SEPARATOR).handler(this::addCredential);
+        credentialSubRouter.route(HttpMethod.POST, URL_SEPARATOR).handler(this::addCredential);
 
-        subRouter.route(HttpMethod.GET, URL_SEPARATOR).handler(this::getAllCredentials);
+        credentialSubRouter.route(HttpMethod.GET, URL_SEPARATOR).handler(this::getAllCredentials);
 
-        subRouter.route(HttpMethod.GET, URL_SEPARATOR + COLON_SEPARATOR + CREDENTIAL_PROFILE_ID_PARAMS).handler(this::getCredential);
+        credentialSubRouter.route(HttpMethod.GET, URL_SEPARATOR + COLON_SEPARATOR + CREDENTIAL_PROFILE_ID_PARAMS)
+                .handler(this::getCredential);
 
-        subRouter.route(HttpMethod.PUT, URL_SEPARATOR + COLON_SEPARATOR + CREDENTIAL_PROFILE_ID_PARAMS).handler(this::updateCredential);
+        credentialSubRouter.route(HttpMethod.PUT, URL_SEPARATOR + COLON_SEPARATOR + CREDENTIAL_PROFILE_ID_PARAMS)
+                .handler(this::updateCredential);
 
-        subRouter.route(HttpMethod.DELETE, URL_SEPARATOR + COLON_SEPARATOR + CREDENTIAL_PROFILE_ID_PARAMS).handler(this::deleteCredential);
+        credentialSubRouter.route(HttpMethod.DELETE, URL_SEPARATOR + COLON_SEPARATOR + CREDENTIAL_PROFILE_ID_PARAMS)
+                .handler(this::deleteCredential);
     }
 
-    public void addCredential(RoutingContext routingContext)
+    private void addCredential(RoutingContext routingContext)
     {
 
         try
         {
-            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request()
+                    .path(), routingContext.request().remoteAddress());
 
             routingContext.request().bodyHandler(buffer ->
             {
@@ -83,12 +86,18 @@ public class Credential
                     }
                     else
                     {
-                        response.put(STATUS, FAILED).put(ERROR, "Error in creating credential profile").put(ERR_MESSAGE, "Empty values are not allowed").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
+                        response.put(STATUS, FAILED)
+                                .put(ERROR, "Error in creating credential profile")
+                                .put(ERR_MESSAGE, "Empty values are not allowed")
+                                .put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                     }
                 }
                 else
                 {
-                    response.put(STATUS, FAILED).put(ERROR, "Error in creating credential profile").put(ERR_MESSAGE, INVALID_REQUEST_BODY).put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
+                    response.put(STATUS, FAILED)
+                            .put(ERROR, "Error in creating credential profile")
+                            .put(ERR_MESSAGE, INVALID_REQUEST_BODY)
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                 }
 
                 routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
@@ -98,18 +107,25 @@ public class Credential
         }
         catch (Exception exception)
         {
-            routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
+            routingContext.response()
+                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .end(new JsonObject().put(STATUS, FAILED)
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                            .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
+                            .put(ERR_MESSAGE, exception.getMessage())
+                            .toString());
 
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
         }
     }
 
-    public void getAllCredentials(RoutingContext routingContext)
+    private void getAllCredentials(RoutingContext routingContext)
     {
 
         try
         {
-            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request()
+                    .path(), routingContext.request().remoteAddress());
 
             var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE));
 
@@ -117,7 +133,10 @@ public class Credential
             {
                 response.remove(RESULT);
 
-                response.put(STATUS, FAILED).put(ERROR, "No credential profiles found").put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
+                response.put(STATUS, FAILED)
+                        .put(ERROR, "No credential profiles found")
+                        .put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase())
+                        .put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
             }
             else
             {
@@ -129,26 +148,37 @@ public class Credential
         }
         catch (Exception exception)
         {
-            routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
+            routingContext.response()
+                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .end(new JsonObject().put(STATUS, FAILED)
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                            .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
+                            .put(ERR_MESSAGE, exception.getMessage())
+                            .toString());
 
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
         }
     }
 
-    public void getCredential(RoutingContext routingContext)
+    private void getCredential(RoutingContext routingContext)
     {
 
         try
         {
-            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request()
+                    .path(), routingContext.request().remoteAddress());
 
             var credProfileId = routingContext.request().getParam(CREDENTIAL_PROFILE_ID_PARAMS);
 
-            var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId)));
+            var response = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE)
+                    .put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId)));
 
             if (response.isEmpty())
             {
-                response.put(STATUS, FAILED).put(ERROR, "No credential profile found for ID: " + credProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
+                response.put(STATUS, FAILED)
+                        .put(ERROR, "No credential profile found for ID: " + credProfileId)
+                        .put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase())
+                        .put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
             }
             else
             {
@@ -160,18 +190,25 @@ public class Credential
         }
         catch (Exception exception)
         {
-            routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
+            routingContext.response()
+                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .end(new JsonObject().put(STATUS, FAILED)
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                            .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
+                            .put(ERR_MESSAGE, exception.getMessage())
+                            .toString());
 
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
         }
     }
 
-    public void updateCredential(RoutingContext routingContext)
+    private void updateCredential(RoutingContext routingContext)
     {
 
         try
         {
-            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request()
+                    .path(), routingContext.request().remoteAddress());
 
             var credProfileId = routingContext.request().getParam(CREDENTIAL_PROFILE_ID_PARAMS);
 
@@ -201,12 +238,18 @@ public class Credential
                     }
                     else
                     {
-                        response.put(STATUS, FAILED).put(ERROR, "Error in updating credential profile").put(ERR_MESSAGE, "Empty values are not allowed").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
+                        response.put(STATUS, FAILED)
+                                .put(ERROR, "Error in updating credential profile")
+                                .put(ERR_MESSAGE, "Empty values are not allowed")
+                                .put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                     }
                 }
                 else
                 {
-                    response.put(STATUS, FAILED).put(ERROR, "Error in updating credential profile").put(ERR_MESSAGE, "Either version or community field not available!").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
+                    response.put(STATUS, FAILED)
+                            .put(ERROR, "Error in updating credential profile")
+                            .put(ERR_MESSAGE, "Either version or community field not available!")
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code());
                 }
 
                 routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
@@ -215,18 +258,25 @@ public class Credential
         }
         catch (Exception exception)
         {
-            routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
+            routingContext.response()
+                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .end(new JsonObject().put(STATUS, FAILED)
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                            .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
+                            .put(ERR_MESSAGE, exception.getMessage())
+                            .toString());
 
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
         }
     }
 
-    public void deleteCredential(RoutingContext routingContext)
+    private void deleteCredential(RoutingContext routingContext)
     {
 
         try
         {
-            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request().path(), routingContext.request().remoteAddress());
+            LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request()
+                    .path(), routingContext.request().remoteAddress());
 
             var credProfileId = routingContext.request().getParam(CREDENTIAL_PROFILE_ID_PARAMS);
 
@@ -234,11 +284,15 @@ public class Credential
 
             if (Utils.getCounter(Long.parseLong(credProfileId)) == 0)
             {
-                response = ConfigDB.delete(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE).put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId)));
+                response = ConfigDB.delete(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE)
+                        .put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, credProfileId)));
 
                 if (response.isEmpty())
                 {
-                    response.put(STATUS, FAILED).put(ERROR, "No credential profile found for ID: " + credProfileId).put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
+                    response.put(STATUS, FAILED)
+                            .put(ERROR, "No credential profile found for ID: " + credProfileId)
+                            .put(ERR_MESSAGE, HttpResponseStatus.NOT_FOUND.reasonPhrase())
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code());
                 }
                 else if (response.containsKey(ERROR))
                 {
@@ -251,7 +305,10 @@ public class Credential
             }
             else
             {
-                response.put(STATUS, FAILED).put(ERROR, "Credential profile is currently in use: " + credProfileId).put(ERR_MESSAGE, HttpResponseStatus.FORBIDDEN.reasonPhrase()).put(ERR_STATUS_CODE, HttpResponseStatus.FORBIDDEN.code());
+                response.put(STATUS, FAILED)
+                        .put(ERROR, "Credential profile is currently in use: " + credProfileId)
+                        .put(ERR_MESSAGE, HttpResponseStatus.FORBIDDEN.reasonPhrase())
+                        .put(ERR_STATUS_CODE, HttpResponseStatus.FORBIDDEN.code());
             }
 
             routingContext.response().putHeader(CONTENT_TYPE, APP_JSON).end(response.toString());
@@ -259,7 +316,13 @@ public class Credential
         }
         catch (Exception exception)
         {
-            routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(new JsonObject().put(STATUS, FAILED).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).put(ERR_MESSAGE, exception.getMessage()).toString());
+            routingContext.response()
+                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .end(new JsonObject().put(STATUS, FAILED)
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                            .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
+                            .put(ERR_MESSAGE, exception.getMessage())
+                            .toString());
 
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
         }

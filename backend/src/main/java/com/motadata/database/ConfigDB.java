@@ -16,7 +16,7 @@ public class ConfigDB
 
     public static final ConcurrentHashMap<Long, JsonObject> provisionedDevices = new ConcurrentHashMap<>();
 
-    static final Logger LOGGER = LoggerFactory.getLogger(ConfigDB.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigDB.class);
 
     private static final ConcurrentHashMap<Long, JsonObject> credentialProfiles = new ConcurrentHashMap<>();
 
@@ -47,7 +47,9 @@ public class ConfigDB
                     {
                         if (data.getString(CREDENTIAL_NAME).equals(credentialProfile.getString(CREDENTIAL_NAME)))
                         {
-                            response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code()).put(ERR_MESSAGE, String.format("error in saving %s, because credentialProfile name is already used", request.getString(REQUEST_TYPE))));
+                            response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR")
+                                    .put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())
+                                    .put(ERR_MESSAGE, String.format("error in saving %s, because credentialProfile name is already used", request.getString(REQUEST_TYPE))));
 
                             return response;
                         }
@@ -67,7 +69,9 @@ public class ConfigDB
                     {
                         if (data.getString(DISCOVERY_NAME).equals(discoveryProfile.getString(DISCOVERY_NAME)))
                         {
-                            response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR").put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code()).put(ERR_MESSAGE, String.format("error in saving %s, because discovery name is already used", request.getString(REQUEST_TYPE))));
+                            response.put(ERROR, new JsonObject().put(ERROR, "INSERTION ERROR")
+                                    .put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())
+                                    .put(ERR_MESSAGE, String.format("error in saving %s, because discovery name is already used", request.getString(REQUEST_TYPE))));
 
                             return response;
                         }
@@ -85,7 +89,10 @@ public class ConfigDB
         }
         catch (Exception exception)
         {
-            response.put(STATUS, FAILED).put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing INSERT operation"));
+            response.put(STATUS, FAILED)
+                    .put(ERROR, new JsonObject().put(ERROR, exception.getMessage())
+                            .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                            .put(ERR_MESSAGE, "error in executing INSERT operation"));
 
             LOGGER.error(exception.getMessage());
 
@@ -157,7 +164,9 @@ public class ConfigDB
         {
             response.put(STATUS, FAILED);
 
-            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing GET operation"));
+            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage())
+                    .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .put(ERR_MESSAGE, "error in executing GET operation"));
 
             LOGGER.error(exception.getMessage());
         }
@@ -193,7 +202,9 @@ public class ConfigDB
                     }
                     else
                     {
-                        response.put(ERROR, new JsonObject().put(ERROR, "Error in updating credential profile").put(ERR_STATUS_CODE, HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(CREDENTIAL_PROFILE_ID))));
+                        response.put(ERROR, new JsonObject().put(ERROR, "Error in updating credential profile")
+                                .put(ERR_STATUS_CODE, HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE.code())
+                                .put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(CREDENTIAL_PROFILE_ID))));
                     }
                 }
                 case DISCOVERY_PROFILE ->
@@ -211,7 +222,9 @@ public class ConfigDB
                     }
                     else
                     {
-                        response.put(ERROR, new JsonObject().put(ERROR, "Error in updating discovery profile").put(ERR_STATUS_CODE, HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(DISCOVERY_PROFILE_ID))));
+                        response.put(ERROR, new JsonObject().put(ERROR, "Error in updating discovery profile")
+                                .put(ERR_STATUS_CODE, HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE.code())
+                                .put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(DISCOVERY_PROFILE_ID))));
                     }
                 }
             }
@@ -221,7 +234,9 @@ public class ConfigDB
         {
             response.put(STATUS, FAILED);
 
-            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing UPDATE operation"));
+            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage())
+                    .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .put(ERR_MESSAGE, "error in executing UPDATE operation"));
 
             LOGGER.error(exception.getMessage());
 
@@ -254,7 +269,9 @@ public class ConfigDB
                     }
                     else
                     {
-                        response.put(ERROR, new JsonObject().put(ERROR, "Error in deleting credential profile").put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(CREDENTIAL_PROFILE_ID))));
+                        response.put(ERROR, new JsonObject().put(ERROR, "Error in deleting credential profile")
+                                .put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code())
+                                .put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(CREDENTIAL_PROFILE_ID))));
                     }
                 }
 
@@ -267,7 +284,8 @@ public class ConfigDB
                     {
                         if (discoveryProfiles.get(discoveryProfileId).containsKey(CREDENTIAL_PROFILE_ID))
                         {
-                            var credentialProfileId = Long.parseLong(discoveryProfiles.get(discoveryProfileId).getString(CREDENTIAL_PROFILE_ID));
+                            var credentialProfileId = Long.parseLong(discoveryProfiles.get(discoveryProfileId)
+                                    .getString(CREDENTIAL_PROFILE_ID));
 
                             Utils.decrementCounter(credentialProfileId);
                         }
@@ -278,7 +296,9 @@ public class ConfigDB
                     }
                     else
                     {
-                        response.put(ERROR, new JsonObject().put(ERROR, "Error in deleting discovery profile").put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code()).put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(DISCOVERY_PROFILE_ID))));
+                        response.put(ERROR, new JsonObject().put(ERROR, "Error in deleting discovery profile")
+                                .put(ERR_STATUS_CODE, HttpResponseStatus.NOT_FOUND.code())
+                                .put(ERR_MESSAGE, String.format("No profile exists for ID: %s", data.getString(DISCOVERY_PROFILE_ID))));
                     }
                 }
             }
@@ -287,7 +307,9 @@ public class ConfigDB
         {
             response.put(STATUS, FAILED);
 
-            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage()).put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).put(ERR_MESSAGE, "error in executing DELETE operation"));
+            response.put(ERROR, new JsonObject().put(ERROR, exception.getMessage())
+                    .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .put(ERR_MESSAGE, "error in executing DELETE operation"));
 
             LOGGER.error(exception.getMessage());
 

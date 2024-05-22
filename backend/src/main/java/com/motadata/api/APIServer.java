@@ -16,7 +16,9 @@ import static com.motadata.constants.Constants.*;
 public class APIServer extends AbstractVerticle
 {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(APIServer.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(APIServer.class);
+
+    protected Router router = Router.router(vertx);
 
     private ErrorHandler errorHandler()
     {
@@ -32,11 +34,9 @@ public class APIServer extends AbstractVerticle
         {
             var server = vertx.createHttpServer(new HttpServerOptions().setHost(Config.HOST).setPort(Config.PORT));
 
-            var router = Router.router(vertx);
+            new Credential().init();
 
-            new Credential().init(router);
-
-            new Discovery().init(router);
+            new Discovery().init();
 
             // FOR HANDLING FAILURES
             router.route().failureHandler(errorHandler());
@@ -45,7 +45,8 @@ public class APIServer extends AbstractVerticle
             router.route(URL_SEPARATOR).handler(ctx ->
             {
 
-                LOGGER.trace(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request().remoteAddress());
+                LOGGER.trace(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request()
+                        .remoteAddress());
 
                 ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
             });

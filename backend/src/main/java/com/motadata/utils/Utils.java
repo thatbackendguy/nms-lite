@@ -100,7 +100,8 @@ public class Utils
                                 }
                                 else
                                 {
-                                    LOGGER.warn("Error occurred while writing to file {}: {}", fileName, writeResult.cause().getMessage());
+                                    LOGGER.warn("Error occurred while writing to file {}: {}", fileName, writeResult.cause()
+                                            .getMessage());
 
                                     file.close();
                                 }
@@ -108,7 +109,8 @@ public class Utils
                         }
                         else
                         {
-                            LOGGER.warn("Error occurred while opening file {}: {}", fileName, openResult.cause().getMessage());
+                            LOGGER.warn("Error occurred while opening file {}: {}", fileName, openResult.cause()
+                                    .getMessage());
                         }
                     });
                 }
@@ -117,7 +119,8 @@ public class Utils
             }
             else
             {
-                LOGGER.warn("Error occurred while creating directory {}: {}", ipDirName, mkdirsResult.cause().getMessage());
+                LOGGER.warn("Error occurred while creating directory {}: {}", ipDirName, mkdirsResult.cause()
+                        .getMessage());
 
                 promise.fail(mkdirsResult.cause());
             }
