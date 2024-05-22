@@ -2,8 +2,9 @@ package com.motadata;
 
 import com.motadata.api.APIServer;
 import com.motadata.constants.Constants;
-import com.motadata.engine.Discovery;
-import com.motadata.engine.Polling;
+import com.motadata.engine.ProcessSpawner;
+import com.motadata.engine.ResponseParser;
+import com.motadata.engine.Scheduler;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
@@ -22,13 +23,13 @@ public class Bootstrap
 
         try
         {
-            var workerOptions = new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER);
+            vertx.deployVerticle(Scheduler.class.getName())
 
-            vertx.deployVerticle(Discovery.class.getName(), workerOptions)
+                    .compose(id -> vertx.deployVerticle(ProcessSpawner.class.getName()))
 
-                    .compose(id -> vertx.deployVerticle(Polling.class.getName(), workerOptions))
+                    .compose(id -> vertx.deployVerticle(ResponseParser.class.getName()))
 
-                    .compose(id -> vertx.deployVerticle(APIServer.class.getName()))
+                    .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions()))
 
                     .onSuccess(handler -> LOGGER.info("All verticles deployed"))
 

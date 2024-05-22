@@ -11,10 +11,11 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import static com.motadata.api.APIServer.LOGGER;
 
 import static com.motadata.constants.Constants.*;
 
-public class Credential extends APIServer
+public class Credential
 {
 
     private final EventBus eventBus;
@@ -33,7 +34,7 @@ public class Credential extends APIServer
         this.credentialSubRouter = Router.router(vertx);
     }
 
-    public void init()
+    public void init(Router router)
     {
 
         router.route("/credential/*").subRouter(credentialSubRouter);

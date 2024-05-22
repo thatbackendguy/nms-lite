@@ -14,8 +14,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 import static com.motadata.constants.Constants.*;
+import static com.motadata.api.APIServer.LOGGER;
 
-public class Provision extends Discovery
+public class Provision
 {
 
     private final EventBus eventBus;
@@ -34,10 +35,10 @@ public class Provision extends Discovery
         this.provisionSubRouter = Router.router(vertx);
     }
 
-    public void init()
+    public void init(Router router)
     {
 
-        discoverySubRouter.route("/provision/*").subRouter(provisionSubRouter);
+        router.route("/provision/*").subRouter(provisionSubRouter);
 
         provisionSubRouter.route(HttpMethod.GET, URL_SEPARATOR + "devices").handler(this::getProvisionedDevice);
 
@@ -142,23 +143,36 @@ public class Provision extends Discovery
                 var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE)
                         .put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discProfileId))).getJsonObject(RESULT);
 
-                var credentialProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE)
-                                .put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, Long.parseLong(discoveryProfile.getString(CREDENTIAL_PROFILE_ID)))))
-                        .getJsonObject(RESULT);
+                if (discoveryProfile.containsKey(CREDENTIAL_PROFILE_ID))
+                {
+                    var credentialProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, CREDENTIAL_PROFILE)
+                                    .put(DATA, new JsonObject().put(CREDENTIAL_PROFILE_ID, Long.parseLong(discoveryProfile.getString(CREDENTIAL_PROFILE_ID)))))
+                            .getJsonObject(RESULT);
 
-                ConfigDB.provisionedDevices.put(provisionId, new JsonObject().put(OBJECT_IP, discoveryProfile.getString(OBJECT_IP))
-                        .put(PORT, discoveryProfile.getInteger(PORT))
-                        .put(SNMP_COMMUNITY, credentialProfile.getString(SNMP_COMMUNITY))
-                        .put(VERSION, credentialProfile.getString(VERSION))
-                        .put(CREDENTIAL_PROFILE_ID, Long.parseLong(discoveryProfile.getString(CREDENTIAL_PROFILE_ID))));
+                    ConfigDB.provisionedDevices.put(provisionId, new JsonObject().put(OBJECT_IP, discoveryProfile.getString(OBJECT_IP))
+                            .put(PORT, discoveryProfile.getInteger(PORT))
+                            .put(SNMP_COMMUNITY, credentialProfile.getString(SNMP_COMMUNITY))
+                            .put(VERSION, credentialProfile.getString(VERSION))
+                            .put(CREDENTIAL_PROFILE_ID, Long.parseLong(discoveryProfile.getString(CREDENTIAL_PROFILE_ID))));
 
-                routingContext.response()
-                        .setStatusCode(HttpResponseStatus.OK.code())
-                        .putHeader(CONTENT_TYPE, APP_JSON)
-                        .end(new JsonObject().put(STATUS, SUCCESS)
-                                .put(MESSAGE, String.format("Device provisioned successfully! Provision ID: %d", provisionId))
-                                .toString());
-
+                    routingContext.response()
+                            .setStatusCode(HttpResponseStatus.OK.code())
+                            .putHeader(CONTENT_TYPE, APP_JSON)
+                            .end(new JsonObject().put(STATUS, SUCCESS)
+                                    .put(MESSAGE, String.format("Device provisioned successfully! Provision ID: %d", provisionId))
+                                    .toString());
+                }
+                else
+                {
+                    routingContext.response()
+                            .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+                            .putHeader(CONTENT_TYPE, APP_JSON)
+                            .end(new JsonObject().put(STATUS, FAILED)
+                                    .put(ERROR, "Unable to provision device")
+                                    .put(ERR_MESSAGE, "Device is not discovered yet, first run discovery!")
+                                    .put(ERR_STATUS_CODE, HttpResponseStatus.BAD_REQUEST.code())
+                                    .toString());
+                }
                 return;
             }
 

@@ -15,10 +15,10 @@ import java.util.Base64;
 
 import static com.motadata.constants.Constants.*;
 
-public class Polling extends AbstractVerticle
+public class Scheduler extends AbstractVerticle
 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Polling.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception
@@ -26,7 +26,8 @@ public class Polling extends AbstractVerticle
 
         var vertx = Bootstrap.getVertx();
 
-        // TODO: dont block set-periodic
+        var eventBus = vertx.eventBus();
+
         vertx.setPeriodic(Config.POLLING_INTERVAL, timerId ->
         {
             try
@@ -44,19 +45,8 @@ public class Polling extends AbstractVerticle
 
                 var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
-                var results = Utils.spawnPluginEngine(encodedString);
+               eventBus.send(POLL_METRICS_EVENT,encodedString);
 
-                for (var result : results)
-                {
-                    var monitor = new JsonObject(result.toString());
-
-                    LOGGER.trace(monitor.toString());
-
-                    if (monitor.getString(STATUS).equals(SUCCESS))
-                    {
-                        Utils.writeToFile(vertx, monitor).onComplete(event -> LOGGER.trace("Result written to file"));
-                    }
-                }
             }
             catch (Exception exception)
             {
@@ -66,7 +56,7 @@ public class Polling extends AbstractVerticle
 
         startPromise.complete();
 
-        LOGGER.info("Polling engine started successfully");
+        LOGGER.info("Scheduler started successfully");
     }
 
     @Override

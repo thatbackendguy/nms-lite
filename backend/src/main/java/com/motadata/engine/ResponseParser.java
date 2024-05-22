@@ -5,31 +5,31 @@ import com.motadata.database.ConfigDB;
 import com.motadata.utils.Utils;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.motadata.constants.Constants.*;
 
-public class Discovery extends AbstractVerticle
+public class ResponseParser extends AbstractVerticle
 {
 
-    static final Logger LOGGER = LoggerFactory.getLogger(Discovery.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseParser.class);
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
 
-        var eventBus = Bootstrap.getVertx().eventBus();
+        var vertx = Bootstrap.getVertx();
 
-        eventBus.<String> localConsumer(RUN_DISCOVERY_EVENT, msg ->
+        var eventBus = vertx.eventBus();
+
+        eventBus.<JsonArray> localConsumer(PARSE_DISCOVERY_EVENT, results ->
         {
-            try
+            vertx.executeBlocking(handler ->
             {
-
-                var results = Utils.spawnPluginEngine(msg.body());
-
-                for (var result : results)
+                for (var result : results.body())
                 {
                     var monitor = new JsonObject(result.toString());
 
@@ -58,16 +58,33 @@ public class Discovery extends AbstractVerticle
                         LOGGER.trace("Monitor status updated");
                     }
                 }
-            }
-            catch (Exception exception)
+            });
+
+        });
+
+        eventBus.<JsonArray> localConsumer(PARSE_COLLECT_EVENT, results ->
+        {
+            vertx.executeBlocking(handler ->
             {
-                LOGGER.error(ERROR_CONTAINER, exception.getMessage());
-            }
+                for (var result : results.body())
+                {
+                    var monitor = new JsonObject(result.toString());
+
+                    LOGGER.trace(monitor.toString());
+
+                    if (monitor.getString(STATUS).equals(SUCCESS))
+                    {
+
+                        Utils.writeToFile(vertx, monitor).onComplete(event -> LOGGER.trace("Result written to file"));
+
+                    }
+                }
+            });
         });
 
         startPromise.complete();
 
-        LOGGER.info("Discovery engine started");
+        LOGGER.info("Response parser started");
     }
 
     @Override

@@ -64,6 +64,8 @@ public class Constants
 
     public static final String RUN_DISCOVERY_EVENT = "discovery.run";
 
+    public static final String POLL_METRICS_EVENT = "poll.metrics";
+
     public static final String DISCOVERY_PROFILE = "discovery_profile";
 
     public static final String CREDENTIAL_PROFILE = "credential_profile";
@@ -91,5 +93,9 @@ public class Constants
     public static final String CREDENTIAL_PROFILE_ID_PARAMS = "credentialProfileId";
 
     public static final String DATA = "data";
+
+    public static final String PARSE_DISCOVERY_EVENT = "parse.discovery";
+
+    public static final String PARSE_COLLECT_EVENT = "parse.collect";
 
 }
