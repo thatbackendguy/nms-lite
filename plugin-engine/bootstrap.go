@@ -191,7 +191,7 @@ func main() {
 
 			PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket: %v", send))
 
-			time.Sleep(30 * time.Second)
+			time.Sleep(1 * time.Minute)
 
 		} else {
 
