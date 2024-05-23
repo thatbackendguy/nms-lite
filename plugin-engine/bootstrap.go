@@ -61,6 +61,10 @@ func main() {
 
 	wg := sync.WaitGroup{}
 
+	ticker := time.NewTicker(1 * time.Minute)
+
+	defer ticker.Stop()
+
 	for {
 
 		PluginEngineLogger.Info("Starting Plugin Engine")
@@ -202,7 +206,7 @@ func main() {
 
 			PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket: %v", send))
 
-			time.Sleep(1 * time.Minute)
+			<-ticker.C
 
 		} else {
 

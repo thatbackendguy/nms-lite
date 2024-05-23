@@ -32,6 +32,8 @@ public class Constants
 
     public static final String PORT = "port";
 
+    public static final String ZMQ_PORT = "zmq.port";
+
     public static final String REQUEST_TYPE = "request.type";
 
     public static final String REQ_CONTAINER = "{} {} {}";

@@ -34,7 +34,7 @@ public class StoreRemoteMetrics extends AbstractVerticle
 
         var socket = context.createSocket(SocketType.PULL);
 
-        socket.bind("tcp://*:9090");
+        socket.bind("tcp://*:"+Config.ZMQ_PORT);
 
         var vertx = Bootstrap.getVertx();
 

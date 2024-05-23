@@ -22,6 +22,8 @@ public class Config
 
     public static int PORT;
 
+    public static int ZMQ_PORT;
+
     public static long POLLING_INTERVAL;
 
     public static String GO_PLUGIN_ENGINE_PATH;
@@ -41,6 +43,8 @@ public class Config
         HOST = config.getString(Constants.HOST, "127.0.0.1");
 
         PORT = config.getInteger(Constants.PORT, 8080);
+
+        ZMQ_PORT = config.getInteger(Constants.ZMQ_PORT, 9090);
 
         POLLING_INTERVAL = config.getLong(Constants.POLLING_INTERVAL, 300_000L);
 

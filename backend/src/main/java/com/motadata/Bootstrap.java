@@ -34,11 +34,11 @@ public class Bootstrap
 
             vertx.deployVerticle(Scheduler.class.getName(), new DeploymentOptions().setInstances(1))
 
-                    .compose(id -> vertx.deployVerticle(ProcessSpawner.class.getName()))
+                    .compose(id -> vertx.deployVerticle(ProcessSpawner.class.getName(), new DeploymentOptions().setInstances(2)))
 
                     .compose(id -> vertx.deployVerticle(ResponseParser.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER)))
 
-                    .compose(id -> vertx.deployVerticle(APIServer.class.getName()))
+                    .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions().setInstances(4)))
 
                     .onSuccess(handler -> LOGGER.info("All verticles deployed"))
 
