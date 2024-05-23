@@ -44,64 +44,70 @@ public class StoreRemoteMetrics extends AbstractVerticle
 
             vertx.executeBlocking(handler ->
             {
-                var message = socket.recvStr(ZMQ.DONTWAIT);
-
-                if (message != null)
+                while (true)
                 {
-                    var decodedString = new String(Base64.getDecoder().decode(message));
+                    var message = socket.recvStr(ZMQ.DONTWAIT);
 
-                    var result = new JsonArray(decodedString);
-
-                    for (var data : result)
+                    if (message == null)
                     {
-                        var monitor = new JsonObject(data.toString());
+                        var decodedString = new String(Base64.getDecoder().decode(message));
 
-                        var interfaceData = monitor.getJsonObject(RESULT).getJsonArray(INTERFACE);
+                        var result = new JsonArray(decodedString);
 
-                        var objectIp = monitor.getString(OBJECT_IP);
-
-                        var pollTime = monitor.getString(POLL_TIME);
-
-                        try (var conn = DriverManager.getConnection(DB_URI, DB_USERNAME, DB_PASS); var insertPolledMetrics = conn.prepareStatement(METRICS_INSERT_QUERY))
+                        for (var data : result)
                         {
-                            for (var singleInterface : interfaceData)
+                            var monitor = new JsonObject(data.toString());
+
+                            var interfaceData = monitor.getJsonObject(RESULT).getJsonArray(INTERFACE);
+
+                            var objectIp = monitor.getString(OBJECT_IP);
+
+                            var pollTime = monitor.getString(POLL_TIME);
+
+                            try (var conn = DriverManager.getConnection(DB_URI, DB_USERNAME, DB_PASS); var insertPolledMetrics = conn.prepareStatement(METRICS_INSERT_QUERY))
                             {
-                                var interfaceMetrics = new JsonObject(singleInterface.toString());
+                                for (var singleInterface : interfaceData)
+                                {
+                                    var interfaceMetrics = new JsonObject(singleInterface.toString());
 
-                                insertPolledMetrics.setString(1, objectIp);
+                                    insertPolledMetrics.setString(1, objectIp);
 
-                                insertPolledMetrics.setInt(2, interfaceMetrics.getInteger(INTERFACE_INDEX, -1));
-                                insertPolledMetrics.setString(3, interfaceMetrics.getString(INTERFACE_NAME, ""));
-                                insertPolledMetrics.setInt(4, interfaceMetrics.getInteger(INTERFACE_OPERATIONAL_STATUS, 1));
-                                insertPolledMetrics.setInt(5, interfaceMetrics.getInteger(INTERFACE_ADMIN_STATUS, -1));
-                                insertPolledMetrics.setString(6, interfaceMetrics.getString(INTERFACE_DESCRIPTION, ""));
-                                insertPolledMetrics.setInt(7, interfaceMetrics.getInteger(INTERFACE_SENT_ERROR_PACKET, -1));
-                                insertPolledMetrics.setInt(8, interfaceMetrics.getInteger(INTERFACE_RECEIVED_ERROR_PACKET, -1));
-                                insertPolledMetrics.setInt(9, interfaceMetrics.getInteger(INTERFACE_SENT_OCTETS, 0));
-                                insertPolledMetrics.setInt(10, interfaceMetrics.getInteger(INTERFACE_RECEIVED_OCTETS, -1));
-                                insertPolledMetrics.setInt(11, interfaceMetrics.getInteger(INTERFACE_SPEED, -1));
-                                insertPolledMetrics.setString(12, interfaceMetrics.getString(INTERFACE_ALIAS, ""));
-                                insertPolledMetrics.setString(13, interfaceMetrics.getString(INTERFACE_PHYSICAL_ADDRESS, ""));
-                                insertPolledMetrics.setString(14, pollTime);
+                                    insertPolledMetrics.setInt(2, interfaceMetrics.getInteger(INTERFACE_INDEX, -1));
+                                    insertPolledMetrics.setString(3, interfaceMetrics.getString(INTERFACE_NAME, ""));
+                                    insertPolledMetrics.setInt(4, interfaceMetrics.getInteger(INTERFACE_OPERATIONAL_STATUS, 1));
+                                    insertPolledMetrics.setInt(5, interfaceMetrics.getInteger(INTERFACE_ADMIN_STATUS, -1));
+                                    insertPolledMetrics.setString(6, interfaceMetrics.getString(INTERFACE_DESCRIPTION, ""));
+                                    insertPolledMetrics.setInt(7, interfaceMetrics.getInteger(INTERFACE_SENT_ERROR_PACKET, -1));
+                                    insertPolledMetrics.setInt(8, interfaceMetrics.getInteger(INTERFACE_RECEIVED_ERROR_PACKET, -1));
+                                    insertPolledMetrics.setInt(9, interfaceMetrics.getInteger(INTERFACE_SENT_OCTETS, 0));
+                                    insertPolledMetrics.setInt(10, interfaceMetrics.getInteger(INTERFACE_RECEIVED_OCTETS, -1));
+                                    insertPolledMetrics.setInt(11, interfaceMetrics.getInteger(INTERFACE_SPEED, -1));
+                                    insertPolledMetrics.setString(12, interfaceMetrics.getString(INTERFACE_ALIAS, ""));
+                                    insertPolledMetrics.setString(13, interfaceMetrics.getString(INTERFACE_PHYSICAL_ADDRESS, ""));
+                                    insertPolledMetrics.setString(14, pollTime);
 
-                                insertPolledMetrics.addBatch();
+                                    insertPolledMetrics.addBatch();
+                                }
+
+                                var rowsInserted = insertPolledMetrics.executeBatch();
+
+                                LOGGER.trace("{} rows data inserted for {}", rowsInserted.length, objectIp);
+
                             }
-
-                            var rowsInserted = insertPolledMetrics.executeBatch();
-
-                            LOGGER.trace("{} rows data inserted for {}", rowsInserted.length, objectIp);
-
-                        }
-                        catch (SQLException sqlException)
-                        {
-                            LOGGER.error(ERROR_CONTAINER, sqlException.getMessage());
+                            catch (SQLException sqlException)
+                            {
+                                LOGGER.error(ERROR_CONTAINER, sqlException.getMessage());
+                            }
                         }
                     }
+                    else
+                    {
+                        LOGGER.trace("No message received");
+                        
+                        break;
+                    }
                 }
-                else
-                {
-                    LOGGER.trace("No message received");
-                }
+
             });
         });
 
