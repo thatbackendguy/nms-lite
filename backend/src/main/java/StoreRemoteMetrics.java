@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -14,6 +13,7 @@ import static com.motadata.constants.Constants.*;
 
 public class StoreRemoteMetrics
 {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreRemoteMetrics.class);
 
     private static final String DB_URI = "jdbc:mysql://localhost:3306/configDB";
@@ -27,9 +27,9 @@ public class StoreRemoteMetrics
     public static void main(String[] args)
     {
 
-        try (ZContext context = new ZContext(); )
+        try (ZContext context = new ZContext())
         {
-            ZMQ.Socket socket = context.createSocket(SocketType.PULL);
+            var socket = context.createSocket(SocketType.PULL);
 
             socket.bind("tcp://*:9090");
 
@@ -39,7 +39,7 @@ public class StoreRemoteMetrics
 
                 var result = new JsonArray(decodedString);
 
-                for(var data : result)
+                for (var data : result)
                 {
                     var monitor = new JsonObject(data.toString());
 
@@ -49,26 +49,26 @@ public class StoreRemoteMetrics
 
                     var pollTime = monitor.getString(POLL_TIME);
 
-                    try(var conn = DriverManager.getConnection(DB_URI,DB_USERNAME,DB_PASS); var insertPolledMetrics = conn.prepareStatement(METRICS_INSERT_QUERY))
+                    try (var conn = DriverManager.getConnection(DB_URI, DB_USERNAME, DB_PASS); var insertPolledMetrics = conn.prepareStatement(METRICS_INSERT_QUERY))
                     {
-                        for(var singleInterface : interfaceData)
+                        for (var singleInterface : interfaceData)
                         {
                             var interfaceObj = new JsonObject(singleInterface.toString());
 
                             insertPolledMetrics.setString(1, objectIp);
 
-                            insertPolledMetrics.setInt(2, interfaceObj.containsKey(INTERFACE_INDEX) ? interfaceObj.getInteger(INTERFACE_INDEX) : -999);
-                            insertPolledMetrics.setString(3, interfaceObj.containsKey(INTERFACE_NAME) ? interfaceObj.getString(INTERFACE_NAME) : "");
-                            insertPolledMetrics.setInt(4, interfaceObj.containsKey(INTERFACE_OPERATIONAL_STATUS) ? interfaceObj.getInteger(INTERFACE_OPERATIONAL_STATUS) : -999);
-                            insertPolledMetrics.setInt(5, interfaceObj.containsKey(INTERFACE_ADMIN_STATUS) ? interfaceObj.getInteger(INTERFACE_ADMIN_STATUS) : -999);
-                            insertPolledMetrics.setString(6, interfaceObj.containsKey(INTERFACE_DESCRIPTION) ? interfaceObj.getString(INTERFACE_DESCRIPTION) : "");
-                            insertPolledMetrics.setInt(7, interfaceObj.containsKey(INTERFACE_SENT_ERROR_PACKET) ? interfaceObj.getInteger(INTERFACE_SENT_ERROR_PACKET) : -999);
-                            insertPolledMetrics.setInt(8, interfaceObj.containsKey(INTERFACE_RECEIVED_ERROR_PACKET) ? interfaceObj.getInteger(INTERFACE_RECEIVED_ERROR_PACKET) : -999);
-                            insertPolledMetrics.setInt(9, interfaceObj.containsKey(INTERFACE_SENT_OCTETS) ? interfaceObj.getInteger(INTERFACE_SENT_OCTETS) : -999);
-                            insertPolledMetrics.setInt(10, interfaceObj.containsKey(INTERFACE_RECEIVED_OCTETS) ? interfaceObj.getInteger(INTERFACE_RECEIVED_OCTETS) : -999);
-                            insertPolledMetrics.setInt(11, interfaceObj.containsKey(INTERFACE_SPEED) ? interfaceObj.getInteger(INTERFACE_SPEED) : -999);
-                            insertPolledMetrics.setString(12, interfaceObj.containsKey(INTERFACE_ALIAS) ? interfaceObj.getString(INTERFACE_ALIAS) : "");
-                            insertPolledMetrics.setString(13, interfaceObj.containsKey(INTERFACE_PHYSICAL_ADDRESS) ? interfaceObj.getString(INTERFACE_PHYSICAL_ADDRESS) : "");
+                            insertPolledMetrics.setInt(2, interfaceObj.getInteger(INTERFACE_INDEX, -1));
+                            insertPolledMetrics.setString(3, interfaceObj.getString(INTERFACE_NAME, ""));
+                            insertPolledMetrics.setInt(4, interfaceObj.getInteger(INTERFACE_OPERATIONAL_STATUS, 1));
+                            insertPolledMetrics.setInt(5, interfaceObj.getInteger(INTERFACE_ADMIN_STATUS, -1));
+                            insertPolledMetrics.setString(6, interfaceObj.getString(INTERFACE_DESCRIPTION, ""));
+                            insertPolledMetrics.setInt(7, interfaceObj.getInteger(INTERFACE_SENT_ERROR_PACKET, -1));
+                            insertPolledMetrics.setInt(8, interfaceObj.getInteger(INTERFACE_RECEIVED_ERROR_PACKET, -1));
+                            insertPolledMetrics.setInt(9, interfaceObj.getInteger(INTERFACE_SENT_OCTETS, 0));
+                            insertPolledMetrics.setInt(10, interfaceObj.getInteger(INTERFACE_RECEIVED_OCTETS, -1));
+                            insertPolledMetrics.setInt(11, interfaceObj.getInteger(INTERFACE_SPEED, -1));
+                            insertPolledMetrics.setString(12, interfaceObj.getString(INTERFACE_ALIAS, ""));
+                            insertPolledMetrics.setString(13, interfaceObj.getString(INTERFACE_PHYSICAL_ADDRESS, ""));
                             insertPolledMetrics.setString(14, pollTime);
 
                             insertPolledMetrics.addBatch();
@@ -78,7 +78,8 @@ public class StoreRemoteMetrics
 
                         LOGGER.trace("{} rows data inserted for {}", rowsInserted.length, objectIp);
 
-                    } catch(SQLException sqlException)
+                    }
+                    catch (SQLException sqlException)
                     {
                         LOGGER.error(ERROR_CONTAINER, sqlException.getMessage());
                     }
