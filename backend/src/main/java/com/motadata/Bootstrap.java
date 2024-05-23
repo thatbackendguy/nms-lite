@@ -1,10 +1,12 @@
 package com.motadata;
 
 import com.motadata.api.APIServer;
+import com.motadata.config.Config;
 import com.motadata.constants.Constants;
 import com.motadata.engine.ProcessSpawner;
 import com.motadata.engine.ResponseParser;
 import com.motadata.engine.Scheduler;
+import com.motadata.engine.StoreRemoteMetrics;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
@@ -23,6 +25,13 @@ public class Bootstrap
 
         try
         {
+            if (Config.AGENT_MODE == 1)
+            {
+                vertx.deployVerticle(StoreRemoteMetrics.class.getName())
+                        .onSuccess(handler -> LOGGER.info("Store Remote Metrics Deployed"))
+                        .onFailure(handler -> LOGGER.error("Store Remote Metrics Deploy Failed"));
+            }
+
             vertx.deployVerticle(Scheduler.class.getName(), new DeploymentOptions().setInstances(1))
 
                     .compose(id -> vertx.deployVerticle(ProcessSpawner.class.getName()))

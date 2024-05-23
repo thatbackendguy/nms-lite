@@ -10,6 +10,14 @@ public class Constants
 
     public static final String HOST = "host";
 
+    public static final String DATABASE_USERNAME = "database.username";
+
+    public static final String DATABASE_PASSWORD = "database.password";
+
+    public static final String DATABASE_URI = "database.uri";
+
+    public static final String AGENT_MODE = "agent";
+
     public static final String POLLING_INTERVAL = "polling.interval";
 
     public static final String CONTENT_TYPE = "Content-Type";
@@ -123,6 +131,5 @@ public class Constants
     public static final String INTERFACE_PHYSICAL_ADDRESS = "interface.physical.address";
 
     public static final String INTERFACE = "interface";
-
 
 }
