@@ -48,7 +48,7 @@ public class StoreRemoteMetrics extends AbstractVerticle
                 {
                     var message = socket.recvStr(ZMQ.DONTWAIT);
 
-                    if (message == null)
+                    if (message != null)
                     {
                         var decodedString = new String(Base64.getDecoder().decode(message));
 
@@ -102,8 +102,8 @@ public class StoreRemoteMetrics extends AbstractVerticle
                     }
                     else
                     {
-                        LOGGER.trace("No message received");
-                        
+                        LOGGER.trace("Messaging queue empty");
+
                         break;
                     }
                 }

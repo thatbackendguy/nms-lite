@@ -43,10 +43,12 @@ public class Scheduler extends AbstractVerticle
                     }
                 }
 
-                var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
+                if (!context.isEmpty())
+                {
+                    var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
-               eventBus.send(POLL_METRICS_EVENT,encodedString);
-
+                    eventBus.send(POLL_METRICS_EVENT, encodedString);
+                }
             }
             catch (Exception exception)
             {

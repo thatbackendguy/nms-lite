@@ -27,6 +27,10 @@ const (
 func main() {
 	agent := false
 
+	zmqPort := 9090
+
+	zmqIp := "localhost"
+
 	context, _ := zmq.NewContext()
 
 	defer context.Term()
@@ -44,7 +48,7 @@ func main() {
 
 	stringContext := make([]byte, 0)
 
-	stringContext, err := os.ReadFile("/home/yash/Documents/GitHub/nms-lite/plugin-engine/context-config.json")
+	stringContext, err := os.ReadFile("./config.json")
 
 	if err != nil {
 
@@ -88,6 +92,10 @@ func main() {
 		PluginEngineLogger.Info(string(stringContext))
 
 		for _, context := range contexts {
+
+			zmqPort = int(context["zmq.port"].(float64))
+
+			zmqIp = context["zmq.ip"].(string)
 
 			wg.Add(1)
 
@@ -172,8 +180,11 @@ func main() {
 		PluginEngineLogger.Info(encodedString)
 
 		if agent {
-			// Connect to the subscriber's address
-			err := socket.Connect("tcp://localhost:9090")
+			zmqEnpoint := fmt.Sprintf("tcp://%v:%v", zmqIp, zmqPort)
+
+			PluginEngineLogger.Trace(zmqEnpoint)
+
+			err := socket.Connect(zmqEnpoint)
 
 			if err != nil {
 
