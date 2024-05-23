@@ -98,4 +98,31 @@ public class Constants
 
     public static final String PARSE_COLLECT_EVENT = "parse.collect";
 
+    public static final String POLL_TIME = "poll.time";
+
+    public static final String INTERFACE_INDEX = "interface.index";
+
+    public static final String INTERFACE_OPERATIONAL_STATUS = "interface.operational.status";
+
+    public static final String INTERFACE_ADMIN_STATUS = "interface.admin.status";
+
+    public static final String INTERFACE_DESCRIPTION = "interface.description";
+
+    public static final String INTERFACE_SENT_ERROR_PACKET = "interface.sent.error.packet";
+
+    public static final String INTERFACE_RECEIVED_ERROR_PACKET = "interface.received.error.packet";
+
+    public static final String INTERFACE_SENT_OCTETS = "interface.sent.octets";
+
+    public static final String INTERFACE_RECEIVED_OCTETS = "interface.received.octets";
+
+    public static final String INTERFACE_SPEED = "interface.speed";
+
+    public static final String INTERFACE_ALIAS = "interface.alias";
+
+    public static final String INTERFACE_PHYSICAL_ADDRESS = "interface.physical.address";
+
+    public static final String INTERFACE = "interface";
+
+
 }

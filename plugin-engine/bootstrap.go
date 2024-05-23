@@ -4,13 +4,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	zmq "github.com/pebbe/zmq4"
+	"log"
 	"os"
 	"plugin-engine/global"
 	"plugin-engine/logger"
 	"plugin-engine/plugins/snmp"
-	"plugin-engine/utils"
 	"strings"
 	"sync"
+	"time"
 )
 
 var PluginEngineLogger = logger.NewLogger(global.LogFilesPath, global.SystemLoggerName)
@@ -23,102 +25,179 @@ const (
 )
 
 func main() {
+	agent := false
+
+	context, _ := zmq.NewContext()
+
+	defer context.Term()
+
+	// Create a new PUB socket
+	socket, _ := context.NewSocket(zmq.PUSH)
+
+	defer socket.Close()
+
+	if len(os.Args) > 1 {
+		if len(os.Args[1]) < 10 && os.Args[1] == "--agent" {
+			agent = true
+		}
+	}
+
+	stringContext := make([]byte, 0)
+
+	stringContext, err := os.ReadFile("/home/yash/Documents/GitHub/nms-lite/plugin-engine/context-config.json")
+
+	if err != nil {
+
+		PluginEngineLogger.Error("Error reading file:" + err.Error())
+
+		return
+	}
+
+	PluginEngineLogger.Info(fmt.Sprintf("file read: %v", string(stringContext)))
 
 	wg := sync.WaitGroup{}
 
-	PluginEngineLogger.Info("Starting Plugin Engine")
+	for {
 
-	decodedBytes, err := base64.StdEncoding.DecodeString(os.Args[1])
+		PluginEngineLogger.Info("Starting Plugin Engine")
 
-	if err != nil {
+		contexts := make([]map[string]interface{}, 0)
 
-		PluginEngineLogger.Error(fmt.Sprintf("base64 decoding error: %s", err.Error()))
+		if agent == false {
 
-		return
+			stringContext, err = base64.StdEncoding.DecodeString(os.Args[1])
 
-	}
+			if err != nil {
 
-	contexts := make([]map[string]interface{}, 0)
+				PluginEngineLogger.Error(fmt.Sprintf("base64 decoding error: %s", err.Error()))
 
-	err = json.Unmarshal(decodedBytes, &contexts)
+				return
 
-	if err != nil {
-		PluginEngineLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
+			}
+		}
 
-		return
-	}
+		err = json.Unmarshal(stringContext, &contexts)
 
-	PluginEngineLogger.Info(string(decodedBytes))
+		if err != nil {
 
-	for _, context := range contexts {
+			PluginEngineLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
 
-		wg.Add(1)
+			return
+		}
 
-		go func(context map[string]interface{}) {
+		PluginEngineLogger.Info(string(stringContext))
 
-			defer wg.Done()
+		for _, context := range contexts {
 
-			errors := make([]map[string]interface{}, 0)
+			wg.Add(1)
 
-			defer func(context map[string]interface{}, contexts []map[string]interface{}) {
+			go func(context map[string]interface{}) {
 
-				if r := recover(); r != nil {
+				defer wg.Done()
 
-					PluginEngineLogger.Error(fmt.Sprintf("some error occurred!, reason : %v", r))
+				errors := make([]map[string]interface{}, 0)
 
-					context[global.Status] = global.Failed
+				defer func(context map[string]interface{}, contexts []map[string]interface{}) {
 
-				}
-			}(context, contexts)
+					if r := recover(); r != nil {
 
-			if pluginName, ok := context[PluginName].(string); ok {
+						PluginEngineLogger.Error(fmt.Sprintf("some error occurred!, reason : %v", r))
 
-				switch pluginName {
+						context[global.Status] = global.Failed
 
-				case NetworkDevice:
-
-					if requestType, ok := context[RequestType].(string); ok {
-
-						if strings.EqualFold(requestType, Discovery) {
-
-							PluginEngineLogger.Trace(fmt.Sprintf("Discovery request: %v", context[snmp.ObjectIp]))
-
-							snmp.Discovery(context, &errors)
-
-						} else {
-
-							PluginEngineLogger.Trace(fmt.Sprintf("Collect request: %v", context[snmp.ObjectIp]))
-
-							snmp.Collect(context, &errors)
-
-						}
 					}
-				default:
+				}(context, contexts)
 
-					PluginEngineLogger.Error("Unsupported plugin type!")
+				if pluginName, ok := context[PluginName].(string); ok {
+
+					switch pluginName {
+
+					case NetworkDevice:
+
+						if requestType, ok := context[RequestType].(string); ok {
+
+							if strings.EqualFold(requestType, Discovery) {
+
+								PluginEngineLogger.Trace(fmt.Sprintf("Discovery request: %v", context[snmp.ObjectIp]))
+
+								snmp.Discovery(context, &errors)
+
+							} else {
+
+								PluginEngineLogger.Trace(fmt.Sprintf("Collect request: %v", context[snmp.ObjectIp]))
+
+								snmp.Collect(context, &errors)
+
+							}
+						}
+					default:
+
+						PluginEngineLogger.Error("Unsupported plugin type!")
+					}
 				}
-			}
 
-			context[global.Error] = errors
+				context[global.Error] = errors
 
-			if _, ok := context[global.Result]; ok {
+				if _, ok := context[global.Result]; ok {
 
-				if len(context[global.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
+					if len(context[global.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
 
-					context[global.Status] = global.Failed
+						context[global.Status] = global.Failed
 
+					} else {
+						context[global.Status] = global.Success
+					}
 				} else {
-					context[global.Status] = global.Success
+					context[global.Status] = global.Failed
 				}
-			} else {
-				context[global.Status] = global.Failed
+
+			}(context)
+
+		}
+
+		wg.Wait()
+
+		//result := utils.SendResponse(contexts)
+
+		jsonOutput, err := json.Marshal(contexts)
+
+		if err != nil {
+
+			log.Fatal("JSON Marshal Error: ", err)
+
+		}
+
+		encodedString := base64.StdEncoding.EncodeToString(jsonOutput)
+
+		PluginEngineLogger.Info(encodedString)
+
+		if agent {
+			// Connect to the subscriber's address
+			err := socket.Connect("tcp://localhost:9090")
+
+			if err != nil {
+
+				PluginEngineLogger.Error(err.Error())
+
 			}
 
-		}(context)
+			send, err := socket.Send(encodedString, 0)
 
+			if err != nil {
+
+				PluginEngineLogger.Error(err.Error())
+
+			}
+
+			PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket: %v", send))
+
+			time.Sleep(1 * time.Minute)
+
+		} else {
+
+			fmt.Println(encodedString)
+
+			break
+		}
 	}
-
-	wg.Wait()
-
-	utils.SendResponse(contexts)
 }

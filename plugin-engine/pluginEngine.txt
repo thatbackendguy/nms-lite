@@ -10,3 +10,31 @@ W3sicGx1Z2luLm5hbWUiOiJOZXR3b3JrIiwib2JqZWN0LmlwIjoiMTI3LjAuMC4xIiwicmVxdWVzdC50
 single context collect (motadata router)
 W3sicGx1Z2luLm5hbWUiOiJOZXR3b3JrIiwib2JqZWN0LmlwIjoiMTcyLjE2LjguMyIsInJlcXVlc3QudHlwZSI6IkNvbGxlY3QiLCJzbm1wLmNvbW11bml0eSI6InB1YmxpYyIsInNubXAucG9ydCI6MTYxfV0=
 
+# Discovery
+[
+  {
+    "plugin.name": "Network",
+    "object.ip": "172.16.8.3",
+    "request.type": "Discovery",
+    "port": 161,
+    "credentials": [
+      {
+        "credential.profile.id": 2,
+        "community": "public"
+      }
+    ]
+  }
+]
+
+# Collect
+[
+  {
+    "object.ip": "172.16.14.9",
+    "port": 161,
+    "community": "public",
+    "version": "v2c",
+    "credential.profile.id": 1,
+    "plugin.name": "Network",
+    "request.type": "Collect"
+  }
+]

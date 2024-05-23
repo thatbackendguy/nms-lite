@@ -1,0 +1,11 @@
+[
+  {
+    "object.ip": "172.16.14.9",
+    "port": 161,
+    "community": "public",
+    "version": "v2c",
+    "credential.profile.id": 1,
+    "plugin.name": "Network",
+    "request.type": "Collect"
+  }
+]
