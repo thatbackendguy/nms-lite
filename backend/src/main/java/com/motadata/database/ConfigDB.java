@@ -20,7 +20,7 @@ public class ConfigDB
 
     private static final ConcurrentHashMap<Long, JsonObject> credentialProfiles = new ConcurrentHashMap<>();
 
-    private static final ConcurrentHashMap<Long, JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<Long, JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
     private ConfigDB()
     {
@@ -143,7 +143,7 @@ public class ConfigDB
 
                         for (var id : discoveryProfiles.keySet())
                         {
-                            discoveryObjects.add(new JsonObject().put(id.toString(), discoveryProfiles.get(id)));
+                            discoveryObjects.add(discoveryProfiles.get(id).put(DISCOVERY_PROFILE_ID,id));
                         }
 
                         response.put(RESULT, discoveryObjects);
@@ -168,7 +168,7 @@ public class ConfigDB
                     .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                     .put(ERR_MESSAGE, "error in executing GET operation"));
 
-            LOGGER.error(exception.getMessage());
+            LOGGER.error(exception.toString());
         }
 
         return response;

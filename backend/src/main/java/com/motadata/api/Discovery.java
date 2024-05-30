@@ -13,7 +13,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-
 import java.util.Base64;
 
 import static com.motadata.constants.Constants.*;
@@ -412,12 +411,12 @@ public class Discovery
 
                     for (var object : requestObjects)
                     {
-                        var monitor = new JsonObject(object.toString());
+                        var discoverProfileId = Long.parseLong(object.toString());
 
                         var discoveryProfile = ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE)
-                                        .put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, monitor.getString(DISCOVERY_PROFILE_ID))))
+                                        .put(DATA, new JsonObject().put(DISCOVERY_PROFILE_ID, discoverProfileId)))
                                 .getJsonObject(RESULT)
-                                .put(DISCOVERY_PROFILE_ID, monitor.getString(DISCOVERY_PROFILE_ID));
+                                .put(DISCOVERY_PROFILE_ID, discoverProfileId);
 
                         if (discoveryProfile.containsKey(RESULT) && discoveryProfile.containsKey(IS_DISCOVERED))
                         {
@@ -452,6 +451,7 @@ public class Discovery
 
                     var encodedString = Base64.getEncoder().encodeToString(contexts.toString().getBytes());
 
+                    // sending event with context to ProcessSpawner
                     eventBus.send(RUN_DISCOVERY_EVENT, encodedString);
 
                     handler.complete();

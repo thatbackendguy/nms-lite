@@ -96,6 +96,8 @@ public class Constants
 
     public static final String GO_PLUGIN_ENGINE_PATH = "go.plugin.path";
 
+    public static final String GO_COLLECTOR_PATH = "go.collector.path";
+
     public static final String DISCOVERY_PROFILE_ID_PARAMS = "discoveryProfileId";
 
     public static final String PROVISION_ID_PARAMS = "provisionId";
@@ -106,7 +108,7 @@ public class Constants
 
     public static final String PARSE_DISCOVERY_EVENT = "parse.discovery";
 
-    public static final String PARSE_COLLECT_EVENT = "parse.collect";
+    public static final String DUMP_TO_FILE = "dump.to.file";
 
     public static final String POLL_TIME = "poll.time";
 
@@ -133,5 +135,9 @@ public class Constants
     public static final String INTERFACE_PHYSICAL_ADDRESS = "interface.physical.address";
 
     public static final String INTERFACE = "interface";
+
+    public static final String CHECK_AVAILABILITY = "check.availability";
+
+    public static final String AVAILABILITY = "Availability";
 
 }

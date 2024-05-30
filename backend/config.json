@@ -1,11 +1,6 @@
 {
   "host": "127.0.0.1",
   "port": 8080,
-  "zmq.port": 9090,
-  "polling.interval": 60000,
-  "go.plugin.path": "/home/yash/Documents/GitHub/nms-lite/backend/pluginEngine/plugin-engine",
-  "agent": 1,
-  "database.uri": "jdbc:mysql://localhost:3306/configDB",
-  "database.username": "root",
-  "database.password": "Root@1010"
+  "go.plugin.path": "/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine",
+  "go.collector.path": "/home/yash/Documents/GitHub/nms-lite/collector/collector"
 }

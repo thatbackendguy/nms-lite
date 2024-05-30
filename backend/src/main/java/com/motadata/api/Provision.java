@@ -121,9 +121,9 @@ public class Provision
             }
             else
             {
-                for (var values : ConfigDB.provisionedDevices.values())
+                for (var values : ConfigDB.provisionedDevices.keySet())
                 {
-                    if (Long.parseLong(discProfileId) == values.getLong(DISCOVERY_PROFILE_ID))
+                    if (Long.parseLong(discProfileId) == values)
                     {
                         routingContext.response()
                                 .setStatusCode(HttpResponseStatus.CONFLICT.code())

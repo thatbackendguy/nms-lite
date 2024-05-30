@@ -29,6 +29,8 @@ public class ResponseParser extends AbstractVerticle
 
         eventBus.<JsonArray> localConsumer(PARSE_DISCOVERY_EVENT, results ->
         {
+            LOGGER.trace("PARSE_DISCOVERY_EVENT: {}",results);
+
             try
             {
                 for (var result : results.body())
@@ -57,100 +59,7 @@ public class ResponseParser extends AbstractVerticle
                             Utils.incrementCounter(credentialProfileId);
                         }
 
-                        LOGGER.trace("Monitor status updated");
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                LOGGER.error(ERROR_CONTAINER, exception.getMessage());
-            }
-
-        });
-
-        eventBus.<JsonArray> localConsumer(PARSE_COLLECT_EVENT, results ->
-        {
-
-            try
-            {
-                for (var result : results.body())
-                {
-                    var monitor = new JsonObject(result.toString());
-
-                    LOGGER.trace(monitor.toString());
-
-                    if (monitor.getString(STATUS).equals(SUCCESS))
-                    {
-                        var objectIp = monitor.getString(OBJECT_IP, "localhost");
-
-                        var mainDirName = "metrics-result";
-
-                        var ipDirName = mainDirName + "/" + objectIp;
-
-                        var collectResult = monitor.getJsonObject("result");
-
-                        var interfaces = collectResult.getJsonArray("interface");
-
-                        vertx.fileSystem().mkdirs(ipDirName, mkdirsResult ->
-                        {
-                            if (mkdirsResult.succeeded())
-                            {
-                                LOGGER.trace("Created directory: {}", ipDirName);
-
-                                for (Object interfaceObj : interfaces)
-                                {
-                                    var interfaceJson = new JsonObject(interfaceObj.toString());
-
-                                    var interfaceName = interfaceJson.getString(INTERFACE_NAME)
-                                            .replace("/", "-")
-                                            .replace(".", "-");
-
-                                    var fileName = ipDirName + "/" + interfaceName + ".txt";
-
-                                    vertx.fileSystem()
-                                            .open(fileName, new OpenOptions().setAppend(true)
-                                                    .setCreate(true), openResult ->
-                                            {
-                                                if (openResult.succeeded())
-                                                {
-                                                    var file = openResult.result();
-
-                                                    var buffer = Buffer.buffer(interfaceJson.encodePrettily() + "\n");
-
-                                                    file.write(buffer, writeResult ->
-                                                    {
-                                                        if (writeResult.succeeded())
-                                                        {
-                                                            LOGGER.trace("Content appended to file: {}", fileName);
-
-                                                            file.close();
-                                                        }
-                                                        else
-                                                        {
-                                                            LOGGER.warn("Error occurred while writing to file {}: {}", fileName, writeResult.cause()
-                                                                    .getMessage());
-
-                                                            file.close();
-                                                        }
-                                                    });
-                                                }
-                                                else
-                                                {
-                                                    LOGGER.warn("Error occurred while opening file {}: {}", fileName, openResult.cause()
-                                                            .getMessage());
-                                                }
-                                            });
-                                }
-
-                            }
-                            else
-                            {
-                                LOGGER.warn("Error occurred while creating directory {}: {}", ipDirName, mkdirsResult.cause()
-                                        .getMessage());
-
-                            }
-                        });
-                        LOGGER.trace("Result written to file");
+                        LOGGER.trace("Monitor status updated: {}", monitor.getString(OBJECT_IP,""));
                     }
                 }
             }

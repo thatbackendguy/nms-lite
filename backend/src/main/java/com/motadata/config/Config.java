@@ -22,19 +22,9 @@ public class Config
 
     public static int PORT;
 
-    public static int ZMQ_PORT;
-
-    public static long POLLING_INTERVAL;
-
     public static String GO_PLUGIN_ENGINE_PATH;
 
-    public static int AGENT_MODE;
-
-    public static final String DB_URI;
-
-    public static final String DB_USERNAME;
-
-    public static final String DB_PASS;
+    public static String GO_COLLECTOR_PATH;
 
     static
     {
@@ -44,19 +34,9 @@ public class Config
 
         PORT = config.getInteger(Constants.PORT, 8080);
 
-        ZMQ_PORT = config.getInteger(Constants.ZMQ_PORT, 9090);
+        GO_PLUGIN_ENGINE_PATH = config.getString(Constants.GO_PLUGIN_ENGINE_PATH, System.getProperty("user.dir") + "/plugins/plugin-engine");
 
-        POLLING_INTERVAL = config.getLong(Constants.POLLING_INTERVAL, 300_000L);
-
-        GO_PLUGIN_ENGINE_PATH = config.getString(Constants.GO_PLUGIN_ENGINE_PATH, System.getProperty("user.dir") + "/pluginEngine/plugin-engine");
-
-        AGENT_MODE = config.getInteger(Constants.AGENT_MODE, 0);
-
-        DB_URI = config.getString(Constants.DATABASE_URI, "jdbc:mysql://localhost:3306/configDB");
-
-        DB_USERNAME = config.getString(Constants.DATABASE_USERNAME, "root");
-
-        DB_PASS = config.getString(Constants.DATABASE_PASSWORD, "Root@1010");
+        GO_COLLECTOR_PATH = config.getString(Constants.GO_COLLECTOR_PATH, System.getProperty("user.dir") + "/plugins/collector");
 
     }
 

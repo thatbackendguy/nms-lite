@@ -28,8 +28,11 @@ public class Scheduler extends AbstractVerticle
 
         var eventBus = vertx.eventBus();
 
-        vertx.setPeriodic(Config.POLLING_INTERVAL, timerId ->
+        // for metric polling
+        vertx.setPeriodic(300_000, timerId ->
         {
+            LOGGER.trace("Initiating metric polling cycle...");
+
             try
             {
 
@@ -47,7 +50,49 @@ public class Scheduler extends AbstractVerticle
                 {
                     var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
+                    // sending poll event on interval to ProcessSpawner
                     eventBus.send(POLL_METRICS_EVENT, encodedString);
+                }
+            }
+            catch (Exception exception)
+            {
+                LOGGER.error(ERROR_CONTAINER, exception.getMessage());
+            }
+        });
+
+        // for availability
+        vertx.setPeriodic(120_000, timerId ->
+        {
+            LOGGER.trace("Initiating check availability cycle...");
+
+            try
+            {
+                var context = new JsonArray();
+
+                var discoveryProfiles = ( ConfigDB.get(new JsonObject().put(REQUEST_TYPE, DISCOVERY_PROFILE)) ).getJsonArray(RESULT, new JsonArray());
+
+                if (!discoveryProfiles.isEmpty())
+                {
+                    for (var profile : discoveryProfiles)
+                    {
+                        var discoveryProfile = new JsonObject(profile.toString());
+
+                        if (discoveryProfile.containsKey(OBJECT_IP) && discoveryProfile.containsKey(DISCOVERY_PROFILE_ID))
+                        {
+                            context.add(new JsonObject().put(OBJECT_IP, discoveryProfile.getString(OBJECT_IP))
+                                    .put(DISCOVERY_PROFILE_ID, discoveryProfile.getInteger(DISCOVERY_PROFILE_ID))
+                                    .put(REQUEST_TYPE, AVAILABILITY)
+                                    .put(PLUGIN_NAME, NETWORK));
+                        }
+                    }
+                }
+
+                if (!context.isEmpty())
+                {
+                    var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
+
+                    // sending availability event on interval to ProcessSpawner
+                    eventBus.send(CHECK_AVAILABILITY, encodedString);
                 }
             }
             catch (Exception exception)

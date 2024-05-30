@@ -53,53 +53,11 @@ public class Utils
         return counter.incrementAndGet();
     }
 
-    public static JsonArray spawnPluginEngine(String encodedString)
+    public static JsonArray decodeBase64ToJsonArray(String encodedString)
     {
-
         var decodedString = "[]";
 
-        try
-        {
-            var processBuilder = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH, encodedString).redirectErrorStream(true);
-
-            LOGGER.trace("Initiating process builder");
-
-            LOGGER.trace(encodedString);
-
-            var process = processBuilder.start();
-
-            var isCompleted = process.waitFor(25, TimeUnit.SECONDS); // Wait for 25 seconds
-
-            if (!isCompleted)
-            {
-                process.destroyForcibly();
-
-                LOGGER.error("Polling failed, Timed out");
-            }
-            else
-            {
-                var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-                String line;
-
-                var processBuffer = Buffer.buffer();
-
-                while (( line = reader.readLine() ) != null)
-                {
-                    processBuffer.appendString(line);
-                }
-
-                LOGGER.trace("Process completed, Decoding & sending result...");
-
-                decodedString = new String(Base64.getDecoder().decode(processBuffer.toString()));
-
-                LOGGER.info(decodedString);
-            }
-        }
-        catch (IOException | InterruptedException exception)
-        {
-            LOGGER.error(ERROR_CONTAINER, exception.getMessage());
-        }
+        decodedString = new String(Base64.getDecoder().decode(encodedString));
 
         return new JsonArray(decodedString);
     }

@@ -6,13 +6,12 @@ import (
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
 	"log"
-	"os"
 	"plugin-engine/global"
 	"plugin-engine/logger"
 	"plugin-engine/plugins/snmp"
+	"plugin-engine/utils"
 	"strings"
 	"sync"
-	"time"
 )
 
 var PluginEngineLogger = logger.NewLogger(global.LogFilesPath, global.SystemLoggerName)
@@ -20,71 +19,52 @@ var PluginEngineLogger = logger.NewLogger(global.LogFilesPath, global.SystemLogg
 const (
 	RequestType   = "request.type"
 	Discovery     = "Discovery"
+	Collect       = "Collect"
 	PluginName    = "plugin.name"
 	NetworkDevice = "Network"
 )
 
 func main() {
-	agent := false
 
-	zmqPort := 9090
+	zmqContext, _ := zmq.NewContext()
 
-	zmqIp := "localhost"
+	socket, _ := zmqContext.NewSocket(zmq.REP)
 
-	context, _ := zmq.NewContext()
+	defer func() {
+		zmqContext.Term()
 
-	defer context.Term()
+		socket.Close()
 
-	// Create a new PUB socket
-	socket, _ := context.NewSocket(zmq.PUSH)
+		if err := recover(); err != nil {
 
-	defer socket.Close()
+			PluginEngineLogger.Error(err)
 
-	if len(os.Args) > 1 {
-		if len(os.Args[1]) < 10 && os.Args[1] == "--agent" {
-			agent = true
 		}
-	}
+	}()
 
-	stringContext := make([]byte, 0)
-
-	stringContext, err := os.ReadFile("./config.json")
-
-	if err != nil {
-
-		PluginEngineLogger.Error("Error reading file:" + err.Error())
-
-		return
-	}
-
-	PluginEngineLogger.Info(fmt.Sprintf("file read: %v", string(stringContext)))
+	socket.Bind("tcp://*:7777")
 
 	wg := sync.WaitGroup{}
 
-	ticker := time.NewTicker(1 * time.Minute)
-
-	defer ticker.Stop()
+	PluginEngineLogger.Info("Starting Plugin Engine")
 
 	for {
 
-		PluginEngineLogger.Info("Starting Plugin Engine")
+		encodedContext, _ := socket.Recv(0)
 
 		contexts := make([]map[string]interface{}, 0)
 
-		if agent == false {
+		decodedContext, err := base64.StdEncoding.DecodeString(encodedContext)
 
-			stringContext, err = base64.StdEncoding.DecodeString(os.Args[1])
+		if err != nil {
 
-			if err != nil {
+			PluginEngineLogger.Error(fmt.Sprintf("base64 decoding error: %s", err.Error()))
 
-				PluginEngineLogger.Error(fmt.Sprintf("base64 decoding error: %s", err.Error()))
+			return
 
-				return
-
-			}
 		}
 
-		err = json.Unmarshal(stringContext, &contexts)
+		err = json.Unmarshal(decodedContext, &contexts)
 
 		if err != nil {
 
@@ -93,13 +73,9 @@ func main() {
 			return
 		}
 
-		PluginEngineLogger.Info(string(stringContext))
+		PluginEngineLogger.Info(string(decodedContext))
 
 		for _, context := range contexts {
-
-			zmqPort = int(context["zmq.port"].(float64))
-
-			zmqIp = context["zmq.ip"].(string)
 
 			wg.Add(1)
 
@@ -134,12 +110,16 @@ func main() {
 
 								snmp.Discovery(context, &errors)
 
-							} else {
+							} else if strings.EqualFold(requestType, Collect) {
 
 								PluginEngineLogger.Trace(fmt.Sprintf("Collect request: %v", context[snmp.ObjectIp]))
 
 								snmp.Collect(context, &errors)
 
+							} else {
+								PluginEngineLogger.Trace(fmt.Sprintf("Check availability request: %v", context[snmp.ObjectIp]))
+
+								utils.CheckAvailability(context)
 							}
 						}
 					default:
@@ -183,36 +163,17 @@ func main() {
 
 		PluginEngineLogger.Info(encodedString)
 
-		if agent {
-			zmqEnpoint := fmt.Sprintf("tcp://%v:%v", zmqIp, zmqPort)
+		send, err := socket.Send(encodedString, zmq.DONTWAIT)
 
-			PluginEngineLogger.Trace(zmqEnpoint)
+		if err != nil {
 
-			err := socket.Connect(zmqEnpoint)
+			PluginEngineLogger.Error(err.Error())
 
-			if err != nil {
-
-				PluginEngineLogger.Error(err.Error())
-
-			}
-
-			send, err := socket.Send(encodedString, 0)
-
-			if err != nil {
-
-				PluginEngineLogger.Error(err.Error())
-
-			}
-
-			PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket: %v", send))
-
-			<-ticker.C
-
-		} else {
-
-			fmt.Println(encodedString)
-
-			break
 		}
+
+		PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket, data length = %v", send))
+
+		//fmt.Println(encodedString)
+
 	}
 }
