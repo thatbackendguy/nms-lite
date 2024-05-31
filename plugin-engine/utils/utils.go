@@ -20,17 +20,15 @@ func CheckAvailability(context map[string]interface{}) {
 
 	output, _ := execute.CombinedOutput()
 
-	if strings.Contains(string(output), "/0%") {
+	status := "down"
 
-		context[global.Result] = map[string]interface{}{
-			"is.available": "up",
-		}
+	if !strings.Contains(string(output), "/0%") {
 
-	} else {
+		status = "up"
 
-		context[global.Result] = map[string]interface{}{
-			"is.available": "down",
-		}
+	}
 
+	context[global.Result] = map[string]interface{}{
+		"is.available": status,
 	}
 }

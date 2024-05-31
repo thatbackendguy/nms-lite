@@ -21,3 +21,9 @@ const (
 
 	InterfacePhysicalAddress = "interface.physical.address"
 )
+
+var (
+	Requests = make(chan string, 10)
+
+	Responses = make(chan string, 10)
+)

@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	zmq "github.com/pebbe/zmq4"
 	"log"
 	"plugin-engine/global"
 	"plugin-engine/logger"
 	"plugin-engine/plugins/snmp"
+	"plugin-engine/server"
 	"plugin-engine/utils"
 	"strings"
 	"sync"
@@ -35,58 +35,30 @@ func main() {
 		}
 	}()
 
-	zmqContext, _ := zmq.NewContext()
-
-	defer zmqContext.Term()
-
-	puller, _ := zmqContext.NewSocket(zmq.PULL)
-
-	defer puller.Close()
-
-	pusher, _ := zmqContext.NewSocket(zmq.PUSH)
-
-	defer pusher.Close()
-
-	err := puller.Connect("tcp://localhost:7777")
+	puller, pusher, err := server.Init()
 
 	if err != nil {
 
-		PluginEngineLogger.Error(err)
+		PluginEngineLogger.Error(err.Error())
 
+		return
 	}
 
-	err = pusher.Connect("tcp://localhost:8888")
-
+	err = server.Start(puller, pusher)
 	if err != nil {
 
-		PluginEngineLogger.Error(err)
+		PluginEngineLogger.Error(err.Error())
 
+		return
 	}
-
-	works := make(chan string, 10)
 
 	wg := sync.WaitGroup{}
 
 	PluginEngineLogger.Info("Starting Plugin Engine")
 
-	go func() {
+	for encodedContext := range global.Requests {
 
-		for {
-			encodedContext, err := puller.Recv(0)
-
-			if err != nil {
-
-				PluginEngineLogger.Error(err.Error())
-
-			}
-
-			works <- encodedContext
-		}
-	}()
-
-	for encodedContext := range works {
-
-		contexts := make([]map[string]interface{}, 0)
+		var contexts []map[string]interface{}
 
 		decodedContext, err := base64.StdEncoding.DecodeString(encodedContext)
 
@@ -197,17 +169,9 @@ func main() {
 
 		PluginEngineLogger.Info(encodedString)
 
-		send, err := pusher.Send(encodedString, zmq.DONTWAIT)
+		global.Responses <- encodedString
 
-		if err != nil {
-
-			PluginEngineLogger.Error(err.Error())
-
-		}
-
-		PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket, data length = %v", send))
-
-		//fmt.Println(encodedString)
+		PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket"))
 
 	}
 }

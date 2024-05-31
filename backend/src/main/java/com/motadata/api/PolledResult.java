@@ -2,19 +2,15 @@ package com.motadata.api;
 
 import com.motadata.Bootstrap;
 import com.motadata.constants.Constants;
-import com.motadata.database.ConfigDB;
 import com.motadata.utils.Utils;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-
-import java.util.Arrays;
 
 import static com.motadata.constants.Constants.*;
 import static com.motadata.api.APIServer.LOGGER;
@@ -61,7 +57,7 @@ public class PolledResult
 
                 var request = buffer.toJsonObject();
 
-                if (request.containsKey(OBJECT_IP) && request.containsKey(INTERFACE_NAME) && request.containsKey(TOP_N))
+                if (request.containsKey(OBJECT_IP) && request.containsKey(INTERFACE_NAME) && request.containsKey(LAST))
                 {
                     if (Utils.validateRequestBody(request))
                     {
@@ -76,7 +72,7 @@ public class PolledResult
 
                                         var noOfEntries = records.length;
 
-                                        if (noOfEntries <= request.getInteger(TOP_N))
+                                        if (noOfEntries <= request.getInteger(LAST))
                                         {
 
                                             for (int entry = noOfEntries - 1; entry >= 0; entry--)
@@ -87,7 +83,7 @@ public class PolledResult
                                         else
                                         {
 
-                                            for (int entry = noOfEntries - 1; entry >= noOfEntries - request.getInteger(TOP_N); entry--)
+                                            for (int entry = noOfEntries - 1; entry >= noOfEntries - request.getInteger(LAST); entry--)
                                             {
                                                 response.add(new JsonObject(records[ entry ]));
                                             }
