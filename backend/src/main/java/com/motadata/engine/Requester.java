@@ -5,6 +5,7 @@ import com.motadata.database.ConfigDB;
 import com.motadata.utils.Utils;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -22,9 +23,21 @@ public class Requester extends AbstractVerticle
 
     private static final ZContext context = new ZContext();
 
+    private static final ZMQ.Socket pusher = context.createSocket(SocketType.PUSH);
+
+    private static final ZMQ.Socket puller = context.createSocket(SocketType.PULL);
+
+    private static final ZMQ.Socket resultPusher = context.createSocket(SocketType.PUSH);
+
     @Override
     public void start(Promise<Void> startPromise) throws Exception
     {
+
+        pusher.bind("tcp://*:7777");
+
+        puller.bind("tcp://*:8888");
+
+        resultPusher.bind("tcp://*:9999");
 
         var vertx = Bootstrap.getVertx();
 
@@ -32,20 +45,19 @@ public class Requester extends AbstractVerticle
 
         eventBus.<String> localConsumer(DUMP_TO_FILE, msg ->
         {
-            try (var requester = context.createSocket(SocketType.PUSH))
+
+            try
             {
-                if (requester.connect("tcp://localhost:9999"))
-                {
-                    requester.send(msg.body(), 0);
+                resultPusher.send(msg.body(), 0);
 
-                    Thread.sleep(100);
-                }
+                LOGGER.trace("Data pushed to tcp://*:9999: {}", msg.body());
 
+                Thread.sleep(100);
 
             }
             catch (Exception exception)
             {
-                System.out.println(exception);
+                LOGGER.error(exception.getMessage(), exception);
             }
 
         });
@@ -55,25 +67,23 @@ public class Requester extends AbstractVerticle
             vertx.executeBlocking(handler ->
             {
 
-                try (var requester = context.createSocket(SocketType.REQ))
+                try
                 {
-                    requester.connect("tcp://localhost:7777");
-
-                    requester.setReceiveTimeOut(30000);
-
-                    requester.send(msg.body(), 0);
+                    pusher.send(msg.body(), 0);
 
                     LOGGER.trace("Discovery request sent: {}", msg.body());
 
-                    var reply = requester.recvStr(0);
+                    var result = puller.recvStr(0);
+
+                    LOGGER.trace("Discovery result received: {}", result);
 
                     // sending plugin engine result to ResponseParser
-                    eventBus.send(PARSE_DISCOVERY_EVENT, Utils.decodeBase64ToJsonArray(reply));
+                    eventBus.send(PARSE_DISCOVERY_EVENT, Utils.decodeBase64ToJsonArray(result));
 
                 }
                 catch (Exception exception)
                 {
-                    LOGGER.error(ERROR_CONTAINER, exception.getMessage());
+                    LOGGER.error(exception.getMessage(), exception);
                 }
             });
 
@@ -83,20 +93,18 @@ public class Requester extends AbstractVerticle
         {
             vertx.executeBlocking(handler ->
             {
-                try (var requester = context.createSocket(SocketType.REQ))
+                try
                 {
-                    requester.connect("tcp://localhost:7777");
-
-                    requester.setReceiveTimeOut(30000);
-
-                    requester.send(msg.body(), 0);
+                    pusher.send(msg.body(), 0);
 
                     LOGGER.trace("Collect request sent: {}", msg.body());
 
-                    var reply = requester.recvStr(0);
+                    var result = puller.recvStr(0);
+
+                    LOGGER.trace("Collect result received: {}", result);
 
                     // sending metrics result to Requester to dump to file
-                    eventBus.send(DUMP_TO_FILE, Utils.decodeBase64ToJsonArray(reply).toString());
+                    eventBus.send(DUMP_TO_FILE, Utils.decodeBase64ToJsonArray(result).toString());
 
                 }
                 catch (Exception exception)
@@ -110,25 +118,23 @@ public class Requester extends AbstractVerticle
         {
             vertx.executeBlocking(handler ->
             {
-                try (var requester = context.createSocket(SocketType.REQ))
+                try
                 {
-                    requester.connect("tcp://localhost:7777");
-
-                    requester.setReceiveTimeOut(30000);
-
-                    requester.send(msg.body(), 0);
+                    pusher.send(msg.body(), 0);
 
                     LOGGER.trace("Check availability request sent: {}", msg.body());
 
-                    var reply = requester.recvStr(0);
+                    var reply = puller.recvStr(0);
+
+                    LOGGER.trace("Availability result: {}", reply);
 
                     for (var result : Utils.decodeBase64ToJsonArray(reply))
                     {
                         var monitor = new JsonObject(result.toString());
 
-                        var discoveryProfile = ConfigDB.discoveryProfiles.get(monitor.getLong(DISCOVERY_PROFILE_ID));
+                        ConfigDB.availableDevices.put(monitor.getString(OBJECT_IP), monitor.getJsonObject(RESULT)
+                                .getString("is.available", "down"));
 
-                        discoveryProfile.put("is.available", monitor.getJsonObject(RESULT).getString("is.available"));
                     }
 
                 }

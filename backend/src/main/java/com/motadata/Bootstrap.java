@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class Bootstrap
 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Bootstrap.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(Bootstrap.class);
 
     private static final Vertx vertx = Vertx.vertx();
 
@@ -27,33 +27,38 @@ public class Bootstrap
 
             vertx.deployVerticle(Scheduler.class.getName(), new DeploymentOptions().setInstances(1))
 
-                    .compose(id -> vertx.deployVerticle(Requester.class.getName(), new DeploymentOptions().setInstances(2)))
+                    .compose(id -> vertx.deployVerticle(Requester.class.getName(), new DeploymentOptions().setInstances(1)))
 
                     .compose(id -> vertx.deployVerticle(ResponseParser.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER)))
 
-                    .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions().setInstances(4)))
+                    .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions().setInstances(3)))
 
                     .onSuccess(handler -> LOGGER.info("All verticles deployed"))
 
-                    .onFailure(exception -> LOGGER.error("Deployment failed: {}", exception.getMessage()));
+                    .onFailure(exception -> LOGGER.error("Deployment failed: ", exception));
 
-            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH).redirectErrorStream(true);
+            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
 
             var pluginProcess = pluginEngine.start();
 
             LOGGER.trace("Go Plugin engine started");
 
-            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH).redirectErrorStream(true);
+            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
 
             var collectorProcess = collector.start();
 
             LOGGER.trace("Go collector started");
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Runtime.getRuntime().addShutdownHook(new Thread(() ->
+            {
+
+                LOGGER.trace("Cleanup process in progress");
 
                 pluginProcess.destroyForcibly();
 
                 collectorProcess.destroyForcibly();
+
+                LOGGER.trace("Cleanup process successful");
 
             }));
 

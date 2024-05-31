@@ -40,7 +40,7 @@ public class Scheduler extends AbstractVerticle
 
                 for (var monitor : ConfigDB.provisionedDevices.values())
                 {
-                    if (monitor != null)
+                    if (monitor != null && Utils.isAvailable(monitor.getString(OBJECT_IP)))
                     {
                         context.add(monitor.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
                     }
@@ -50,7 +50,7 @@ public class Scheduler extends AbstractVerticle
                 {
                     var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
-                    // sending poll event on interval to ProcessSpawner
+                    // sending poll event on interval to Requester
                     eventBus.send(POLL_METRICS_EVENT, encodedString);
                 }
             }
@@ -91,7 +91,7 @@ public class Scheduler extends AbstractVerticle
                 {
                     var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
-                    // sending availability event on interval to ProcessSpawner
+                    // sending availability event on interval to Requester
                     eventBus.send(CHECK_AVAILABILITY, encodedString);
                 }
             }

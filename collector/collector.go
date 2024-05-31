@@ -21,11 +21,23 @@ func main() {
 
 	defer socket.Close()
 
-	socket.Bind("tcp://*:9999")
+	socket.Connect("tcp://localhost:9999")
 
-	for {
+	works := make(chan []byte, 10)
 
-		data, _ := socket.RecvBytes(0)
+	go func() {
+		for {
+			data, err := socket.RecvBytes(0)
+
+			if err != nil {
+				collectorLogger.Error(err.Error())
+			}
+
+			works <- data
+		}
+	}()
+
+	for data := range works {
 
 		contexts := make([]map[string]interface{}, 0)
 
@@ -35,7 +47,7 @@ func main() {
 
 			collectorLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
 
-			return
+			break
 		}
 
 		for _, result := range contexts {
@@ -48,46 +60,67 @@ func main() {
 				if interfacesData, ok := result["result"].(map[string]interface{})["interface"].([]interface{}); ok {
 
 					for _, value := range interfacesData {
+
 						if interfaceData, ok := value.(map[string]interface{}); ok {
 
 							interfaceName := interfaceData["interface.name"].(string)
 
-							folderPath := "./metrics-result/" + objectIp + "/" + interfaceName
+							folderPath := "./metrics-result/" + objectIp + "/"
 
 							err = os.MkdirAll(fmt.Sprintf(folderPath), 0755)
 
 							if err != nil {
 
-								collectorLogger.Info("Error creating folder:" + err.Error())
+								collectorLogger.Trace("Error creating folder:" + err.Error())
 
-								return
+								continue
 							}
 
-							collectorLogger.Info("Folder created successfully")
+							collectorLogger.Trace("Folder created successfully")
 
-							for name, metrics := range interfaceData {
-								filePath := filepath.Join(folderPath, name)
+							record := map[string]interface{}{
 
-								file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+								pollTime: interfaceData,
+							}
 
-								defer file.Close()
+							filePath := filepath.Join(folderPath, strings.ReplaceAll(strings.ReplaceAll(interfaceName, "/", "-"), ".", "-"))
 
-								if err != nil {
+							file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
-									collectorLogger.Error("Error opening file: " + filePath)
+							if err != nil {
 
-									return
-								}
+								collectorLogger.Error("Error opening file: " + filePath)
 
-								_, err = file.WriteString(fmt.Sprintf("%v,%s\n", metrics, pollTime))
+								continue
+							}
 
-								if err != nil {
-									collectorLogger.Error("Error writing to file:" + err.Error())
+							recordStr, err := json.Marshal(record)
 
-									return
-								}
+							if err != nil {
 
-								collectorLogger.Info("Data appended to file successfully")
+								collectorLogger.Error("Error marshaling data:" + err.Error())
+
+								continue
+							}
+
+							_, err = file.Write(append(recordStr, 10))
+
+							if err != nil {
+
+								collectorLogger.Error("Error writing to file:" + err.Error())
+
+								continue
+							}
+
+							collectorLogger.Trace("Data appended to file successfully")
+
+							err = file.Close()
+
+							if err != nil {
+
+								collectorLogger.Error("Error closing file:" + err.Error())
+
+								continue
 							}
 						}
 					}

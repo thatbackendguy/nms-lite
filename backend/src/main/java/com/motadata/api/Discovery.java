@@ -165,6 +165,7 @@ public class Discovery
 
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
@@ -208,7 +209,9 @@ public class Discovery
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
+
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
                             .put(ERR_MESSAGE, exception.getMessage())
@@ -255,6 +258,7 @@ public class Discovery
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
@@ -334,6 +338,7 @@ public class Discovery
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
@@ -381,6 +386,7 @@ public class Discovery
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
@@ -425,7 +431,7 @@ public class Discovery
                             discoveryProfile.remove(IS_DISCOVERED);
                         }
 
-                        if (!discoveryProfile.isEmpty() && Utils.pingCheck(discoveryProfile.getString(OBJECT_IP)))
+                        if (!discoveryProfile.isEmpty())
                         {
                             discoveryProfile.put(REQUEST_TYPE, DISCOVERY).put(PLUGIN_NAME, NETWORK);
 
@@ -472,6 +478,7 @@ public class Discovery
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
@@ -528,6 +535,7 @@ public class Discovery
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())

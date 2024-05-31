@@ -84,6 +84,7 @@ public class Provision
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
@@ -183,6 +184,7 @@ public class Provision
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())
@@ -236,6 +238,7 @@ public class Provision
         {
             routingContext.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(CONTENT_TYPE,APP_JSON)
                     .end(new JsonObject().put(STATUS, FAILED)
                             .put(ERR_STATUS_CODE, HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                             .put(ERROR, HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase())

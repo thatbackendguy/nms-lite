@@ -4,9 +4,11 @@ import com.motadata.config.Config;
 import com.motadata.constants.Constants;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.ErrorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,17 +40,20 @@ public class APIServer extends AbstractVerticle
 
             new Discovery().init(router);
 
+            new PolledResult().init(router);
+
             // FOR HANDLING FAILURES
             router.route().failureHandler(errorHandler());
 
             // GET: "/"
-            router.route(URL_SEPARATOR).handler(ctx ->
+            router.route(URL_SEPARATOR).handler(routingContext ->
             {
 
-                LOGGER.trace(REQ_CONTAINER, ctx.request().method(), ctx.request().path(), ctx.request()
-                        .remoteAddress());
+                LOGGER.trace(REQ_CONTAINER, routingContext.request().method(), routingContext.request()
+                        .path(), routingContext.request().remoteAddress());
 
-                ctx.json(new JsonObject().put(STATUS, SUCCESS).put(MESSAGE, "Welcome to Network Monitoring System!"));
+                routingContext.json(new JsonObject().put(STATUS, SUCCESS)
+                        .put(MESSAGE, "Welcome to Network Monitoring System!"));
             });
 
             server.requestHandler(router).listen(httpServerAsyncResult ->

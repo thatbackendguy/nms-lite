@@ -29,7 +29,7 @@ public class ResponseParser extends AbstractVerticle
 
         eventBus.<JsonArray> localConsumer(PARSE_DISCOVERY_EVENT, results ->
         {
-            LOGGER.trace("PARSE_DISCOVERY_EVENT: {}",results);
+            LOGGER.trace("PARSE_DISCOVERY_EVENT: {}", results);
 
             try
             {
@@ -59,7 +59,7 @@ public class ResponseParser extends AbstractVerticle
                             Utils.incrementCounter(credentialProfileId);
                         }
 
-                        LOGGER.trace("Monitor status updated: {}", monitor.getString(OBJECT_IP,""));
+                        LOGGER.trace("Monitor status updated: {}", monitor.getString(OBJECT_IP, ""));
                     }
                 }
             }

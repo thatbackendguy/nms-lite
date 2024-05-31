@@ -2,17 +2,13 @@ package com.motadata.config;
 
 import com.motadata.constants.Constants;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.motadata.Bootstrap.LOGGER;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
 public class Config
 {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(Config.class);
-
     private Config()
     {
 

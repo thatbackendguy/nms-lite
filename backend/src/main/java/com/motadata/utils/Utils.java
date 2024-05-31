@@ -1,18 +1,12 @@
 package com.motadata.utils;
 
-import com.motadata.config.Config;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.file.OpenOptions;
+import com.motadata.database.ConfigDB;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,8 +14,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.motadata.constants.Constants.*;
 
 public class Utils
 {
@@ -55,6 +47,7 @@ public class Utils
 
     public static JsonArray decodeBase64ToJsonArray(String encodedString)
     {
+
         var decodedString = "[]";
 
         decodedString = new String(Base64.getDecoder().decode(encodedString));
@@ -62,47 +55,17 @@ public class Utils
         return new JsonArray(decodedString);
     }
 
-    public static boolean pingCheck(String objectIp)
+    public static boolean isAvailable(String objectIp)
     {
 
-        try
+        if (ConfigDB.availableDevices.containsKey(objectIp) && ConfigDB.availableDevices.get(objectIp).equals("up"))
         {
-            var processBuilder = new ProcessBuilder("fping", objectIp, "-c3", "-q");
+            LOGGER.trace("{} device is UP!", objectIp);
 
-            processBuilder.redirectErrorStream(true);
-
-            var process = processBuilder.start();
-
-            var isCompleted = process.waitFor(5, TimeUnit.SECONDS); // Wait for 5 seconds
-
-            if (!isCompleted)
-            {
-                process.destroyForcibly();
-            }
-            else
-            {
-                var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-                String line;
-
-                while (( line = reader.readLine() ) != null)
-                {
-                    if (line.contains("/0%"))
-                    {
-
-                        LOGGER.debug("{} device is UP!", objectIp);
-
-                        return true;
-                    }
-                }
-            }
-        }
-        catch (Exception exception)
-        {
-            LOGGER.error("Exception: {}", exception.getMessage());
+            return true;
         }
 
-        LOGGER.debug("{} device is DOWN!", objectIp);
+        LOGGER.trace("{} device is DOWN!", objectIp);
 
         return false;
     }

@@ -22,6 +22,8 @@ public class ConfigDB
 
     public static final ConcurrentHashMap<Long, JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
+    public static final ConcurrentHashMap<String, String> availableDevices = new ConcurrentHashMap<>();
+
     private ConfigDB()
     {
 
@@ -143,7 +145,7 @@ public class ConfigDB
 
                         for (var id : discoveryProfiles.keySet())
                         {
-                            discoveryObjects.add(discoveryProfiles.get(id).put(DISCOVERY_PROFILE_ID,id));
+                            discoveryObjects.add(discoveryProfiles.get(id).put(DISCOVERY_PROFILE_ID, id));
                         }
 
                         response.put(RESULT, discoveryObjects);

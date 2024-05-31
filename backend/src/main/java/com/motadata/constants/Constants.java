@@ -81,6 +81,7 @@ public class Constants
     public static final String CREDENTIAL_PROFILE = "credential_profile";
 
     public static final String INTERFACE_NAME = "interface.name";
+    public static final String TOP_N = "top.n";
 
     public static final String ERROR_CONTAINER = "Error: {}";
 

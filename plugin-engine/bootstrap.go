@@ -26,14 +26,7 @@ const (
 
 func main() {
 
-	zmqContext, _ := zmq.NewContext()
-
-	socket, _ := zmqContext.NewSocket(zmq.REP)
-
 	defer func() {
-		zmqContext.Term()
-
-		socket.Close()
 
 		if err := recover(); err != nil {
 
@@ -42,15 +35,56 @@ func main() {
 		}
 	}()
 
-	socket.Bind("tcp://*:7777")
+	zmqContext, _ := zmq.NewContext()
+
+	defer zmqContext.Term()
+
+	puller, _ := zmqContext.NewSocket(zmq.PULL)
+
+	defer puller.Close()
+
+	pusher, _ := zmqContext.NewSocket(zmq.PUSH)
+
+	defer pusher.Close()
+
+	err := puller.Connect("tcp://localhost:7777")
+
+	if err != nil {
+
+		PluginEngineLogger.Error(err)
+
+	}
+
+	err = pusher.Connect("tcp://localhost:8888")
+
+	if err != nil {
+
+		PluginEngineLogger.Error(err)
+
+	}
+
+	works := make(chan string, 10)
 
 	wg := sync.WaitGroup{}
 
 	PluginEngineLogger.Info("Starting Plugin Engine")
 
-	for {
+	go func() {
 
-		encodedContext, _ := socket.Recv(0)
+		for {
+			encodedContext, err := puller.Recv(0)
+
+			if err != nil {
+
+				PluginEngineLogger.Error(err.Error())
+
+			}
+
+			works <- encodedContext
+		}
+	}()
+
+	for encodedContext := range works {
 
 		contexts := make([]map[string]interface{}, 0)
 
@@ -163,7 +197,7 @@ func main() {
 
 		PluginEngineLogger.Info(encodedString)
 
-		send, err := socket.Send(encodedString, zmq.DONTWAIT)
+		send, err := pusher.Send(encodedString, zmq.DONTWAIT)
 
 		if err != nil {
 
