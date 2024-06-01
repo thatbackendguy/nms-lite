@@ -4,7 +4,7 @@ import (
 	"collector/logger"
 	"encoding/json"
 	"fmt"
-	zmq "github.com/pebbe/zmq4"
+	"github.com/pebbe/zmq4"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,11 +13,11 @@ import (
 var collectorLogger = logger.NewLogger("go-engine/logs", "collector")
 
 func main() {
-	zmqContext, _ := zmq.NewContext()
+	zmqContext, _ := zmq4.NewContext()
 
 	defer zmqContext.Term()
 
-	socket, _ := zmqContext.NewSocket(zmq.PULL)
+	socket, _ := zmqContext.NewSocket(zmq4.PULL)
 
 	defer socket.Close()
 
@@ -30,7 +30,7 @@ func main() {
 			data, err := socket.RecvBytes(0)
 
 			if err != nil {
-				collectorLogger.Error(err.Error())
+				collectorLogger.Error("Error receiving data: " + err.Error())
 			}
 
 			works <- data

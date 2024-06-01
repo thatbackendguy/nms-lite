@@ -1,117 +1,135 @@
 package server
 
 import (
-	zmq "github.com/pebbe/zmq4"
+	"github.com/pebbe/zmq4"
+	"os"
+	"os/signal"
 	"plugin-engine/global"
 	"plugin-engine/logger"
+	"syscall"
 )
 
 var serverLogger = logger.NewLogger(global.LogFilesPath, "server")
 
-func Init() (puller *zmq.Socket, pusher *zmq.Socket, err error) {
-	server, err := zmq.NewContext()
+func Init() (puller *zmq4.Socket, pusher *zmq4.Socket, err error) {
+
+	server, err := zmq4.NewContext()
 
 	if err != nil {
+
 		serverLogger.Error("Failed to create new zmq context")
 
 		return nil, nil, err
 	}
 
-	defer func(server *zmq.Context) {
-		if server != nil {
-
-			err := server.Term()
-
-			if err != nil {
-
-				serverLogger.Error(err.Error())
-
-			}
-		}
-	}(server)
-
-	puller, err = server.NewSocket(zmq.PULL)
+	puller, err = server.NewSocket(zmq4.PULL)
 
 	if err != nil {
 
-		serverLogger.Error(err.Error())
+		serverLogger.Error("Error creating PULL socket: " + err.Error())
 
 		return nil, nil, err
 	}
-
-	defer func(puller *zmq.Socket) {
-
-		err := puller.Close()
-
-		if err != nil {
-
-			serverLogger.Error(err.Error())
-
-		}
-	}(puller)
-
-	pusher, err = server.NewSocket(zmq.PUSH)
-
-	if err != nil {
-
-		serverLogger.Error(err.Error())
-
-		return nil, nil, err
-	}
-
-	defer func(pusher *zmq.Socket) {
-
-		err := pusher.Close()
-
-		if err != nil {
-
-			serverLogger.Error(err.Error())
-
-		}
-	}(pusher)
 
 	err = puller.Connect("tcp://localhost:7777")
 
 	if err != nil {
 
-		serverLogger.Error(err.Error())
+		serverLogger.Error("Connecting pull socket: " + err.Error())
 
+	}
+
+	pusher, err = server.NewSocket(zmq4.PUSH)
+
+	if err != nil {
+
+		serverLogger.Error("Error creating PUSH socket: " + err.Error())
+
+		return nil, nil, err
 	}
 
 	err = pusher.Connect("tcp://localhost:8888")
 
 	if err != nil {
 
-		serverLogger.Error(err.Error())
+		serverLogger.Error("Connecting push socket: " + err.Error())
 
 	}
 
 	return pusher, puller, nil
 }
 
-func Start(puller *zmq.Socket, pusher *zmq.Socket) (err error) {
+func Start(puller *zmq4.Socket, pusher *zmq4.Socket) (err error) {
+
 	go receive(puller)
 
 	go send(pusher)
 
+	go handleSignals(puller, pusher)
+
 	return nil
 }
 
-func receive(puller *zmq.Socket) {
+func handleSignals(puller *zmq4.Socket, pusher *zmq4.Socket) {
+
+	stopReceiver := make(chan os.Signal, 1)
+
+	signal.Notify(stopReceiver, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
+
+	receivedSignal := <-stopReceiver
+
+	serverLogger.Trace("Received signal: " + receivedSignal.String())
+
+	Stop(puller, pusher)
+}
+
+func Stop(puller *zmq4.Socket, pusher *zmq4.Socket) {
+
+	serverLogger.Info("Stopping ZMQ sockets...")
+
+	if puller != nil {
+
+		err := puller.Close()
+
+		if err != nil {
+
+			serverLogger.Error("Failed to close PULL socket: " + err.Error())
+
+		}
+	}
+
+	if pusher != nil {
+
+		err := pusher.Close()
+
+		if err != nil {
+
+			serverLogger.Error("Failed to close PUSH socket:" + err.Error())
+
+		}
+	}
+
+	serverLogger.Info("ZMQ sockets closed successfully")
+}
+
+func receive(puller *zmq4.Socket) {
 	for {
 		encodedContext, err := puller.Recv(0)
 
 		if err != nil {
 
-			serverLogger.Error(err.Error())
+			serverLogger.Error("Error receiving encodedContext: " + err.Error())
 
 		}
 
-		global.Requests <- encodedContext
+		if encodedContext != "" {
+
+			global.Requests <- encodedContext
+		}
 	}
 }
 
-func send(pusher *zmq.Socket) {
+func send(pusher *zmq4.Socket) {
 	for {
 		response := <-global.Responses
 

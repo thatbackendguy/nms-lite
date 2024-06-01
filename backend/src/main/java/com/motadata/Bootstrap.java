@@ -37,30 +37,30 @@ public class Bootstrap
 
                     .onFailure(exception -> LOGGER.error("Deployment failed: ", exception));
 
-            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
-
-            var pluginProcess = pluginEngine.start();
-
-            LOGGER.trace("Go Plugin engine started");
-
-            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
-
-            var collectorProcess = collector.start();
-
-            LOGGER.trace("Go collector started");
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() ->
-            {
-
-                LOGGER.trace("Cleanup process in progress");
-
-                pluginProcess.destroyForcibly();
-
-                collectorProcess.destroyForcibly();
-
-                LOGGER.trace("Cleanup process successful");
-
-            }));
+//            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
+//
+//            var pluginProcess = pluginEngine.start();
+//
+//            LOGGER.trace("Go Plugin engine started");
+//
+//            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
+//
+//            var collectorProcess = collector.start();
+//
+//            LOGGER.trace("Go collector started");
+//
+//            Runtime.getRuntime().addShutdownHook(new Thread(() ->
+//            {
+//
+//                LOGGER.trace("Cleanup process in progress");
+//
+//                pluginProcess.destroyForcibly();
+//
+//                collectorProcess.destroyForcibly();
+//
+//                LOGGER.trace("Cleanup process successful");
+//
+//            }));
 
         }
         catch (Exception exception)

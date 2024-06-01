@@ -145,6 +145,14 @@ public class Requester extends AbstractVerticle
             });
         });
 
+        Runtime.getRuntime().addShutdownHook(new Thread(()->{
+            pusher.close();
+
+            puller.close();
+
+            resultPusher.close();
+        }));
+
         startPromise.complete();
 
         LOGGER.info("Process spawner started");
