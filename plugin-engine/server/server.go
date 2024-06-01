@@ -11,7 +11,7 @@ import (
 
 var serverLogger = logger.NewLogger(global.LogFilesPath, "server")
 
-func Init() (puller *zmq4.Socket, pusher *zmq4.Socket, err error) {
+func Init() (*zmq4.Socket, *zmq4.Socket, error) {
 
 	server, err := zmq4.NewContext()
 
@@ -22,7 +22,7 @@ func Init() (puller *zmq4.Socket, pusher *zmq4.Socket, err error) {
 		return nil, nil, err
 	}
 
-	puller, err = server.NewSocket(zmq4.PULL)
+	puller, err := server.NewSocket(zmq4.PULL)
 
 	if err != nil {
 
@@ -31,7 +31,7 @@ func Init() (puller *zmq4.Socket, pusher *zmq4.Socket, err error) {
 		return nil, nil, err
 	}
 
-	err = puller.Connect("tcp://localhost:7777")
+	err = puller.Connect("tcp://localhost:9001")
 
 	if err != nil {
 
@@ -39,7 +39,7 @@ func Init() (puller *zmq4.Socket, pusher *zmq4.Socket, err error) {
 
 	}
 
-	pusher, err = server.NewSocket(zmq4.PUSH)
+	pusher, err := server.NewSocket(zmq4.PUSH)
 
 	if err != nil {
 
@@ -48,7 +48,7 @@ func Init() (puller *zmq4.Socket, pusher *zmq4.Socket, err error) {
 		return nil, nil, err
 	}
 
-	err = pusher.Connect("tcp://localhost:8888")
+	err = pusher.Connect("tcp://localhost:9002")
 
 	if err != nil {
 

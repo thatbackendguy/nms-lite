@@ -2,9 +2,9 @@ package main
 
 import (
 	"collector/logger"
+	"collector/server"
 	"encoding/json"
 	"fmt"
-	"github.com/pebbe/zmq4"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,31 +13,47 @@ import (
 var collectorLogger = logger.NewLogger("go-engine/logs", "collector")
 
 func main() {
-	zmqContext, _ := zmq4.NewContext()
+	//zmqContext, _ := zmq4.NewContext()
+	//
+	//defer zmqContext.Term()
+	//
+	//socket, _ := zmqContext.NewSocket(zmq4.PULL)
+	//
+	//defer socket.Close()
+	//
+	//socket.Connect("tcp://localhost:9999")
+	//
+	//works := make(chan []byte, 10)
+	//
+	//go func() {
+	//	for {
+	//		data, err := socket.RecvBytes(0)
+	//
+	//		if err != nil {
+	//			collectorLogger.Error("Error receiving data: " + err.Error())
+	//		}
+	//
+	//		works <- data
+	//	}
+	//}()
 
-	defer zmqContext.Term()
+	puller, err := server.Init()
 
-	socket, _ := zmqContext.NewSocket(zmq4.PULL)
+	if err != nil {
 
-	defer socket.Close()
+		collectorLogger.Error("ZMQ Server not initialized: " + err.Error())
+	}
 
-	socket.Connect("tcp://localhost:9999")
+	err = server.Start(puller)
 
-	works := make(chan []byte, 10)
+	if err != nil {
 
-	go func() {
-		for {
-			data, err := socket.RecvBytes(0)
+		collectorLogger.Error("ZMQ not connected: " + err.Error())
 
-			if err != nil {
-				collectorLogger.Error("Error receiving data: " + err.Error())
-			}
+	}
 
-			works <- data
-		}
-	}()
-
-	for data := range works {
+	for {
+		data := <-server.Requests
 
 		contexts := make([]map[string]interface{}, 0)
 
@@ -45,7 +61,7 @@ func main() {
 
 		if err != nil {
 
-			collectorLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
+			collectorLogger.Error("unable to convert JSON string to map: %s" + err.Error())
 
 			break
 		}

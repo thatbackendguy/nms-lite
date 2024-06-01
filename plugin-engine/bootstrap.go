@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
 	"plugin-engine/global"
 	"plugin-engine/logger"
 	"plugin-engine/plugins/snmp"
@@ -14,7 +12,6 @@ import (
 	"plugin-engine/utils"
 	"strings"
 	"sync"
-	"syscall"
 )
 
 var PluginEngineLogger = logger.NewLogger(global.LogFilesPath, global.SystemLoggerName)
@@ -28,18 +25,6 @@ const (
 )
 
 func main() {
-
-	signalChan := make(chan os.Signal, 1)
-
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
-	go func() {
-		sig := <-signalChan
-
-		fmt.Println("Received signal:", sig)
-
-		os.Exit(0)
-	}()
 
 	defer func() {
 
@@ -60,6 +45,7 @@ func main() {
 	}
 
 	err = server.Start(puller, pusher)
+
 	if err != nil {
 
 		PluginEngineLogger.Error(err.Error())
@@ -73,6 +59,7 @@ func main() {
 
 	for {
 		select {
+
 		case encodedContext := <-global.Requests:
 
 			var contexts []map[string]interface{}
