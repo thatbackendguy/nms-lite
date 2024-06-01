@@ -2,11 +2,8 @@ package server
 
 import (
 	"github.com/pebbe/zmq4"
-	"os"
-	"os/signal"
 	"plugin-engine/global"
 	"plugin-engine/logger"
-	"syscall"
 )
 
 var serverLogger = logger.NewLogger(global.LogFilesPath, "server")
@@ -48,53 +45,7 @@ func Start(receiver *zmq4.Socket, sender *zmq4.Socket) error {
 
 	go send(sender)
 
-	go handleSignals(receiver, sender)
-
 	return nil
-}
-
-func handleSignals(receiver *zmq4.Socket, sender *zmq4.Socket) {
-
-	stopReceiver := make(chan os.Signal, 1)
-
-	signal.Notify(stopReceiver, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
-
-	receivedSignal := <-stopReceiver
-
-	serverLogger.Trace("Received signal: " + receivedSignal.String())
-
-	Stop(receiver, sender)
-}
-
-func Stop(receiver *zmq4.Socket, sender *zmq4.Socket) {
-
-	serverLogger.Info("Stopping ZMQ sockets...")
-
-	if receiver != nil {
-
-		err := receiver.Close()
-
-		if err != nil {
-
-			serverLogger.Error("Failed to close PULL socket: " + err.Error())
-
-		}
-
-	}
-
-	if sender != nil {
-
-		err := sender.Close()
-
-		if err != nil {
-
-			serverLogger.Error("Failed to close PUSH socket: " + err.Error())
-
-		}
-	}
-
-	serverLogger.Info("ZMQ sockets closed successfully")
-
 }
 
 func receive(receiver *zmq4.Socket) {
