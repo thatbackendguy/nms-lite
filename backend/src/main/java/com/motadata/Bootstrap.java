@@ -5,6 +5,7 @@ import com.motadata.config.Config;
 import com.motadata.constants.Constants;
 import com.motadata.engine.Requester;
 import com.motadata.engine.ResponseParser;
+import com.motadata.engine.ResponseReceiver;
 import com.motadata.engine.Scheduler;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.ThreadingModel;
@@ -29,6 +30,8 @@ public class Bootstrap
 
                     .compose(id -> vertx.deployVerticle(Requester.class.getName(), new DeploymentOptions().setInstances(1)))
 
+                    .compose(id -> vertx.deployVerticle(ResponseReceiver.class.getName(), new DeploymentOptions().setInstances(1)))
+
                     .compose(id -> vertx.deployVerticle(ResponseParser.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER)))
 
                     .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions().setInstances(3)))
@@ -37,30 +40,30 @@ public class Bootstrap
 
                     .onFailure(exception -> LOGGER.error("Deployment failed: ", exception));
 
-//            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
-//
-//            var pluginProcess = pluginEngine.start();
-//
-//            LOGGER.trace("Go Plugin engine started");
-//
-//            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
-//
-//            var collectorProcess = collector.start();
-//
-//            LOGGER.trace("Go collector started");
-//
-//            Runtime.getRuntime().addShutdownHook(new Thread(() ->
-//            {
-//
-//                LOGGER.trace("Cleanup process in progress");
-//
-//                pluginProcess.destroyForcibly();
-//
-//                collectorProcess.destroyForcibly();
-//
-//                LOGGER.trace("Cleanup process successful");
-//
-//            }));
+            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
+
+            var pluginProcess = pluginEngine.start();
+
+            LOGGER.trace("Go Plugin engine started");
+
+            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
+
+            var collectorProcess = collector.start();
+
+            LOGGER.trace("Go collector started");
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() ->
+            {
+
+                LOGGER.trace("Cleanup process in progress");
+
+                pluginProcess.destroyForcibly();
+
+                collectorProcess.destroyForcibly();
+
+                LOGGER.trace("Cleanup process successful");
+
+            }));
 
         }
         catch (Exception exception)

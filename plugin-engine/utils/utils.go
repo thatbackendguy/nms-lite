@@ -22,7 +22,7 @@ func CheckAvailability(context map[string]interface{}) {
 
 	status := "down"
 
-	if !strings.Contains(string(output), "/0%") {
+	if strings.Contains(string(output), "/0%") {
 
 		status = "up"
 

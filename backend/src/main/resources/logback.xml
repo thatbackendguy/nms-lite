@@ -50,6 +50,14 @@
         </encoder>
     </appender>
 
+    <!-- File Appender for Requester -->
+    <appender name="ResponseReceiver_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/ResponseReceiver.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- File Appender for ResponseParser -->
     <appender name="RESPONSE_PARSER_FILE" class="ch.qos.logback.core.FileAppender">
         <file>logs/ResponseParser.log</file>
@@ -79,6 +87,11 @@
     <!-- API Server -->
     <logger name="com.motadata.api.APIServer" level="TRACE" additivity="false">
         <appender-ref ref="API_SERVER_FILE"/>
+    </logger>
+
+
+    <logger name="com.motadata.engine.ResponseReceiver" level="TRACE" additivity="false">
+        <appender-ref ref="ResponseReceiver_FILE"/>
     </logger>
 
     <!-- ConfigDB -->

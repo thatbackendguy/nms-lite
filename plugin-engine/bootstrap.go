@@ -35,7 +35,7 @@ func main() {
 		}
 	}()
 
-	puller, pusher, err := server.Init()
+	receiver, sender, err := server.Init()
 
 	if err != nil {
 
@@ -44,11 +44,11 @@ func main() {
 		return
 	}
 
-	err = server.Start(puller, pusher)
+	err = server.Start(receiver, sender)
 
 	if err != nil {
 
-		PluginEngineLogger.Error(err.Error())
+		PluginEngineLogger.Error("Error in starting zmq server: " + err.Error())
 
 		return
 	}

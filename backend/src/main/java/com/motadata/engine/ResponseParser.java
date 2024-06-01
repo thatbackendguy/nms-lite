@@ -29,7 +29,7 @@ public class ResponseParser extends AbstractVerticle
 
         eventBus.<JsonArray> localConsumer(PARSE_DISCOVERY_EVENT, results ->
         {
-            LOGGER.trace("PARSE_DISCOVERY_EVENT: {}", results);
+            LOGGER.trace("PARSE_DISCOVERY_EVENT: {}", results.body());
 
             try
             {

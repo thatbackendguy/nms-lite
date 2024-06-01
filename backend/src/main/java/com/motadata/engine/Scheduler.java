@@ -29,30 +29,35 @@ public class Scheduler extends AbstractVerticle
         var eventBus = vertx.eventBus();
 
         // for metric polling
-        vertx.setPeriodic(300_000, timerId ->
+        vertx.setPeriodic(30_000, timerId ->
         {
             LOGGER.trace("Initiating metric polling cycle...");
 
             try
             {
-
-                var context = new JsonArray();
-
-                for (var monitor : ConfigDB.provisionedDevices.values())
+                vertx.executeBlocking(handler ->
                 {
-                    if (monitor != null && Utils.isAvailable(monitor.getString(OBJECT_IP)))
+                    var context = new JsonArray();
+
+                    for (var monitor : ConfigDB.provisionedDevices.values())
                     {
-                        context.add(monitor.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
+                        if (monitor != null && Utils.isAvailable(monitor.getString(OBJECT_IP)))
+                        {
+                            context.add(monitor.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
+                        }
                     }
-                }
 
-                if (!context.isEmpty())
-                {
-                    var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
+                    if (!context.isEmpty())
+                    {
+                        var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
-                    // sending poll event on interval to Requester
-                    eventBus.send(POLL_METRICS_EVENT, encodedString);
-                }
+                        LOGGER.trace("POLL METRICS: {}", encodedString);
+
+                        // sending poll event on interval to Requester
+                        eventBus.send(POLL_METRICS_EVENT, encodedString);
+                    }
+                });
+
             }
             catch (Exception exception)
             {
@@ -61,7 +66,7 @@ public class Scheduler extends AbstractVerticle
         });
 
         // for availability
-        vertx.setPeriodic(120_000, timerId ->
+        vertx.setPeriodic(12_000, timerId ->
         {
             LOGGER.trace("Initiating check availability cycle...");
 
@@ -90,6 +95,8 @@ public class Scheduler extends AbstractVerticle
                 if (!context.isEmpty())
                 {
                     var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
+
+                    LOGGER.trace("CHECK AVAILABILITY: {}", encodedString);
 
                     // sending availability event on interval to Requester
                     eventBus.send(CHECK_AVAILABILITY, encodedString);

@@ -67,6 +67,7 @@ func main() {
 		}
 
 		for _, result := range contexts {
+
 			if strings.EqualFold(result["status"].(string), "success") {
 
 				pollTime := result["poll.time"].(string)
@@ -79,7 +80,13 @@ func main() {
 
 						if interfaceData, ok := value.(map[string]interface{}); ok {
 
-							interfaceName := interfaceData["interface.name"].(string)
+							interfaceName, nameExists := interfaceData["interface.name"].(string)
+
+							if !nameExists || interfaceName == "" {
+
+								interfaceName, _ = interfaceData["interface.description"].(string)
+
+							}
 
 							folderPath := "./metrics-result/" + objectIp + "/"
 
