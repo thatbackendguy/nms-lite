@@ -29,7 +29,7 @@ public class Scheduler extends AbstractVerticle
         var eventBus = vertx.eventBus();
 
         // for metric polling
-        vertx.setPeriodic(30_000, timerId ->
+        vertx.setPeriodic(60_000, timerId ->
         {
             LOGGER.trace("Initiating metric polling cycle...");
 
@@ -66,7 +66,7 @@ public class Scheduler extends AbstractVerticle
         });
 
         // for availability
-        vertx.setPeriodic(12_000, timerId ->
+        vertx.setPeriodic(30_000, timerId ->
         {
             LOGGER.trace("Initiating check availability cycle...");
 

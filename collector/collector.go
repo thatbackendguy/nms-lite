@@ -13,29 +13,6 @@ import (
 var collectorLogger = logger.NewLogger("go-engine/logs", "collector")
 
 func main() {
-	//zmqContext, _ := zmq4.NewContext()
-	//
-	//defer zmqContext.Term()
-	//
-	//socket, _ := zmqContext.NewSocket(zmq4.PULL)
-	//
-	//defer socket.Close()
-	//
-	//socket.Connect("tcp://localhost:9999")
-	//
-	//works := make(chan []byte, 10)
-	//
-	//go func() {
-	//	for {
-	//		data, err := socket.RecvBytes(0)
-	//
-	//		if err != nil {
-	//			collectorLogger.Error("Error receiving data: " + err.Error())
-	//		}
-	//
-	//		works <- data
-	//	}
-	//}()
 
 	puller, err := server.Init()
 
@@ -148,9 +125,7 @@ func main() {
 						}
 					}
 				}
-
 			}
-
 		}
 	}
 }

@@ -12,6 +12,9 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static com.motadata.constants.Constants.*;
 
 public class Requester extends AbstractVerticle
@@ -31,6 +34,8 @@ public class Requester extends AbstractVerticle
 
         try
         {
+            var workerExecutors = Executors.newFixedThreadPool(10);
+
             sender.bind("tcp://*:7777");
 
             resultPusher.bind("tcp://*:9999");
@@ -44,11 +49,22 @@ public class Requester extends AbstractVerticle
 
                 try
                 {
-                    resultPusher.send(msg.body(), 0);
+                    workerExecutors.submit(() ->
+                    {
+                        // sending work on TCP Port: 9999
+                        resultPusher.send(msg.body(), 0);
 
-                    LOGGER.trace("Data pushed to tcp://*:9999: {}", msg.body());
+                        LOGGER.trace("Data pushed to tcp://*:9999: {}", msg.body());
 
-                    Thread.sleep(100);
+                        try
+                        {
+                            Thread.sleep(100);
+                        }
+                        catch (InterruptedException interruptedException)
+                        {
+                            LOGGER.error(ERROR_CONTAINER, interruptedException.toString());
+                        }
+                    });
 
                 }
                 catch (Exception exception)
@@ -63,9 +79,13 @@ public class Requester extends AbstractVerticle
 
                 try
                 {
-                    sender.send(msg.body(), 0);
+                    workerExecutors.submit(() ->
+                    {
+                        // sending work on TCP Port: 7777
+                        sender.send(msg.body(), 0);
 
-                    LOGGER.trace("Discovery request sent: {}", msg.body());
+                        LOGGER.trace("Discovery request sent: {}", msg.body());
+                    });
                 }
                 catch (Exception exception)
                 {
@@ -79,9 +99,14 @@ public class Requester extends AbstractVerticle
 
                 try
                 {
-                    sender.send(msg.body(), 0);
+                    workerExecutors.submit(() ->
+                    {
+                        // sending work on TCP Port: 7777
+                        sender.send(msg.body(), 0);
 
-                    LOGGER.trace("Collect request sent: {}", msg.body());
+                        LOGGER.trace("Collect request sent: {}", msg.body());
+
+                    });
 
                 }
                 catch (Exception exception)
@@ -95,9 +120,13 @@ public class Requester extends AbstractVerticle
 
                 try
                 {
-                    sender.send(msg.body(), 0);
+                    workerExecutors.submit(() ->
+                    {
+                        // sending work on TCP Port: 7777
+                        sender.send(msg.body(), 0);
 
-                    LOGGER.trace("Check availability request sent: {}", msg.body());
+                        LOGGER.trace("Check availability request sent: {}", msg.body());
+                    });
                 }
                 catch (Exception exception)
                 {
@@ -113,11 +142,16 @@ public class Requester extends AbstractVerticle
                 resultPusher.close();
 
                 context.close();
+
+                if (!workerExecutors.isShutdown())
+                {
+                    workerExecutors.shutdown();
+                }
             }));
 
             startPromise.complete();
 
-            LOGGER.info("Process spawner started");
+            LOGGER.info("Requester started");
         }
         catch (Exception exception)
         {

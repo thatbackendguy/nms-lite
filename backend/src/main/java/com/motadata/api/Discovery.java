@@ -457,7 +457,7 @@ public class Discovery
 
                     var encodedString = Base64.getEncoder().encodeToString(contexts.toString().getBytes());
 
-                    // sending event with context to ProcessSpawner
+                    // sending event with context to Requester
                     eventBus.send(RUN_DISCOVERY_EVENT, encodedString);
 
                     handler.complete();

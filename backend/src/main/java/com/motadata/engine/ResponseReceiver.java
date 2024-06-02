@@ -93,7 +93,7 @@ public class ResponseReceiver extends AbstractVerticle
                         }
                     }
                 }
-                catch (ZMQException e)
+                catch (ZMQException zmqException)
                 {
                     if (context.isClosed())
                     {
@@ -101,7 +101,7 @@ public class ResponseReceiver extends AbstractVerticle
                     }
                     else
                     {
-                        LOGGER.error("ZMQException occurred: ", e);
+                        LOGGER.error("ZMQException occurred: ", zmqException);
                     }
                 }
                 catch (Exception exception)
