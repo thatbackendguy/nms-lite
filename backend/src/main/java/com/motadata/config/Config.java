@@ -30,7 +30,7 @@ public class Config
 
         PORT = config.getInteger(Constants.PORT, 8080);
 
-        GO_PLUGIN_ENGINE_PATH = config.getString(Constants.GO_PLUGIN_ENGINE_PATH, System.getProperty("user.dir") + "/plugins/plugin-engine");
+        GO_PLUGIN_ENGINE_PATH = config.getString(Constants.GO_PLUGIN_ENGINE_PATH, System.getProperty("user.dir") + "/plugins/pluginengine");
 
         GO_COLLECTOR_PATH = config.getString(Constants.GO_COLLECTOR_PATH, System.getProperty("user.dir") + "/plugins/collector");
 

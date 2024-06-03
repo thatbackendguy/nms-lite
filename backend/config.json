@@ -1,6 +1,6 @@
 {
   "host": "127.0.0.1",
   "port": 8080,
-  "go.plugin.path": "/home/yash/Documents/GitHub/nms-lite/plugin-engine/plugin-engine",
+  "go.plugin.path": "/home/yash/Documents/GitHub/nms-lite/plugin-engine/src/pluginengine/pluginengine",
   "go.collector.path": "/home/yash/Documents/GitHub/nms-lite/collector/collector"
 }

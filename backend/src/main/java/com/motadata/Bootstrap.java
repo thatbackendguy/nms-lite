@@ -29,13 +29,13 @@ public class Bootstrap
 //
 //            var pluginProcess = pluginEngine.start();
 //
-//            LOGGER.trace("Go Plugin engine started");
+//            LOGGER.trace("Go Plugin engine started: {}", Config.GO_PLUGIN_ENGINE_PATH);
 //
 //            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
 //
 //            var collectorProcess = collector.start();
 //
-//            LOGGER.trace("Go collector started");
+//            LOGGER.trace("Go collector started: {}", Config.GO_COLLECTOR_PATH);
 //
 //            Runtime.getRuntime().addShutdownHook(new Thread(() ->
 //            {

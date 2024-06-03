@@ -26,8 +26,6 @@ public class ResponseReceiver extends AbstractVerticle
 
     private static final ZMQ.Socket receiver = context.createSocket(SocketType.PULL);
 
-    private final AtomicBoolean running = new AtomicBoolean(true);
-
     @Override
     public void start(Promise<Void> startPromise)
     {
@@ -40,11 +38,11 @@ public class ResponseReceiver extends AbstractVerticle
 
             receiver.bind("tcp://*:8888");
 
-            var workerThread = new Thread(() ->
+            new Thread(() ->
             {
                 try
                 {
-                    while (running.get() && !context.isClosed())
+                    while (true)
                     {
                         var message = receiver.recvStr(0);
 
@@ -112,26 +110,13 @@ public class ResponseReceiver extends AbstractVerticle
                 {
                     receiver.close();
                 }
-            });
-
-            workerThread.start();
+            }).start();
 
             Runtime.getRuntime().addShutdownHook(new Thread(() ->
             {
-                running.set(false);
-
                 receiver.close();
 
                 context.close();
-
-                try
-                {
-                    workerThread.join();
-                }
-                catch (InterruptedException e)
-                {
-                    LOGGER.error("Error while waiting for worker thread to terminate: ", e);
-                }
             }));
 
             startPromise.complete();

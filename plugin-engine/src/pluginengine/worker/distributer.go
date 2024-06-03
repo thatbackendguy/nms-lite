@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"plugin-engine/src/pluginengine/consts"
 	"plugin-engine/src/pluginengine/plugins/snmp"
@@ -22,8 +24,6 @@ var workerPoolLogger = utils.GetLogger(consts.LogFilesPath, "worker-pool")
 const numWorkers = 10
 
 type Job struct {
-	Result chan map[string]interface{}
-
 	Context map[string]interface{}
 }
 
@@ -46,8 +46,27 @@ func worker(wg *sync.WaitGroup, jobQueue chan Job) {
 
 		processJob(job.Context)
 
-		job.Result <- job.Context
+		response := []map[string]interface{}{
+			job.Context,
+		}
 
+		jsonOutput, err := json.Marshal(response)
+
+		if err != nil {
+
+			workerPoolLogger.Error("JSON Marshal Error: " + err.Error())
+
+			continue
+
+		}
+
+		encodedString := base64.StdEncoding.EncodeToString(jsonOutput)
+
+		workerPoolLogger.Info(encodedString)
+
+		consts.Responses <- encodedString
+
+		workerPoolLogger.Info(fmt.Sprintf("Result sent to socket"))
 	}
 
 	return

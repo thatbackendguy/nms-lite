@@ -34,7 +34,7 @@ public class Requester extends AbstractVerticle
 
         try
         {
-            var workerExecutors = Executors.newFixedThreadPool(10);
+            var workerExecutors = Executors.newFixedThreadPool(5);
 
             sender.bind("tcp://*:7777");
 
