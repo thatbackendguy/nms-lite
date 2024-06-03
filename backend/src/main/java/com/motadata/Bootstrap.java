@@ -25,30 +25,30 @@ public class Bootstrap
 
         try
         {
-            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
-
-            var pluginProcess = pluginEngine.start();
-
-            LOGGER.trace("Go Plugin engine started: {}", Config.GO_PLUGIN_ENGINE_PATH);
-
-            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
-
-            var collectorProcess = collector.start();
-
-            LOGGER.trace("Go collector started: {}", Config.GO_COLLECTOR_PATH);
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() ->
-            {
-
-                LOGGER.trace("Cleanup process in progress");
-
-                pluginProcess.destroyForcibly();
-
-                collectorProcess.destroyForcibly();
-
-                LOGGER.trace("Cleanup process successful");
-
-            }));
+//            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
+//
+//            var pluginProcess = pluginEngine.start();
+//
+//            LOGGER.trace("Go Plugin engine started: {}", Config.GO_PLUGIN_ENGINE_PATH);
+//
+//            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
+//
+//            var collectorProcess = collector.start();
+//
+//            LOGGER.trace("Go collector started: {}", Config.GO_COLLECTOR_PATH);
+//
+//            Runtime.getRuntime().addShutdownHook(new Thread(() ->
+//            {
+//
+//                LOGGER.trace("Cleanup process in progress");
+//
+//                pluginProcess.destroyForcibly();
+//
+//                collectorProcess.destroyForcibly();
+//
+//                LOGGER.trace("Cleanup process successful");
+//
+//            }));
 
             vertx.deployVerticle(Scheduler.class.getName(), new DeploymentOptions().setInstances(1))
 

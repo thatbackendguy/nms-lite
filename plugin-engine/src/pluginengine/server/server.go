@@ -1,6 +1,8 @@
 package server
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"github.com/pebbe/zmq4"
 	"plugin-engine/src/pluginengine/consts"
 	"plugin-engine/src/pluginengine/utils"
@@ -100,9 +102,25 @@ func send(sender *zmq4.Socket) {
 
 	for {
 
-		response := <-consts.Responses
+		response := []map[string]interface{}{
+			<-consts.Responses,
+		}
 
-		_, err := sender.Send(response, 0)
+		jsonOutput, err := json.Marshal(response)
+
+		if err != nil {
+
+			serverLogger.Error("JSON Marshal Error: " + err.Error())
+
+			continue
+
+		}
+
+		encodedString := base64.StdEncoding.EncodeToString(jsonOutput)
+
+		serverLogger.Debug(encodedString)
+
+		_, err = sender.Send(encodedString, 0)
 
 		if err != nil {
 

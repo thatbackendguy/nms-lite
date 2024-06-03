@@ -62,5 +62,5 @@ const (
 var (
 	Requests = make(chan string, 10)
 
-	Responses = make(chan string, 10)
+	Responses = make(chan map[string]interface{}, 10)
 )

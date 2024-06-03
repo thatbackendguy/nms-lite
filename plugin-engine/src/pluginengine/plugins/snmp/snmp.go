@@ -130,6 +130,8 @@ func Discovery(context map[string]interface{}) {
 
 	}
 
+	consts.Responses <- context
+
 	return
 
 }
@@ -208,6 +210,10 @@ func Collect(context map[string]interface{}) {
 		context[consts.Status] = consts.Failed
 
 	}
+
+	consts.Responses <- context
+
+	return
 
 }
 

@@ -4,14 +4,22 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"plugin-engine/src/pluginengine/consts"
+	. "plugin-engine/src/pluginengine/consts"
+	"plugin-engine/src/pluginengine/plugins/snmp"
 	"plugin-engine/src/pluginengine/server"
 	"plugin-engine/src/pluginengine/utils"
-	"plugin-engine/src/pluginengine/worker"
-	"sync"
+	"strings"
 )
 
-var PluginEngineLogger = utils.GetLogger(consts.LogFilesPath, consts.SystemLoggerName)
+var PluginEngineLogger = utils.GetLogger(LogFilesPath, SystemLoggerName)
+
+const (
+	RequestType   = "request.type"
+	Discovery     = "Discovery"
+	Collect       = "Collect"
+	PluginName    = "plugin.name"
+	NetworkDevice = "Network"
+)
 
 func main() {
 
@@ -38,7 +46,7 @@ func main() {
 	PluginEngineLogger.Info("Starting Plugin Engine")
 
 	for {
-		request := <-consts.Requests
+		request := <-Requests
 
 		PluginEngineLogger.Trace(request)
 
@@ -66,26 +74,44 @@ func main() {
 
 		PluginEngineLogger.Trace(string(decodedContext))
 
-		var wg sync.WaitGroup
-
-		jobQueue := make(chan worker.Job, len(contexts))
-
-		worker.CreateWorkerPool(&wg, jobQueue)
-
 		for _, context := range contexts {
 
-			job := worker.Job{
+			if pluginName, ok := context[PluginName].(string); ok {
 
-				Context: context,
+				switch pluginName {
+
+				case NetworkDevice:
+
+					if requestType, ok := context[RequestType].(string); ok {
+
+						if strings.EqualFold(requestType, Discovery) {
+
+							PluginEngineLogger.Trace(fmt.Sprintf("Discovery request: %v", context[ObjectIp]))
+
+							go snmp.Discovery(context)
+
+						} else if strings.EqualFold(requestType, Collect) {
+
+							PluginEngineLogger.Trace(fmt.Sprintf("Collect request: %v", context[ObjectIp]))
+
+							go snmp.Collect(context)
+
+						} else {
+
+							PluginEngineLogger.Trace(fmt.Sprintf("Check availability request: %v", context[ObjectIp]))
+
+							go utils.CheckAvailability(context)
+
+						}
+					}
+
+				default:
+
+					PluginEngineLogger.Error("Unsupported plugin type!")
+				}
 			}
 
-			jobQueue <- job
-
 		}
-
-		close(jobQueue)
-
-		wg.Wait()
 	}
 
 }

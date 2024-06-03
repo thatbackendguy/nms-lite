@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os/exec"
+	"plugin-engine/src/pluginengine/consts"
 	"strings"
 )
 
@@ -9,7 +10,7 @@ func CheckAvailability(context map[string]interface{}) {
 
 	command := "fping"
 
-	args := []string{context["object.ip"].(string), "-c3", "-q"}
+	args := []string{context[consts.ObjectIp].(string), "-c3", "-q"}
 
 	execute := exec.Command(command, args...)
 
@@ -23,8 +24,12 @@ func CheckAvailability(context map[string]interface{}) {
 
 	}
 
-	context["result"] = map[string]interface{}{
+	context[consts.Result] = map[string]interface{}{
 
 		"is.available": status,
 	}
+
+	consts.Responses <- context
+
+	return
 }
