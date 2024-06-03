@@ -4,13 +4,13 @@ import (
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
 	"net"
-	"plugin-engine/global"
-	logger2 "plugin-engine/logger"
+	"plugin-engine/src/pluginengine/consts"
+	logger2 "plugin-engine/src/pluginengine/utils"
 	"strings"
 	"time"
 )
 
-var logger = logger2.NewLogger(global.LogFilesPath+"/clients", "snmpclient")
+var logger = logger2.GetLogger(consts.LogFilesPath+"/clients", "snmpclient")
 
 func Init(objectIp string, community string, port uint16, version g.SnmpVersion) (*g.GoSNMP, error) {
 
@@ -134,7 +134,7 @@ func Walk(oids map[string]string, GoSNMP *g.GoSNMP) ([]interface{}, error) {
 				results[interfaceIndex] = make(map[string]interface{})
 			}
 
-			if strings.EqualFold(oidName, global.InterfacePhysicalAddress) {
+			if strings.EqualFold(oidName, consts.InterfacePhysicalAddress) {
 
 				results[interfaceIndex][oidName] = resolveMacAddress(dataUnit.Value, dataUnit.Type)
 

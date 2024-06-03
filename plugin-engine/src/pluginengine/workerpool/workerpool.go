@@ -2,10 +2,9 @@ package workerpool
 
 import (
 	"fmt"
-	"plugin-engine/global"
-	"plugin-engine/logger"
-	"plugin-engine/plugins/snmp"
-	"plugin-engine/utils"
+	. "plugin-engine/src/pluginengine/consts"
+	"plugin-engine/src/pluginengine/plugins/snmp"
+	"plugin-engine/src/pluginengine/utils"
 	"strings"
 	"sync"
 )
@@ -18,14 +17,14 @@ const (
 	NetworkDevice = "Network"
 )
 
-var workerPoolLogger = logger.NewLogger(global.LogFilesPath, "worker-pool")
+var workerPoolLogger = utils.GetLogger(LogFilesPath, "worker-pool")
 
-const numWorkers = 10 // Adjust this value based on your requirements
+const numWorkers = 10
 
 type Job struct {
-	Context map[string]interface{}
-
 	Result chan map[string]interface{}
+
+	Context map[string]interface{}
 }
 
 func CreateWorkerPool(wg *sync.WaitGroup, jobQueue chan Job) {
@@ -50,6 +49,8 @@ func worker(wg *sync.WaitGroup, jobQueue chan Job) {
 		job.Result <- job.Context
 
 	}
+
+	return
 }
 
 func processJob(context map[string]interface{}) {
@@ -62,7 +63,7 @@ func processJob(context map[string]interface{}) {
 
 			workerPoolLogger.Error(fmt.Sprintf("some error occurred!, reason : %v", r))
 
-			context[global.Status] = global.Failed
+			context[Status] = Failed
 		}
 
 	}(context)
@@ -102,23 +103,25 @@ func processJob(context map[string]interface{}) {
 		}
 	}
 
-	context[global.Error] = errors
+	context[Error] = errors
 
-	if _, ok := context[global.Result]; ok {
+	if _, ok := context[Result]; ok {
 
-		if len(context[global.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
+		if len(context[Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
 
-			context[global.Status] = global.Failed
+			context[Status] = Failed
 
 		} else {
 
-			context[global.Status] = global.Success
+			context[Status] = Success
 
 		}
 
 	} else {
 
-		context[global.Status] = global.Failed
+		context[Status] = Failed
 
 	}
+
+	return
 }

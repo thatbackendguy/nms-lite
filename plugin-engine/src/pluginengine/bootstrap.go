@@ -4,14 +4,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"plugin-engine/global"
-	"plugin-engine/logger"
-	"plugin-engine/server"
-	"plugin-engine/workerpool"
+	. "plugin-engine/src/pluginengine/consts"
+	"plugin-engine/src/pluginengine/server"
+	"plugin-engine/src/pluginengine/utils"
+	"plugin-engine/src/pluginengine/workerpool"
 	"sync"
 )
 
-var PluginEngineLogger = logger.NewLogger(global.LogFilesPath, global.SystemLoggerName)
+var PluginEngineLogger = utils.GetLogger(LogFilesPath, SystemLoggerName)
 
 func main() {
 
@@ -19,7 +19,7 @@ func main() {
 
 		if err := recover(); err != nil {
 
-			PluginEngineLogger.Error(err)
+			PluginEngineLogger.Error(fmt.Sprintf("Panic recovered: %v", err))
 
 		}
 
@@ -29,21 +29,13 @@ func main() {
 
 	if err != nil {
 
-		PluginEngineLogger.Error(err.Error())
+		PluginEngineLogger.Error("Error creating zmq sockets server" + err.Error())
 
 		return
 
 	}
 
-	err = server.Start(receiver, sender)
-
-	if err != nil {
-
-		PluginEngineLogger.Error("Error in starting zmq server: " + err.Error())
-
-		return
-
-	}
+	server.Start(receiver, sender)
 
 	PluginEngineLogger.Info("Starting Plugin Engine")
 
@@ -51,7 +43,7 @@ func main() {
 
 		select {
 
-		case encodedContext := <-global.Requests:
+		case encodedContext := <-Requests:
 
 			var contexts []map[string]interface{}
 
@@ -77,9 +69,24 @@ func main() {
 
 			PluginEngineLogger.Info(string(decodedContext))
 
+			wg := sync.WaitGroup{}
+
 			jobQueue := make(chan workerpool.Job, len(contexts))
 
 			resultQueue := make(chan map[string]interface{}, len(contexts))
+
+			go func() {
+
+				workerpool.CreateWorkerPool(&wg, jobQueue)
+
+				wg.Wait()
+
+				close(jobQueue)
+
+				close(resultQueue)
+
+				return
+			}()
 
 			for _, context := range contexts {
 
@@ -93,19 +100,6 @@ func main() {
 				jobQueue <- job
 
 			}
-
-			wg := sync.WaitGroup{}
-
-			go func() {
-
-				workerpool.CreateWorkerPool(&wg, jobQueue)
-
-				wg.Wait()
-
-				close(jobQueue)
-
-				close(resultQueue)
-			}()
 
 			results := make([]map[string]interface{}, 0, len(contexts))
 
@@ -131,7 +125,7 @@ func main() {
 
 			PluginEngineLogger.Info(encodedString)
 
-			global.Responses <- encodedString
+			Responses <- encodedString
 
 			PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket"))
 		}

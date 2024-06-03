@@ -1,4 +1,4 @@
-package global
+package consts
 
 const (
 	Result = "result"

@@ -1,4 +1,4 @@
-package logger
+package utils
 
 import (
 	"fmt"
@@ -14,13 +14,12 @@ const (
 )
 
 type Logger struct {
-	directory string
-	component string
+	directory, component string
 }
 
 var logLevel = 0
 
-func write(level, directory, component string, message interface{}) {
+func write(level, directory, component string, message string) {
 
 	currentTime := time.Now()
 
@@ -42,7 +41,7 @@ func write(level, directory, component string, message interface{}) {
 	}
 }
 
-func NewLogger(directory, component string) Logger {
+func GetLogger(directory, component string) Logger {
 
 	dirPath := filepath.Join(".", directory)
 
@@ -54,37 +53,37 @@ func NewLogger(directory, component string) Logger {
 	}
 }
 
-func (l *Logger) Info(message interface{}) {
+func (l *Logger) Info(message string) {
 
 	if logLevel <= Info {
 
 		write("Info", l.directory, l.component, message)
 	}
 }
-func (l *Logger) Error(message interface{}) {
+func (l *Logger) Error(message string) {
 
 	write("Error", l.directory, l.component, message)
 
 }
-func (l *Logger) Debug(message interface{}) {
+func (l *Logger) Debug(message string) {
 
 	if logLevel <= Debug {
 
 		write("Debug", l.directory, l.component, message)
 	}
 }
-func (l *Logger) Trace(message interface{}) {
+func (l *Logger) Trace(message string) {
 	if logLevel <= Trace {
 
 		write("Trace", l.directory, l.component, message)
 	}
 }
-func (l *Logger) Fatal(message interface{}) {
+func (l *Logger) Fatal(message string) {
 
 	write("Fatal", l.directory, l.component, message)
 
 }
-func (l *Logger) Warn(message interface{}) {
+func (l *Logger) Warn(message string) {
 
 	write("Warn", l.directory, l.component, message)
 

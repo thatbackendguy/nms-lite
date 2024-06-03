@@ -2,13 +2,10 @@ package utils
 
 import (
 	"os/exec"
-	"plugin-engine/global"
-	"plugin-engine/logger"
-	"plugin-engine/plugins/snmp"
+	"plugin-engine/src/pluginengine/consts"
+	"plugin-engine/src/pluginengine/plugins/snmp"
 	"strings"
 )
-
-var utilsLogger = logger.NewLogger(global.LogFilesPath, "utils")
 
 func CheckAvailability(context map[string]interface{}) {
 
@@ -28,7 +25,8 @@ func CheckAvailability(context map[string]interface{}) {
 
 	}
 
-	context[global.Result] = map[string]interface{}{
+	context[consts.Result] = map[string]interface{}{
+
 		"is.available": status,
 	}
 }

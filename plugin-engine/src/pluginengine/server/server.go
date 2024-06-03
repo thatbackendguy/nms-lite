@@ -2,11 +2,11 @@ package server
 
 import (
 	"github.com/pebbe/zmq4"
-	"plugin-engine/global"
-	"plugin-engine/logger"
+	. "plugin-engine/src/pluginengine/consts"
+	"plugin-engine/src/pluginengine/utils"
 )
 
-var serverLogger = logger.NewLogger(global.LogFilesPath, "server")
+var serverLogger = utils.GetLogger(LogFilesPath, "server")
 
 func Init() (receiver *zmq4.Socket, sender *zmq4.Socket, err error) {
 
@@ -39,13 +39,11 @@ func Init() (receiver *zmq4.Socket, sender *zmq4.Socket, err error) {
 	return receiver, sender, nil
 }
 
-func Start(receiver *zmq4.Socket, sender *zmq4.Socket) error {
+func Start(receiver *zmq4.Socket, sender *zmq4.Socket) {
 
 	go receive(receiver)
 
 	go send(sender)
-
-	return nil
 }
 
 func receive(receiver *zmq4.Socket) {
@@ -71,7 +69,7 @@ func receive(receiver *zmq4.Socket) {
 
 		if encodedContext != "" {
 
-			global.Requests <- encodedContext
+			Requests <- encodedContext
 
 		}
 	}
@@ -90,7 +88,7 @@ func send(sender *zmq4.Socket) {
 
 	for {
 
-		response := <-global.Responses
+		response := <-Responses
 
 		_, err := sender.Send(response, 0)
 
