@@ -5,12 +5,12 @@ import (
 	g "github.com/gosnmp/gosnmp"
 	"net"
 	"plugin-engine/src/pluginengine/consts"
-	logger2 "plugin-engine/src/pluginengine/utils"
+	"plugin-engine/src/pluginengine/utils"
 	"strings"
 	"time"
 )
 
-var logger = logger2.GetLogger(consts.LogFilesPath+"/clients", "snmpclient")
+var logger = utils.GetLogger(consts.LogFilesPath+"/clients", "snmpclient")
 
 func Init(objectIp string, community string, port uint16, version g.SnmpVersion) (*g.GoSNMP, error) {
 

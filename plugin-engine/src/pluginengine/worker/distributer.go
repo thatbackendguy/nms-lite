@@ -1,8 +1,8 @@
-package workerpool
+package worker
 
 import (
 	"fmt"
-	. "plugin-engine/src/pluginengine/consts"
+	"plugin-engine/src/pluginengine/consts"
 	"plugin-engine/src/pluginengine/plugins/snmp"
 	"plugin-engine/src/pluginengine/utils"
 	"strings"
@@ -17,7 +17,7 @@ const (
 	NetworkDevice = "Network"
 )
 
-var workerPoolLogger = utils.GetLogger(LogFilesPath, "worker-pool")
+var workerPoolLogger = utils.GetLogger(consts.LogFilesPath, "worker-pool")
 
 const numWorkers = 10
 
@@ -55,15 +55,13 @@ func worker(wg *sync.WaitGroup, jobQueue chan Job) {
 
 func processJob(context map[string]interface{}) {
 
-	errors := make([]map[string]interface{}, 0)
-
 	defer func(context map[string]interface{}) {
 
 		if r := recover(); r != nil {
 
 			workerPoolLogger.Error(fmt.Sprintf("some error occurred!, reason : %v", r))
 
-			context[Status] = Failed
+			context[consts.Status] = consts.Failed
 		}
 
 	}(context)
@@ -78,19 +76,19 @@ func processJob(context map[string]interface{}) {
 
 				if strings.EqualFold(requestType, Discovery) {
 
-					workerPoolLogger.Trace(fmt.Sprintf("Discovery request: %v", context[snmp.ObjectIp]))
+					workerPoolLogger.Trace(fmt.Sprintf("Discovery request: %v", context[consts.ObjectIp]))
 
-					snmp.Discovery(context, &errors)
+					snmp.Discovery(context)
 
 				} else if strings.EqualFold(requestType, Collect) {
 
-					workerPoolLogger.Trace(fmt.Sprintf("Collect request: %v", context[snmp.ObjectIp]))
+					workerPoolLogger.Trace(fmt.Sprintf("Collect request: %v", context[consts.ObjectIp]))
 
-					snmp.Collect(context, &errors)
+					snmp.Collect(context)
 
 				} else {
 
-					workerPoolLogger.Trace(fmt.Sprintf("Check availability request: %v", context[snmp.ObjectIp]))
+					workerPoolLogger.Trace(fmt.Sprintf("Check availability request: %v", context[consts.ObjectIp]))
 
 					utils.CheckAvailability(context)
 
@@ -101,26 +99,6 @@ func processJob(context map[string]interface{}) {
 
 			workerPoolLogger.Error("Unsupported plugin type!")
 		}
-	}
-
-	context[Error] = errors
-
-	if _, ok := context[Result]; ok {
-
-		if len(context[Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
-
-			context[Status] = Failed
-
-		} else {
-
-			context[Status] = Success
-
-		}
-
-	} else {
-
-		context[Status] = Failed
-
 	}
 
 	return

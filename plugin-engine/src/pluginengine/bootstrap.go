@@ -4,14 +4,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	. "plugin-engine/src/pluginengine/consts"
+	"plugin-engine/src/pluginengine/consts"
 	"plugin-engine/src/pluginengine/server"
 	"plugin-engine/src/pluginengine/utils"
-	"plugin-engine/src/pluginengine/workerpool"
+	"plugin-engine/src/pluginengine/worker"
 	"sync"
 )
 
-var PluginEngineLogger = utils.GetLogger(LogFilesPath, SystemLoggerName)
+var PluginEngineLogger = utils.GetLogger(consts.LogFilesPath, consts.SystemLoggerName)
 
 func main() {
 
@@ -25,17 +25,7 @@ func main() {
 
 	}()
 
-	receiver, sender, err := server.Init()
-
-	if err != nil {
-
-		PluginEngineLogger.Error("Error creating zmq sockets server" + err.Error())
-
-		return
-
-	}
-
-	server.Start(receiver, sender)
+	server.Start()
 
 	PluginEngineLogger.Info("Starting Plugin Engine")
 
@@ -43,11 +33,11 @@ func main() {
 
 		select {
 
-		case encodedContext := <-Requests:
+		case request := <-consts.Requests:
 
 			var contexts []map[string]interface{}
 
-			decodedContext, err := base64.StdEncoding.DecodeString(encodedContext)
+			decodedContext, err := base64.StdEncoding.DecodeString(request)
 
 			if err != nil {
 
@@ -71,13 +61,13 @@ func main() {
 
 			wg := sync.WaitGroup{}
 
-			jobQueue := make(chan workerpool.Job, len(contexts))
+			jobQueue := make(chan worker.Job, len(contexts))
 
 			resultQueue := make(chan map[string]interface{}, len(contexts))
 
 			go func() {
 
-				workerpool.CreateWorkerPool(&wg, jobQueue)
+				worker.CreateWorkerPool(&wg, jobQueue)
 
 				wg.Wait()
 
@@ -90,7 +80,7 @@ func main() {
 
 			for _, context := range contexts {
 
-				job := workerpool.Job{
+				job := worker.Job{
 
 					Context: context,
 
@@ -125,7 +115,7 @@ func main() {
 
 			PluginEngineLogger.Info(encodedString)
 
-			Responses <- encodedString
+			consts.Responses <- encodedString
 
 			PluginEngineLogger.Info(fmt.Sprintf("Result sent to socket"))
 		}

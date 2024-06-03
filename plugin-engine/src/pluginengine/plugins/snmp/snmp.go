@@ -2,73 +2,41 @@ package snmp
 
 import (
 	"github.com/gosnmp/gosnmp"
-	"plugin-engine/src/pluginengine/clients/snmpclient"
-	. "plugin-engine/src/pluginengine/consts"
-	logger2 "plugin-engine/src/pluginengine/utils"
+	snmp "plugin-engine/src/pluginengine/clients/snmpclient"
+	"plugin-engine/src/pluginengine/consts"
+	"plugin-engine/src/pluginengine/utils"
 	"time"
 )
 
-const (
-	ObjectIp      = "object.ip"
-	Community     = "community"
-	Port          = "port"
-	Version       = "version"
-	CredProfileId = "credential.profile.id"
-	Credentials   = "credentials"
-	Interface     = "interface"
-	PollTime      = "poll.time"
-)
-
-const (
-	SystemName        = "system.name"
-	SystemDescription = "system.description"
-	SystemObjectId    = "system.objectId"
-	SystemUptime      = "system.uptime"
-	SystemInterfaces  = "system.interfaces"
-	SystemLocation    = "system.location"
-)
-
-const (
-	InterfaceIndexKey               = "interface.index"
-	InterfaceNameKey                = "interface.name"
-	InterfaceOperationalStatusKey   = "interface.operational.status"
-	InterfaceAdminStatusKey         = "interface.admin.status"
-	InterfaceDescriptionKey         = "interface.description"
-	InterfaceSentErrorPacketKey     = "interface.sent.error.packet"
-	InterfaceReceivedErrorPacketKey = "interface.received.error.packet"
-	InterfaceSentOctetsKey          = "interface.sent.octets"
-	InterfaceReceivedOctetsKey      = "interface.received.octets"
-	InterfaceSpeedKey               = "interface.speed"
-	InterfaceAliasKey               = "interface.alias"
-)
-
-var scalerOids = map[string]string{
-	SystemName:        ".1.3.6.1.2.1.1.5.0",
-	SystemDescription: ".1.3.6.1.2.1.1.1.0",
-	SystemObjectId:    ".1.3.6.1.2.1.1.2.0",
-	SystemUptime:      ".1.3.6.1.2.1.1.3.0",
-	SystemInterfaces:  ".1.3.6.1.2.1.2.1.0",
-	SystemLocation:    ".1.3.6.1.2.1.1.6.0",
+var scalarOids = map[string]string{
+	consts.SystemName:        ".1.3.6.1.2.1.1.5.0",
+	consts.SystemDescription: ".1.3.6.1.2.1.1.1.0",
+	consts.SystemObjectId:    ".1.3.6.1.2.1.1.2.0",
+	consts.SystemUptime:      ".1.3.6.1.2.1.1.3.0",
+	consts.SystemInterfaces:  ".1.3.6.1.2.1.2.1.0",
+	consts.SystemLocation:    ".1.3.6.1.2.1.1.6.0",
 }
 
 var tabularOids = map[string]string{
-	InterfaceIndexKey:               ".1.3.6.1.2.1.2.2.1.1",
-	InterfaceNameKey:                ".1.3.6.1.2.1.31.1.1.1.1",
-	InterfaceOperationalStatusKey:   ".1.3.6.1.2.1.2.2.1.8",
-	InterfaceAdminStatusKey:         ".1.3.6.1.2.1.2.2.1.7",
-	InterfaceDescriptionKey:         ".1.3.6.1.2.1.2.2.1.2",
-	InterfaceSentErrorPacketKey:     ".1.3.6.1.2.1.2.2.1.20",
-	InterfaceReceivedErrorPacketKey: ".1.3.6.1.2.1.2.2.1.14",
-	InterfaceSentOctetsKey:          ".1.3.6.1.2.1.2.2.1.16",
-	InterfaceReceivedOctetsKey:      ".1.3.6.1.2.1.2.2.1.10",
-	InterfaceSpeedKey:               ".1.3.6.1.2.1.2.2.1.5",
-	InterfaceAliasKey:               ".1.3.6.1.2.1.31.1.1.1.18",
-	InterfacePhysicalAddress:        ".1.3.6.1.2.1.2.2.1.6",
+	consts.InterfaceIndexKey:               ".1.3.6.1.2.1.2.2.1.1",
+	consts.InterfaceNameKey:                ".1.3.6.1.2.1.31.1.1.1.1",
+	consts.InterfaceOperationalStatusKey:   ".1.3.6.1.2.1.2.2.1.8",
+	consts.InterfaceAdminStatusKey:         ".1.3.6.1.2.1.2.2.1.7",
+	consts.InterfaceDescriptionKey:         ".1.3.6.1.2.1.2.2.1.2",
+	consts.InterfaceSentErrorPacketKey:     ".1.3.6.1.2.1.2.2.1.20",
+	consts.InterfaceReceivedErrorPacketKey: ".1.3.6.1.2.1.2.2.1.14",
+	consts.InterfaceSentOctetsKey:          ".1.3.6.1.2.1.2.2.1.16",
+	consts.InterfaceReceivedOctetsKey:      ".1.3.6.1.2.1.2.2.1.10",
+	consts.InterfaceSpeedKey:               ".1.3.6.1.2.1.2.2.1.5",
+	consts.InterfaceAliasKey:               ".1.3.6.1.2.1.31.1.1.1.18",
+	consts.InterfacePhysicalAddress:        ".1.3.6.1.2.1.2.2.1.6",
 }
 
-var logger = logger2.GetLogger(LogFilesPath+"/plugins", "snmp")
+var logger = utils.GetLogger(consts.LogFilesPath+"/plugins", "snmp")
 
-func Discovery(context map[string]interface{}, errors *[]map[string]interface{}) {
+func Discovery(context map[string]interface{}) {
+
+	errors := make([]map[string]string, 0)
 
 	validateContext(context)
 
@@ -76,17 +44,17 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 	var err error
 
-	if credentials, ok := context[Credentials].([]interface{}); ok {
+	if credentials, ok := context[consts.Credentials].([]interface{}); ok {
 
 		if !(len(credentials) > 0) {
 
-			*errors = append(*errors, map[string]interface{}{
+			errors = append(errors, map[string]string{
 
-				Error: "credentials not found",
+				consts.Error: "credentials not found",
 
-				ErrorCode: "SNMP01",
+				consts.ErrorCode: "SNMP01",
 
-				ErrorMsg: "error connecting to SNMP agent",
+				consts.ErrorMsg: "error connecting to SNMP agent",
 			})
 
 			logger.Error("error connecting to SNMP agent. reason: credentials not found")
@@ -96,73 +64,95 @@ func Discovery(context map[string]interface{}, errors *[]map[string]interface{})
 
 	}
 
-	for _, credential := range context[Credentials].([]interface{}) {
+	for _, credential := range context[consts.Credentials].([]interface{}) {
 
-		client, err = snmpclient.Init(context[ObjectIp].(string), credential.(map[string]interface{})[Community].(string), uint16(context[Port].(float64)), credential.(map[string]interface{})[Version].(gosnmp.SnmpVersion))
+		client, err = snmp.Init(context[consts.ObjectIp].(string), credential.(map[string]interface{})[consts.Community].(string), uint16(context[consts.Port].(float64)), credential.(map[string]interface{})[consts.Version].(gosnmp.SnmpVersion))
 
 		if err != nil {
-			*errors = append(*errors, map[string]interface{}{
+			errors = append(errors, map[string]string{
 
-				Error: "connection error",
+				consts.Error: "connection error",
 
-				ErrorCode: "SNMP01",
+				consts.ErrorCode: "SNMP01",
 
-				ErrorMsg: err.Error(),
+				consts.ErrorMsg: err.Error(),
 			})
 
-			logger.Error("error connecting from " + context[ObjectIp].(string) + " to SNMP agent. reason: " + err.Error())
+			logger.Error("error connecting from " + context[consts.ObjectIp].(string) + " to SNMP agent. reason: " + err.Error())
 
 			return
 		}
 
-		defer snmpclient.Close(client)
+		defer snmp.Close(client)
 
-		results, err := snmpclient.Get(scalerOids, client)
+		results, err := snmp.Get(scalarOids, client)
 
 		if err != nil {
-			*errors = append(*errors, map[string]interface{}{
+			errors = append(errors, map[string]string{
 
-				Error: "invalid credentials/ connection timed out",
+				consts.Error: "invalid credentials/ connection timed out",
 
-				ErrorCode: "SNMP01",
+				consts.ErrorCode: "SNMP01",
 
-				ErrorMsg: err.Error(),
+				consts.ErrorMsg: err.Error(),
 			})
 
-			logger.Error("error connecting from " + context[ObjectIp].(string) + " to SNMP agent. reason: " + err.Error())
+			logger.Error("error connecting from " + context[consts.ObjectIp].(string) + " to SNMP agent. reason: " + err.Error())
 		}
 
 		if len(results) > 0 {
 
-			context[Result] = results
+			context[consts.Result] = results
 
-			context[CredProfileId] = int(credential.(map[string]interface{})[CredProfileId].(float64))
+			context[consts.CredProfileId] = int(credential.(map[string]interface{})[consts.CredProfileId].(float64))
 
 			break
 		}
+	}
+
+	context[consts.Error] = errors
+
+	if _, ok := context[consts.Result]; ok {
+
+		if len(context[consts.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
+
+			context[consts.Status] = consts.Failed
+
+		} else {
+
+			context[consts.Status] = consts.Success
+
+		}
+
+	} else {
+
+		context[consts.Status] = consts.Failed
+
 	}
 
 	return
 
 }
 
-func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
+func Collect(context map[string]interface{}) {
+
+	errors := make([]map[string]string, 0)
 
 	validateContext(context)
 
-	client, err := snmpclient.Init(context[ObjectIp].(string), context[Community].(string), uint16(context[Port].(float64)), context[Version].(gosnmp.SnmpVersion))
+	client, err := snmp.Init(context[consts.ObjectIp].(string), context[consts.Community].(string), uint16(context[consts.Port].(float64)), context[consts.Version].(gosnmp.SnmpVersion))
 
-	defer snmpclient.Close(client)
+	defer snmp.Close(client)
 
 	if err != nil {
 
-		*errors = append(*errors, map[string]interface{}{
+		errors = append(errors, map[string]string{
 
-			Error: err.Error(),
+			consts.Error: err.Error(),
 
-			ErrorCode: "SNMP01",
+			consts.ErrorCode: "SNMP01",
 
-			ErrorMsg: "error connecting to SNMP agent",
+			consts.ErrorMsg: "error connecting to SNMP agent",
 		})
 
 		logger.Error("error connecting to SNMP agent: " + err.Error())
@@ -170,17 +160,17 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 		return
 	}
 
-	results, err := snmpclient.Walk(tabularOids, client)
+	results, err := snmp.Walk(tabularOids, client)
 
 	if err != nil {
 
-		*errors = append(*errors, map[string]interface{}{
+		errors = append(errors, map[string]string{
 
-			Error: err.Error(),
+			consts.Error: err.Error(),
 
-			ErrorCode: "SNMP02",
+			consts.ErrorCode: "SNMP02",
 
-			ErrorMsg: "error in collecting objects!",
+			consts.ErrorMsg: "error in collecting objects!",
 		})
 
 		logger.Error("error in discovery of device: " + err.Error())
@@ -190,12 +180,32 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 
 	if len(results) > 0 {
 
-		context[Result] = map[string]interface{}{
+		context[consts.Result] = map[string]interface{}{
 
-			Interface: results,
+			consts.Interface: results,
 		}
 
-		context[PollTime] = time.Now().Format("2006-01-02 15:04:05")
+		context[consts.PollTime] = time.Now().Format("2006-01-02 15:04:05")
+
+	}
+
+	context[consts.Error] = errors
+
+	if _, ok := context[consts.Result]; ok {
+
+		if len(context[consts.Result].(map[string]interface{})) <= 0 && len(errors) > 0 {
+
+			context[consts.Status] = consts.Failed
+
+		} else {
+
+			context[consts.Status] = consts.Success
+
+		}
+
+	} else {
+
+		context[consts.Status] = consts.Failed
 
 	}
 
@@ -203,74 +213,64 @@ func Collect(context map[string]interface{}, errors *[]map[string]interface{}) {
 
 func validateContext(context map[string]interface{}) {
 
-	var isMultiContext bool
-
-	// for multiple context
-	if credentials, ok := context[Credentials]; ok {
-
-		isMultiContext = true
+	if credentials, ok := context[consts.Credentials]; ok {
 
 		for _, credential := range credentials.([]interface{}) {
 
-			if value, ok := credential.(map[string]interface{})[Version]; ok {
+			if value, ok := credential.(map[string]interface{})[consts.Version]; ok {
 
 				switch value {
 
 				case "v1":
 
-					credential.(map[string]interface{})[Version] = gosnmp.Version1
+					credential.(map[string]interface{})[consts.Version] = gosnmp.Version1
 
 				case "v3":
 
-					credential.(map[string]interface{})[Version] = gosnmp.Version3
+					credential.(map[string]interface{})[consts.Version] = gosnmp.Version3
 
 				default:
 
-					credential.(map[string]interface{})[Version] = gosnmp.Version2c
+					credential.(map[string]interface{})[consts.Version] = gosnmp.Version2c
 
 				}
 
 			} else {
 
-				credential.(map[string]interface{})[Version] = gosnmp.Version2c
+				credential.(map[string]interface{})[consts.Version] = gosnmp.Version2c
 			}
 		}
-	}
-
-	if _, ok := context[ObjectIp]; !ok {
-
-		context[ObjectIp] = "127.0.0.1"
-	}
-
-	if _, ok := context[Port]; !ok {
-
-		context[Port] = 161
-	}
-
-	// for single device context
-	if !isMultiContext {
-
-		if value, ok := context[Version]; ok {
+	} else {
+		if value, ok := context[consts.Version]; ok {
 
 			switch value {
 
 			case "v1":
 
-				context[Version] = gosnmp.Version1
+				context[consts.Version] = gosnmp.Version1
 
 			case "v3":
 
-				context[Version] = gosnmp.Version3
+				context[consts.Version] = gosnmp.Version3
 
 			default:
 
-				context[Version] = gosnmp.Version2c
+				context[consts.Version] = gosnmp.Version2c
 			}
 
 		} else {
 
-			context[Version] = gosnmp.Version2c
+			context[consts.Version] = gosnmp.Version2c
 		}
 	}
 
+	if _, ok := context[consts.ObjectIp]; !ok {
+
+		context[consts.ObjectIp] = consts.Localhost
+	}
+
+	if _, ok := context[consts.Port]; !ok {
+
+		context[consts.Port] = consts.DefaultSnmpPort
+	}
 }
