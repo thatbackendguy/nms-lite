@@ -40,7 +40,7 @@ func main() {
 	for {
 		request := <-consts.Requests
 
-		PluginEngineLogger.Debug(request)
+		PluginEngineLogger.Trace(request)
 
 		var contexts []map[string]interface{}
 
@@ -64,7 +64,7 @@ func main() {
 
 		}
 
-		PluginEngineLogger.Info(string(decodedContext))
+		PluginEngineLogger.Trace(string(decodedContext))
 
 		var wg sync.WaitGroup
 
