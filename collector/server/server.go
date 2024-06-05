@@ -2,103 +2,116 @@ package server
 
 import (
 	"collector/logger"
+	"encoding/json"
+	"fmt"
 	"github.com/pebbe/zmq4"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
-var serverLogger = logger.NewLogger("go-engine/logs", "collector-server")
+type Server struct {
+	context *zmq4.Context
+
+	receiver *zmq4.Socket
+}
 
 var (
-	Requests = make(chan []byte, 10)
+	Requests = make(chan map[string]interface{}, 100)
 )
 
-func Init() (*zmq4.Socket, error) {
+var serverLogger = logger.GetLogger("go-engine/logs", "server")
 
-	server, err := zmq4.NewContext()
+func (server *Server) Init() (err error) {
+
+	server.context, err = zmq4.NewContext()
 
 	if err != nil {
 
-		serverLogger.Error("Failed to create new zmq context")
+		serverLogger.Error("Failed to create new zmq context: " + err.Error())
 
-		return nil, err
+		return
 	}
 
-	socket, err := server.NewSocket(zmq4.PULL)
+	server.receiver, err = server.context.NewSocket(zmq4.PULL)
 
 	if err != nil {
 
 		serverLogger.Error("Error creating PULL socket: " + err.Error())
 
-		return nil, err
+		return
 	}
 
-	err = socket.Connect("tcp://localhost:9999")
+	err = server.receiver.Connect("tcp://localhost:9999")
 
 	if err != nil {
 
 		serverLogger.Error("Connecting pull socket: " + err.Error())
 
+		return
 	}
 
-	return socket, nil
-}
-
-func Start(puller *zmq4.Socket) (err error) {
-
-	go receive(puller)
-
-	go handleSignals(puller)
+	go server.Receive()
 
 	return nil
 }
 
-func handleSignals(puller *zmq4.Socket) {
+func (server *Server) Receive() {
 
-	stopReceiver := make(chan os.Signal, 1)
+	defer func() {
+		if err := recover(); err != nil {
+			serverLogger.Error(fmt.Sprintf("Panic occured while receiving messages: %v", err))
 
-	signal.Notify(stopReceiver, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
-
-	receivedSignal := <-stopReceiver
-
-	serverLogger.Trace("Received signal: " + receivedSignal.String())
-
-	Stop(puller)
-}
-
-func Stop(puller *zmq4.Socket) {
-
-	serverLogger.Info("Stopping ZMQ sockets...")
-
-	if puller != nil {
-
-		err := puller.Close()
-
-		if err != nil {
-
-			serverLogger.Error("Failed to close PULL socket: " + err.Error())
-
+			server.Receive()
 		}
-	}
-
-	serverLogger.Info("ZMQ sockets closed successfully")
-}
-
-func receive(puller *zmq4.Socket) {
+	}()
 
 	for {
-		encodedContext, err := puller.RecvBytes(0)
+		data, err := server.receiver.RecvBytes(0)
 
 		if err != nil {
 
 			serverLogger.Error("Error receiving encodedContext: " + err.Error())
 
+			continue
 		}
 
-		if len(encodedContext) > 0 {
+		record := make(map[string]interface{})
 
-			Requests <- encodedContext
+		err = json.Unmarshal(data, &record)
+
+		if err != nil {
+
+			serverLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
+
+			continue
+
+		}
+
+		if len(record) > 0 {
+
+			Requests <- record
+
 		}
 	}
+}
+
+func (server *Server) Stop() {
+
+	err := server.receiver.Close()
+	if err != nil {
+
+		serverLogger.Error("Error closing receiver: " + err.Error())
+
+		return
+
+	}
+
+	err = server.context.Term()
+	if err != nil {
+
+		serverLogger.Error("Error closing context: " + err.Error())
+
+		return
+
+	}
+
+	return
 }

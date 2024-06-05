@@ -42,7 +42,7 @@ func write(level, directory, component string, message interface{}) {
 	}
 }
 
-func NewLogger(directory, component string) Logger {
+func GetLogger(directory, component string) Logger {
 
 	dirPath := filepath.Join(".", directory)
 
