@@ -1,6 +1,7 @@
 package snmp
 
 import (
+	"fmt"
 	"github.com/gosnmp/gosnmp"
 	snmp "plugin-engine/src/pluginengine/clients/snmpclient"
 	"plugin-engine/src/pluginengine/consts"
@@ -37,6 +38,30 @@ var logger = utils.GetLogger(consts.LogFilesPath+"/plugins", "snmp")
 func Discovery(context map[string]interface{}) {
 
 	errors := make([]map[string]string, 0)
+
+	defer func() {
+		if r := recover(); r != nil {
+
+			logger.Error(fmt.Sprint("Panic recovered while discovery: ", r))
+
+			errors = append(errors, map[string]string{
+
+				consts.Error: "Internal Server Error",
+
+				consts.ErrorCode: "500",
+
+				consts.ErrorMsg: fmt.Sprintf("Error in discovery: %v", r),
+			})
+
+			context[consts.Error] = errors
+
+			context[consts.Status] = consts.Failed
+
+			consts.Responses <- context
+		}
+
+		return
+	}()
 
 	validateContext(context)
 
@@ -139,6 +164,30 @@ func Discovery(context map[string]interface{}) {
 func Collect(context map[string]interface{}) {
 
 	errors := make([]map[string]string, 0)
+
+	defer func() {
+		if r := recover(); r != nil {
+
+			logger.Error(fmt.Sprint("Panic recovered while collect: ", r))
+
+			errors = append(errors, map[string]string{
+
+				consts.Error: "Internal Server Error",
+
+				consts.ErrorCode: "500",
+
+				consts.ErrorMsg: fmt.Sprintf("Error in collect: %v", r),
+			})
+
+			context[consts.Error] = errors
+
+			context[consts.Status] = consts.Failed
+
+			consts.Responses <- context
+		}
+
+		return
+	}()
 
 	validateContext(context)
 

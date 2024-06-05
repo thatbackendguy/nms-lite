@@ -1,17 +1,13 @@
 package com.motadata.utils;
 
 import com.motadata.database.ConfigDB;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -45,14 +41,14 @@ public class Utils
         return counter.incrementAndGet();
     }
 
-    public static JsonArray decodeBase64ToJsonArray(String encodedString)
+    public static JsonObject decodeBase64ToJsonObject(String encodedString)
     {
 
-        var decodedString = "[]";
+        var decodedString = "{}";
 
         decodedString = new String(Base64.getDecoder().decode(encodedString));
 
-        return new JsonArray(decodedString);
+        return new JsonObject(decodedString);
     }
 
     public static boolean isAvailable(String objectIp)

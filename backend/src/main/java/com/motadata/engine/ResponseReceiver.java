@@ -13,8 +13,6 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.motadata.constants.Constants.*;
 
 public class ResponseReceiver extends AbstractVerticle
@@ -43,47 +41,44 @@ public class ResponseReceiver extends AbstractVerticle
 
                 if (message != null && !message.body().isEmpty())
                 {
-                    var result = Utils.decodeBase64ToJsonArray(message.body());
+                    var contextResult = Utils.decodeBase64ToJsonObject(message.body());
 
-                    if (!result.isEmpty())
+                    if (!contextResult.isEmpty())
                     {
-                        for (var object : result)
+                        if (contextResult.containsKey(REQUEST_TYPE))
                         {
-                            var contextResult = new JsonObject(object.toString());
-
-                            if (contextResult.containsKey(REQUEST_TYPE))
+                            switch (contextResult.getString(REQUEST_TYPE))
                             {
-                                switch (contextResult.getString(REQUEST_TYPE))
+                                case COLLECT ->
+
                                 {
-                                    case COLLECT:
+                                    LOGGER.trace("Collect result received: {}", contextResult);
 
-                                        LOGGER.trace("Collect result received: {}", result);
-
-                                        eventBus.send(DUMP_TO_FILE, result.toString());
-
-                                        break;
-
-                                    case DISCOVERY:
-
-                                        LOGGER.trace("Discovery result received: {}", result);
-
-                                        ResponseParser.discoveryResult(result);
-
-                                        break;
-
-                                    case AVAILABILITY:
-
-                                        LOGGER.trace("Availability result received: {}", result);
-
-                                        ConfigDB.availableDevices.put(contextResult.getString(OBJECT_IP), contextResult.getJsonObject(RESULT)
-                                                .getString("is.available", "down"));
-
-                                        break;
+                                    eventBus.send(DUMP_TO_FILE, contextResult.toString());
                                 }
+
+                                case DISCOVERY ->
+
+                                {
+                                    LOGGER.trace("Discovery result received: {}", contextResult);
+
+                                    ResponseParser.discoveryResult(contextResult);
+                                }
+
+                                case AVAILABILITY ->
+
+                                {
+                                    LOGGER.trace("Availability result received: {}", contextResult);
+
+                                    ConfigDB.availableDevices.put(contextResult.getString(OBJECT_IP), contextResult.getJsonObject(RESULT)
+                                            .getString("is.available", "down"));
+                                }
+
                             }
                         }
                     }
                 }
+
             });
 
             new Thread(() ->

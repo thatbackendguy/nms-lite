@@ -3,66 +3,41 @@ package server
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/pebbe/zmq4"
 	"plugin-engine/src/pluginengine/consts"
 	"plugin-engine/src/pluginengine/utils"
 )
 
+type Server struct {
+	context *zmq4.Context
+
+	receiver, sender *zmq4.Socket
+}
+
 var serverLogger = utils.GetLogger(consts.LogFilesPath, "server")
 
-func Init() (receiver *zmq4.Socket, sender *zmq4.Socket, err error) {
+func (server *Server) Init() (err error) {
 
-	server, err := zmq4.NewContext()
+	server.context, err = zmq4.NewContext()
 
 	if err != nil {
 
 		serverLogger.Error("Failed to create new zmq context: " + err.Error())
 
-		return nil, nil, err
+		return
 	}
 
-	receiver, err = server.NewSocket(zmq4.PULL)
+	server.receiver, err = server.context.NewSocket(zmq4.PULL)
 
 	if err != nil {
+
 		serverLogger.Error("Error creating PULL socket: " + err.Error())
 
-		return nil, nil, err
+		return
 	}
 
-	sender, err = server.NewSocket(zmq4.PUSH)
-
-	if err != nil {
-
-		serverLogger.Error("Error creating PUSH socket: " + err.Error())
-
-		return nil, nil, err
-	}
-
-	return receiver, sender, nil
-}
-
-func Start() error {
-
-	receiver, sender, err := Init()
-
-	if err != nil {
-
-		serverLogger.Error("Error creating zmq sockets server" + err.Error())
-
-		return err
-
-	}
-
-	go receive(receiver)
-
-	go send(sender)
-
-	return nil
-}
-
-func receive(receiver *zmq4.Socket) {
-
-	err := receiver.Connect("tcp://localhost:7777")
+	err = server.receiver.Connect("tcp://localhost:7777")
 
 	if err != nil {
 
@@ -71,27 +46,16 @@ func receive(receiver *zmq4.Socket) {
 		return
 	}
 
-	for {
-		encodedContext, err := receiver.Recv(0)
+	server.sender, err = server.context.NewSocket(zmq4.PUSH)
 
-		if err != nil {
+	if err != nil {
 
-			serverLogger.Error("Error receiving encodedContext: " + err.Error())
+		serverLogger.Error("Error creating PUSH socket: " + err.Error())
 
-			continue
-		}
-
-		if encodedContext != "" {
-
-			consts.Requests <- encodedContext
-
-		}
+		return
 	}
-}
 
-func send(sender *zmq4.Socket) {
-
-	err := sender.Connect("tcp://localhost:8888")
+	err = server.sender.Connect("tcp://localhost:8888")
 
 	if err != nil {
 
@@ -100,11 +64,76 @@ func send(sender *zmq4.Socket) {
 		return
 	}
 
+	go server.Receive()
+
+	go server.Send()
+
+	return nil
+}
+
+func (server *Server) Receive() {
+
+	defer func() {
+		if err := recover(); err != nil {
+			serverLogger.Error(fmt.Sprintf("Panic occured while receiving messages: %v", err))
+
+			server.Receive()
+		}
+	}()
+
+	for {
+		encodedContext, err := server.receiver.Recv(0)
+
+		if err != nil {
+
+			serverLogger.Error("Error receiving encodedContext: " + err.Error())
+
+			continue
+		}
+
+		contexts := make([]map[string]interface{}, 0)
+
+		decodedContext, err := base64.StdEncoding.DecodeString(encodedContext)
+
+		if err != nil {
+
+			serverLogger.Error(fmt.Sprintf("base64 decoding error: %s", err.Error()))
+
+			continue
+
+		}
+
+		err = json.Unmarshal(decodedContext, &contexts)
+
+		if err != nil {
+
+			serverLogger.Error(fmt.Sprintf("unable to convert JSON string to map: %s", err.Error()))
+
+			continue
+
+		}
+
+		if len(contexts) > 0 {
+
+			consts.Requests <- contexts
+
+		}
+	}
+}
+
+func (server *Server) Send() {
+
+	defer func() {
+		if err := recover(); err != nil {
+			serverLogger.Error(fmt.Sprintf("Panic occured while sending messages: %v", err))
+
+			server.Send()
+		}
+	}()
+
 	for {
 
-		response := []map[string]interface{}{
-			<-consts.Responses,
-		}
+		response := <-consts.Responses
 
 		jsonOutput, err := json.Marshal(response)
 
@@ -120,7 +149,7 @@ func send(sender *zmq4.Socket) {
 
 		serverLogger.Debug(encodedString)
 
-		_, err = sender.Send(encodedString, 0)
+		_, err = server.sender.Send(encodedString, 0)
 
 		if err != nil {
 
@@ -128,4 +157,36 @@ func send(sender *zmq4.Socket) {
 
 		}
 	}
+}
+
+func (server *Server) Stop() {
+
+	err := server.receiver.Close()
+	if err != nil {
+
+		serverLogger.Error("Error closing receiver: " + err.Error())
+
+		return
+
+	}
+
+	err = server.sender.Close()
+	if err != nil {
+
+		serverLogger.Error("Error closing sender: " + err.Error())
+
+		return
+
+	}
+
+	err = server.context.Term()
+	if err != nil {
+
+		serverLogger.Error("Error closing context: " + err.Error())
+
+		return
+
+	}
+
+	return
 }

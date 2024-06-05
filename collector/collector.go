@@ -32,96 +32,93 @@ func main() {
 	for {
 		data := <-server.Requests
 
-		contexts := make([]map[string]interface{}, 0)
+		result := make(map[string]interface{})
 
-		err := json.Unmarshal(data, &contexts)
+		err := json.Unmarshal(data, &result)
 
 		if err != nil {
 
-			collectorLogger.Error("unable to convert JSON string to map: %s" + err.Error())
+			collectorLogger.Error("unable to convert JSON string to map:" + err.Error())
 
 			break
 		}
 
-		for _, result := range contexts {
+		if strings.EqualFold(result["status"].(string), "success") {
 
-			if strings.EqualFold(result["status"].(string), "success") {
+			pollTime := result["poll.time"].(string)
 
-				pollTime := result["poll.time"].(string)
+			objectIp := result["object.ip"].(string)
 
-				objectIp := result["object.ip"].(string)
+			if interfacesData, ok := result["result"].(map[string]interface{})["interface"].([]interface{}); ok {
 
-				if interfacesData, ok := result["result"].(map[string]interface{})["interface"].([]interface{}); ok {
+				for _, value := range interfacesData {
 
-					for _, value := range interfacesData {
+					if interfaceData, ok := value.(map[string]interface{}); ok {
 
-						if interfaceData, ok := value.(map[string]interface{}); ok {
+						interfaceName, nameExists := interfaceData["interface.name"].(string)
 
-							interfaceName, nameExists := interfaceData["interface.name"].(string)
+						if !nameExists || interfaceName == "" {
 
-							if !nameExists || interfaceName == "" {
+							interfaceName, _ = interfaceData["interface.description"].(string)
 
-								interfaceName, _ = interfaceData["interface.description"].(string)
+						}
 
-							}
+						folderPath := "./metrics-result/" + objectIp + "/"
 
-							folderPath := "./metrics-result/" + objectIp + "/"
+						err = os.MkdirAll(fmt.Sprintf(folderPath), 0755)
 
-							err = os.MkdirAll(fmt.Sprintf(folderPath), 0755)
+						if err != nil {
 
-							if err != nil {
+							collectorLogger.Trace("Error creating folder:" + err.Error())
 
-								collectorLogger.Trace("Error creating folder:" + err.Error())
+							continue
+						}
 
-								continue
-							}
+						collectorLogger.Trace("Folder created successfully")
 
-							collectorLogger.Trace("Folder created successfully")
+						record := map[string]interface{}{
 
-							record := map[string]interface{}{
+							pollTime: interfaceData,
+						}
 
-								pollTime: interfaceData,
-							}
+						filePath := filepath.Join(folderPath, strings.ReplaceAll(strings.ReplaceAll(interfaceName, "/", "-"), ".", "-"))
 
-							filePath := filepath.Join(folderPath, strings.ReplaceAll(strings.ReplaceAll(interfaceName, "/", "-"), ".", "-"))
+						file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
-							file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+						if err != nil {
 
-							if err != nil {
+							collectorLogger.Error("Error opening file: " + filePath)
 
-								collectorLogger.Error("Error opening file: " + filePath)
+							continue
+						}
 
-								continue
-							}
+						recordStr, err := json.Marshal(record)
 
-							recordStr, err := json.Marshal(record)
+						if err != nil {
 
-							if err != nil {
+							collectorLogger.Error("Error marshaling data:" + err.Error())
 
-								collectorLogger.Error("Error marshaling data:" + err.Error())
+							continue
+						}
 
-								continue
-							}
+						_, err = file.Write(append(recordStr, 10))
 
-							_, err = file.Write(append(recordStr, 10))
+						if err != nil {
 
-							if err != nil {
+							collectorLogger.Error("Error writing to file:" + err.Error())
 
-								collectorLogger.Error("Error writing to file:" + err.Error())
+							continue
+						}
 
-								continue
-							}
+						collectorLogger.Trace("Data appended to file successfully")
 
-							collectorLogger.Trace("Data appended to file successfully")
+						err = file.Close()
 
-							err = file.Close()
+						if err != nil {
 
-							if err != nil {
+							collectorLogger.Error("Error closing file:" + err.Error())
 
-								collectorLogger.Error("Error closing file:" + err.Error())
-
-								continue
-							}
+							continue
 						}
 					}
 				}

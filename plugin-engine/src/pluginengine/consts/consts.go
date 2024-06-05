@@ -1,30 +1,20 @@
 package consts
 
 const (
-	Result = "result"
-
-	Status = "status"
-
-	Success = "success"
-
-	Failed = "failed"
-
-	Error = "error"
-
-	ErrorMsg = "error.message"
-
-	ErrorCode = "error.code"
-
-	LogFilesPath = "go-engine/logs"
-
-	SystemLoggerName = "system"
-
+	Result                   = "result"
+	Status                   = "status"
+	Success                  = "success"
+	Failed                   = "failed"
+	Error                    = "error"
+	ErrorMsg                 = "error.message"
+	ErrorCode                = "error.code"
+	LogFilesPath             = "go-engine/logs"
+	SystemLoggerName         = "system"
 	InterfacePhysicalAddress = "interface.physical.address"
-
-	Localhost = "127.0.0.1"
-
-	DefaultSnmpPort = 161
+	Localhost                = "127.0.0.1"
+	DefaultSnmpPort          = 161
 )
+
 const (
 	ObjectIp      = "object.ip"
 	Community     = "community"
@@ -60,7 +50,7 @@ const (
 )
 
 var (
-	Requests = make(chan string, 10)
+	Requests = make(chan []map[string]interface{}, 100)
 
-	Responses = make(chan map[string]interface{}, 10)
+	Responses = make(chan map[string]interface{}, 100)
 )

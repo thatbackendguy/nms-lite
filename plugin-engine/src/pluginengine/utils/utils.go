@@ -1,12 +1,39 @@
 package utils
 
 import (
+	"fmt"
 	"os/exec"
 	"plugin-engine/src/pluginengine/consts"
 	"strings"
 )
 
+var utilsLogger = GetLogger(consts.LogFilesPath, "utils")
+
 func CheckAvailability(context map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+
+			utilsLogger.Error(fmt.Sprintf("Panic recovered in availability: %v", err))
+
+			errors := map[string]string{
+
+				consts.Error: "Internal Server Error",
+
+				consts.ErrorCode: "500",
+
+				consts.ErrorMsg: fmt.Sprintf("Error while checking availability: %v", err),
+			}
+
+			context[consts.Error] = errors
+
+			context[consts.Status] = consts.Failed
+
+			consts.Responses <- context
+		}
+
+		return
+	}()
 
 	command := "fping"
 

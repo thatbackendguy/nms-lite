@@ -464,7 +464,7 @@ public class Discovery
 
                     LOGGER.trace("Discovery context sent to discovery engine");
 
-                });
+                }, false);
 
                 routingContext.response()
                         .putHeader(CONTENT_TYPE, APP_JSON)
