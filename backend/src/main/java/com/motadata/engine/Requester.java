@@ -34,8 +34,6 @@ public class Requester extends AbstractVerticle
 
         try
         {
-            var workerExecutors = Executors.newFixedThreadPool(5);
-
             sender.bind("tcp://*:7777");
 
             resultPusher.bind("tcp://*:9999");
@@ -49,23 +47,11 @@ public class Requester extends AbstractVerticle
 
                 try
                 {
-                    workerExecutors.submit(() ->
-                    {
-                        // sending work on TCP Port: 9999
-                        resultPusher.send(msg.body(), 0);
 
-                        LOGGER.trace("Data pushed to tcp://*:9999: {}", msg.body());
+                    // sending work on TCP Port: 9999
+                    resultPusher.send(msg.body(), ZMQ.DONTWAIT);
 
-                        try
-                        {
-                            Thread.sleep(100);
-                        }
-                        catch (InterruptedException interruptedException)
-                        {
-                            LOGGER.error(ERROR_CONTAINER, interruptedException.toString());
-                        }
-                    });
-
+                    LOGGER.trace("Data pushed to tcp://*:9999: {}", msg.body());
                 }
                 catch (Exception exception)
                 {
@@ -79,13 +65,12 @@ public class Requester extends AbstractVerticle
 
                 try
                 {
-                    workerExecutors.submit(() ->
-                    {
-                        // sending work on TCP Port: 7777
-                        sender.send(msg.body(), 0);
 
-                        LOGGER.trace("Discovery request sent: {}", msg.body());
-                    });
+                    // sending work on TCP Port: 7777
+                    sender.send(msg.body(), ZMQ.DONTWAIT);
+
+                    LOGGER.trace("Discovery request sent: {}", msg.body());
+
                 }
                 catch (Exception exception)
                 {
@@ -99,14 +84,11 @@ public class Requester extends AbstractVerticle
 
                 try
                 {
-                    workerExecutors.submit(() ->
-                    {
-                        // sending work on TCP Port: 7777
-                        sender.send(msg.body(), 0);
 
-                        LOGGER.trace("Collect request sent: {}", msg.body());
+                    // sending work on TCP Port: 7777
+                    sender.send(msg.body(), ZMQ.DONTWAIT);
 
-                    });
+                    LOGGER.trace("Collect request sent: {}", msg.body());
 
                 }
                 catch (Exception exception)
@@ -120,13 +102,11 @@ public class Requester extends AbstractVerticle
 
                 try
                 {
-                    workerExecutors.submit(() ->
-                    {
-                        // sending work on TCP Port: 7777
-                        sender.send(msg.body(), 0);
+                    // sending work on TCP Port: 7777
+                    sender.send(msg.body(), ZMQ.DONTWAIT);
 
-                        LOGGER.trace("Check availability request sent: {}", msg.body());
-                    });
+                    LOGGER.trace("Check availability request sent: {}", msg.body());
+
                 }
                 catch (Exception exception)
                 {
@@ -135,35 +115,41 @@ public class Requester extends AbstractVerticle
 
             });
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() ->
-            {
-                sender.close();
-
-                resultPusher.close();
-
-                context.close();
-
-                if (!workerExecutors.isShutdown())
-                {
-                    workerExecutors.shutdown();
-                }
-            }));
-
             startPromise.complete();
 
             LOGGER.info("Requester started");
         }
         catch (Exception exception)
         {
-            LOGGER.error(ERROR_CONTAINER, exception.getMessage());
+            LOGGER.error("Exception occurred: ", exception);
+
+            startPromise.fail(exception);
         }
     }
 
     @Override
-    public void stop(Promise<Void> stopPromise) throws Exception
+    public void stop(Promise<Void> stopPromise)
     {
 
+        if (sender != null)
+        {
+            sender.close();
+
+            LOGGER.debug("Socket at TCP port 7777 closed.");
+        }
+
+        if (resultPusher != null)
+        {
+            resultPusher.close();
+
+            LOGGER.debug("Socket at TCP port 9999 closed.");
+        }
+
+        context.close();
+
         stopPromise.complete();
+
+        LOGGER.info("Requester undeployed successfully");
     }
 
 }

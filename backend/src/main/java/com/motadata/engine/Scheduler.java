@@ -35,28 +35,26 @@ public class Scheduler extends AbstractVerticle
 
             try
             {
-                vertx.executeBlocking(handler ->
+
+                var context = new JsonArray();
+
+                for (var monitor : ConfigDB.provisionedDevices.values())
                 {
-                    var context = new JsonArray();
-
-                    for (var monitor : ConfigDB.provisionedDevices.values())
+                    if (monitor != null && Utils.isAvailable(monitor.getString(OBJECT_IP)))
                     {
-                        if (monitor != null && Utils.isAvailable(monitor.getString(OBJECT_IP)))
-                        {
-                            context.add(monitor.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
-                        }
+                        context.add(monitor.put(PLUGIN_NAME, NETWORK).put(REQUEST_TYPE, COLLECT));
                     }
+                }
 
-                    if (!context.isEmpty())
-                    {
-                        var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
+                if (!context.isEmpty())
+                {
+                    var encodedString = Base64.getEncoder().encodeToString(context.toString().getBytes());
 
-                        LOGGER.trace("POLL METRICS: {}", encodedString);
+                    LOGGER.trace("POLL METRICS: {}", encodedString);
 
-                        // sending poll event on interval to Requester
-                        eventBus.send(POLL_METRICS_EVENT, encodedString);
-                    }
-                });
+                    // sending poll event on interval to Requester
+                    eventBus.send(POLL_METRICS_EVENT, encodedString);
+                }
 
             }
             catch (Exception exception)
@@ -114,10 +112,12 @@ public class Scheduler extends AbstractVerticle
     }
 
     @Override
-    public void stop(Promise<Void> stopPromise) throws Exception
+    public void stop(Promise<Void> stopPromise)
     {
 
         stopPromise.complete();
+
+        LOGGER.info("Scheduler undeployed successfully");
     }
 
 }

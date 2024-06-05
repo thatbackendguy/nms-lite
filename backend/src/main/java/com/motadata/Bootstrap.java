@@ -4,14 +4,14 @@ import com.motadata.api.APIServer;
 import com.motadata.config.Config;
 import com.motadata.constants.Constants;
 import com.motadata.engine.Requester;
-import com.motadata.engine.ResponseParser;
 import com.motadata.engine.ResponseReceiver;
 import com.motadata.engine.Scheduler;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
 
 public class Bootstrap
 {
@@ -20,49 +20,65 @@ public class Bootstrap
 
     private static final Vertx vertx = Vertx.vertx();
 
+    private static final ArrayList<String> deploymentIds = new ArrayList<>();
+
     public static void main(String[] args)
     {
 
         try
         {
-//            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
-//
-//            var pluginProcess = pluginEngine.start();
-//
-//            LOGGER.trace("Go Plugin engine started: {}", Config.GO_PLUGIN_ENGINE_PATH);
-//
-//            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
-//
-//            var collectorProcess = collector.start();
-//
-//            LOGGER.trace("Go collector started: {}", Config.GO_COLLECTOR_PATH);
-//
-//            Runtime.getRuntime().addShutdownHook(new Thread(() ->
-//            {
-//
-//                LOGGER.trace("Cleanup process in progress");
-//
-//                pluginProcess.destroyForcibly();
-//
-//                collectorProcess.destroyForcibly();
-//
-//                LOGGER.trace("Cleanup process successful");
-//
-//            }));
+            var pluginEngine = new ProcessBuilder(Config.GO_PLUGIN_ENGINE_PATH);
 
-            vertx.deployVerticle(Scheduler.class.getName(), new DeploymentOptions().setInstances(1))
+            var pluginProcess = pluginEngine.start();
 
-                    .compose(id -> vertx.deployVerticle(Requester.class.getName(), new DeploymentOptions().setInstances(1)))
+            LOGGER.trace("Go Plugin engine started: {}", Config.GO_PLUGIN_ENGINE_PATH);
 
-                    .compose(id -> vertx.deployVerticle(ResponseReceiver.class.getName(), new DeploymentOptions().setInstances(1)))
+            var collector = new ProcessBuilder(Config.GO_COLLECTOR_PATH);
 
-                    .compose(id -> vertx.deployVerticle(ResponseParser.class.getName(), new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER)))
+            var collectorProcess = collector.start();
 
-                    .compose(id -> vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions().setInstances(3)))
+            LOGGER.trace("Go collector started: {}", Config.GO_COLLECTOR_PATH);
 
-                    .onSuccess(handler -> LOGGER.info("All verticles deployed"))
+            vertx.deployVerticle(Scheduler.class.getName(), new DeploymentOptions().setInstances(1)).compose(id ->
+            {
+                deploymentIds.add(id);
 
-                    .onFailure(exception -> LOGGER.error("Deployment failed: ", exception));
+                return vertx.deployVerticle(Requester.class.getName(), new DeploymentOptions().setInstances(1));
+
+            }).compose(id ->
+            {
+                deploymentIds.add(id);
+
+                return vertx.deployVerticle(ResponseReceiver.class.getName(), new DeploymentOptions().setInstances(1));
+
+            }).compose(id ->
+            {
+                deploymentIds.add(id);
+
+                return vertx.deployVerticle(APIServer.class.getName(), new DeploymentOptions().setInstances(3));
+
+            }).onSuccess(id ->
+            {
+                deploymentIds.add(id);
+
+                LOGGER.info("All verticles deployed");
+
+            }).onFailure(exception -> LOGGER.error("Deployment failed: ", exception));
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() ->
+            {
+
+                LOGGER.trace("Cleanup process in progress");
+
+                deploymentIds.forEach(vertx::undeploy);
+
+                pluginProcess.destroyForcibly();
+
+                collectorProcess.destroyForcibly();
+
+                LOGGER.trace("Cleanup process successful");
+
+            }));
 
         }
         catch (Exception exception)

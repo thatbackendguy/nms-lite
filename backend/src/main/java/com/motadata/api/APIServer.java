@@ -5,6 +5,7 @@ import com.motadata.constants.Constants;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -20,6 +21,8 @@ public class APIServer extends AbstractVerticle
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(APIServer.class);
 
+    private HttpServer server = null;
+
     private ErrorHandler errorHandler()
     {
 
@@ -34,7 +37,7 @@ public class APIServer extends AbstractVerticle
         {
             var router = Router.router(vertx);
 
-            var server = vertx.createHttpServer(new HttpServerOptions().setHost(Config.HOST).setPort(Config.PORT));
+            server = vertx.createHttpServer(new HttpServerOptions().setHost(Config.HOST).setPort(Config.PORT));
 
             new Credential().init(router);
 
@@ -78,14 +81,25 @@ public class APIServer extends AbstractVerticle
         catch (Exception exception)
         {
             LOGGER.error(Constants.ERROR_CONTAINER, exception.getMessage());
+
+            startPromise.fail(exception);
         }
     }
 
     @Override
-    public void stop(Promise<Void> stopPromise) throws Exception
+    public void stop(Promise<Void> stopPromise)
     {
 
+        if (server != null)
+        {
+            LOGGER.debug("Closing API Server");
+
+            server.close();
+        }
+
         stopPromise.complete();
+
+        LOGGER.info("API Server undeployed successfully");
     }
 
 }

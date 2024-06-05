@@ -38,64 +38,71 @@ public class ResponseReceiver extends AbstractVerticle
 
             receiver.bind("tcp://*:8888");
 
+            eventBus.<String> localConsumer(RESPONSE_MANAGER_EVENT, message ->
+            {
+
+                if (message != null && !message.body().isEmpty())
+                {
+                    var result = Utils.decodeBase64ToJsonArray(message.body());
+
+                    if (!result.isEmpty())
+                    {
+                        for (var object : result)
+                        {
+                            var contextResult = new JsonObject(object.toString());
+
+                            if (contextResult.containsKey(REQUEST_TYPE))
+                            {
+                                switch (contextResult.getString(REQUEST_TYPE))
+                                {
+                                    case COLLECT:
+
+                                        LOGGER.trace("Collect result received: {}", result);
+
+                                        eventBus.send(DUMP_TO_FILE, result.toString());
+
+                                        break;
+
+                                    case DISCOVERY:
+
+                                        LOGGER.trace("Discovery result received: {}", result);
+
+                                        ResponseParser.discoveryResult(result);
+
+                                        break;
+
+                                    case AVAILABILITY:
+
+                                        LOGGER.trace("Availability result received: {}", result);
+
+                                        ConfigDB.availableDevices.put(contextResult.getString(OBJECT_IP), contextResult.getJsonObject(RESULT)
+                                                .getString("is.available", "down"));
+
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
             new Thread(() ->
             {
                 try
                 {
-                    while (true)
+                    while (!Thread.currentThread().isInterrupted())
                     {
                         var message = receiver.recvStr(0);
 
-                        if (message != null && !message.isEmpty())
-                        {
-                            var result = Utils.decodeBase64ToJsonArray(message);
+                        eventBus.send(RESPONSE_MANAGER_EVENT, message);
 
-                            if (!result.isEmpty())
-                            {
-                                for (var object : result)
-                                {
-                                    var contextResult = new JsonObject(object.toString());
-
-                                    if (contextResult.containsKey(REQUEST_TYPE))
-                                    {
-                                        switch (contextResult.getString(REQUEST_TYPE))
-                                        {
-                                            case COLLECT:
-
-                                                LOGGER.trace("Collect result received: {}", result);
-
-                                                eventBus.send(DUMP_TO_FILE, result.toString());
-
-                                                break;
-
-                                            case DISCOVERY:
-
-                                                LOGGER.trace("Discovery result received: {}", result);
-
-                                                eventBus.send(PARSE_DISCOVERY_EVENT, result);
-
-                                                break;
-
-                                            case AVAILABILITY:
-
-                                                LOGGER.trace("Availability result received: {}", result);
-
-                                                ConfigDB.availableDevices.put(contextResult.getString(OBJECT_IP), contextResult.getJsonObject(RESULT)
-                                                        .getString("is.available", "down"));
-
-                                                break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
                 catch (ZMQException zmqException)
                 {
                     if (context.isClosed())
                     {
-                        LOGGER.info("Context was closed, exiting worker thread.");
+                        LOGGER.info("Context was closed");
                     }
                     else
                     {
@@ -104,20 +111,9 @@ public class ResponseReceiver extends AbstractVerticle
                 }
                 catch (Exception exception)
                 {
-                    LOGGER.error("Exception in worker thread: ", exception);
-                }
-                finally
-                {
-                    receiver.close();
+                    LOGGER.error("Exception in receiver thread: ", exception);
                 }
             }).start();
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() ->
-            {
-                receiver.close();
-
-                context.close();
-            }));
 
             startPromise.complete();
 
@@ -125,10 +121,28 @@ public class ResponseReceiver extends AbstractVerticle
         }
         catch (Exception exception)
         {
-            LOGGER.error("Failed to start ResponseReceiver: ", exception);
+            LOGGER.error("Failed to start Response Receiver: ", exception);
 
             startPromise.fail(exception);
         }
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise)
+    {
+
+        if (receiver != null)
+        {
+            receiver.close();
+
+            LOGGER.debug("Socket at TCP port 8888 closed.");
+        }
+
+        context.close();
+
+        stopPromise.complete();
+
+        LOGGER.info("Response Receiver undeployed successfully");
     }
 
 }
