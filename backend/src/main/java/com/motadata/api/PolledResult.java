@@ -5,7 +5,6 @@ import com.motadata.constants.Constants;
 import com.motadata.utils.Utils;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -18,8 +17,6 @@ import static com.motadata.api.APIServer.LOGGER;
 public class PolledResult
 {
 
-    private final EventBus eventBus;
-
     private final Vertx vertx;
 
     private final Router polledMetricsSubRouter;
@@ -28,8 +25,6 @@ public class PolledResult
     {
 
         this.vertx = Bootstrap.getVertx();
-
-        this.eventBus = Bootstrap.getVertx().eventBus();
 
         this.polledMetricsSubRouter = Router.router(vertx);
     }

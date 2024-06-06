@@ -20,6 +20,7 @@ var logger = utils.GetLogger(LogFilesPath, "engine")
 
 func Start() {
 
+	// program execution will not stop if there's panic in processing requests
 	defer func() {
 		if err := recover(); err != nil {
 

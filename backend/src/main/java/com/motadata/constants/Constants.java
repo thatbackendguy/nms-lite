@@ -10,16 +10,6 @@ public class Constants
 
     public static final String HOST = "host";
 
-    public static final String DATABASE_USERNAME = "database.username";
-
-    public static final String DATABASE_PASSWORD = "database.password";
-
-    public static final String DATABASE_URI = "database.uri";
-
-    public static final String AGENT_MODE = "agent";
-
-    public static final String POLLING_INTERVAL = "polling.interval";
-
     public static final String CONTENT_TYPE = "Content-Type";
 
     public static final String APP_JSON = "application/json";
@@ -31,8 +21,6 @@ public class Constants
     public static final String RESULT = "result";
 
     public static final String PORT = "port";
-
-    public static final String ZMQ_PORT = "zmq.port";
 
     public static final String REQUEST_TYPE = "request.type";
 
@@ -107,8 +95,6 @@ public class Constants
     public static final String CREDENTIAL_PROFILE_ID_PARAMS = "credentialProfileId";
 
     public static final String DATA = "data";
-
-    public static final String PARSE_DISCOVERY_EVENT = "parse.discovery";
 
     public static final String DUMP_TO_FILE = "dump.to.file";
 

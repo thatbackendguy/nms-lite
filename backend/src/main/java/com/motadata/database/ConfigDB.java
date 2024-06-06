@@ -14,9 +14,9 @@ import static com.motadata.constants.Constants.*;
 public class ConfigDB
 {
 
-    public static final ConcurrentHashMap<Long, JsonObject> provisionedDevices = new ConcurrentHashMap<>();
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigDB.class);
+
+    public static final ConcurrentHashMap<Long, JsonObject> provisionedDevices = new ConcurrentHashMap<>();
 
     private static final ConcurrentHashMap<Long, JsonObject> credentialProfiles = new ConcurrentHashMap<>();
 

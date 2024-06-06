@@ -39,7 +39,8 @@ func Discovery(context map[string]interface{}) {
 
 	errors := make([]map[string]string, 0)
 
-	defer func() {
+	// if there's panic while discovery, program will not stop, backend will get response with error
+	defer func(context map[string]interface{}) {
 		if r := recover(); r != nil {
 
 			logger.Error(fmt.Sprint("Panic recovered while discovery: ", r))
@@ -61,7 +62,7 @@ func Discovery(context map[string]interface{}) {
 		}
 
 		return
-	}()
+	}(context)
 
 	validateContext(context)
 
@@ -165,7 +166,8 @@ func Collect(context map[string]interface{}) {
 
 	errors := make([]map[string]string, 0)
 
-	defer func() {
+	// if there's panic while collect, program will not stop, backend will get response with error
+	defer func(context map[string]interface{}) {
 		if r := recover(); r != nil {
 
 			logger.Error(fmt.Sprint("Panic recovered while collect: ", r))
@@ -187,7 +189,7 @@ func Collect(context map[string]interface{}) {
 		}
 
 		return
-	}()
+	}(context)
 
 	validateContext(context)
 

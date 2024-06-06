@@ -5,8 +5,7 @@ import com.motadata.constants.Constants;
 import com.motadata.database.ConfigDB;
 import com.motadata.utils.Utils;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.EventBus;
+
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -17,21 +16,11 @@ import static com.motadata.constants.Constants.*;
 
 public class Credential
 {
-
-    private final EventBus eventBus;
-
-    private final Vertx vertx;
-
     private final Router credentialSubRouter;
 
     public Credential()
     {
-
-        this.vertx = Bootstrap.getVertx();
-
-        this.eventBus = Bootstrap.getVertx().eventBus();
-
-        this.credentialSubRouter = Router.router(vertx);
+        this.credentialSubRouter = Router.router(Bootstrap.getVertx());
     }
 
     public void init(Router router)

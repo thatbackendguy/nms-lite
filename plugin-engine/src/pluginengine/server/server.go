@@ -73,6 +73,7 @@ func (server *Server) Init() (err error) {
 
 func (server *Server) Receive() {
 
+	// receiving go routine will not stop if there is panic while receiving or parsing json
 	defer func() {
 		if err := recover(); err != nil {
 			serverLogger.Error(fmt.Sprintf("Panic occured while receiving messages: %v", err))
@@ -123,6 +124,7 @@ func (server *Server) Receive() {
 
 func (server *Server) Send() {
 
+	// sending go routine will not stop if there is panic marshaling json or sending data
 	defer func() {
 		if err := recover(); err != nil {
 			serverLogger.Error(fmt.Sprintf("Panic occured while sending messages: %v", err))
@@ -162,6 +164,7 @@ func (server *Server) Send() {
 func (server *Server) Stop() {
 
 	err := server.receiver.Close()
+
 	if err != nil {
 
 		serverLogger.Error("Error closing receiver: " + err.Error())
@@ -171,6 +174,7 @@ func (server *Server) Stop() {
 	}
 
 	err = server.sender.Close()
+
 	if err != nil {
 
 		serverLogger.Error("Error closing sender: " + err.Error())
@@ -180,6 +184,7 @@ func (server *Server) Stop() {
 	}
 
 	err = server.context.Term()
+
 	if err != nil {
 
 		serverLogger.Error("Error closing context: " + err.Error())
@@ -187,6 +192,10 @@ func (server *Server) Stop() {
 		return
 
 	}
+
+	close(consts.Responses)
+
+	close(consts.Requests)
 
 	return
 }

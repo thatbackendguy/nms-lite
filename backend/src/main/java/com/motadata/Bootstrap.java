@@ -89,7 +89,6 @@ public class Bootstrap
 
     public static Vertx getVertx()
     {
-
         return vertx;
     }
 

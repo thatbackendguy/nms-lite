@@ -18,21 +18,11 @@ import static com.motadata.api.APIServer.LOGGER;
 
 public class Provision
 {
-
-    private final EventBus eventBus;
-
-    private final Vertx vertx;
-
     private final Router provisionSubRouter;
 
     public Provision()
     {
-
-        this.vertx = Bootstrap.getVertx();
-
-        this.eventBus = Bootstrap.getVertx().eventBus();
-
-        this.provisionSubRouter = Router.router(vertx);
+        this.provisionSubRouter = Router.router(Bootstrap.getVertx());
     }
 
     public void init(Router router)

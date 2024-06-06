@@ -3,7 +3,6 @@ package com.motadata.engine;
 import com.motadata.database.ConfigDB;
 import com.motadata.utils.Utils;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,7 @@ import static com.motadata.constants.Constants.*;
 
 public class ResponseParser
 {
+    private ResponseParser(){}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResponseParser.class);
 

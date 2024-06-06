@@ -96,6 +96,7 @@ func (server *Server) Receive() {
 func (server *Server) Stop() {
 
 	err := server.receiver.Close()
+
 	if err != nil {
 
 		serverLogger.Error("Error closing receiver: " + err.Error())
@@ -112,6 +113,8 @@ func (server *Server) Stop() {
 		return
 
 	}
+
+	close(Requests)
 
 	return
 }

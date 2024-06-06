@@ -1,19 +1,15 @@
 package com.motadata.engine;
 
 import com.motadata.Bootstrap;
-import com.motadata.database.ConfigDB;
-import com.motadata.utils.Utils;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static com.motadata.constants.Constants.*;
 
@@ -38,9 +34,7 @@ public class Requester extends AbstractVerticle
 
             resultPusher.bind("tcp://*:9999");
 
-            var vertx = Bootstrap.getVertx();
-
-            var eventBus = vertx.eventBus();
+            var eventBus = Bootstrap.getVertx().eventBus();
 
             eventBus.<String> localConsumer(DUMP_TO_FILE, msg ->
             {

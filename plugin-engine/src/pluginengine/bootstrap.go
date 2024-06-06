@@ -14,12 +14,17 @@ func main() {
 
 	PluginEngineLogger.Info("Starting Plugin Engine")
 
+	// fatal error, program execution will stop
 	defer func() {
 
 		if err := recover(); err != nil {
 
 			PluginEngineLogger.Error(fmt.Sprintf("Panic recovered: %v", err))
 		}
+
+		close(Requests)
+
+		close(Responses)
 	}()
 
 	zmqClient := server.Server{}

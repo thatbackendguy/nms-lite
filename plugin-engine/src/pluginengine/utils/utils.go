@@ -11,7 +11,9 @@ var utilsLogger = GetLogger(consts.LogFilesPath, "utils")
 
 func CheckAvailability(context map[string]interface{}) {
 
-	defer func() {
+	// if there's panic while checking availability, program will not stop, backend will get response with error
+	defer func(context map[string]interface{}) {
+
 		if err := recover(); err != nil {
 
 			utilsLogger.Error(fmt.Sprintf("Panic recovered in availability: %v", err))
@@ -33,7 +35,7 @@ func CheckAvailability(context map[string]interface{}) {
 		}
 
 		return
-	}()
+	}(context)
 
 	command := "fping"
 

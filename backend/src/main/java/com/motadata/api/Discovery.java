@@ -32,7 +32,7 @@ public class Discovery
 
         this.vertx = Bootstrap.getVertx();
 
-        this.eventBus = Bootstrap.getVertx().eventBus();
+        this.eventBus = vertx.eventBus();
 
         this.discoverySubRouter = Router.router(vertx);
     }
