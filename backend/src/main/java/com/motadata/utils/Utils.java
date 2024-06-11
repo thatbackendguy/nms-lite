@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Utils
 {
+    private Utils(){}
 
     private static final ConcurrentMap<Long, AtomicInteger> counters = new ConcurrentHashMap<>();
 
