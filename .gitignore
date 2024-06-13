@@ -1,2 +1,6 @@
 
 *.log
+*.text
+*.txt
+backend/metrics-result/
+collector/metrics-result/
