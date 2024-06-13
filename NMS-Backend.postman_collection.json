@@ -1,0 +1,334 @@
+{
+	"info": {
+		"_postman_id": "af9c0d95-6c81-46f5-a5b7-5f0fff99d3cb",
+		"name": "NMS-Backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "24632981"
+	},
+	"item": [
+		{
+			"name": "Credential Profile",
+			"item": [
+				{
+					"name": "add",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"credential.name\": \"test-12\",\n    \"version\": \"v2c\",\n    \"community\": \"public\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/credential/"
+					},
+					"response": []
+				},
+				{
+					"name": "get-all",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/credential/"
+					},
+					"response": []
+				},
+				{
+					"name": "get/:credProfileId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/credential/1"
+					},
+					"response": []
+				},
+				{
+					"name": "update/:credProfileId",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"community\":\"yash\",\n    \"version\":\"v2c\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/credential/1"
+					},
+					"response": []
+				},
+				{
+					"name": "delete/:credProfileId",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/credential/2"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Discovery Profile",
+			"item": [
+				{
+					"name": "add",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"discovery.name\":\"router-1\",\n    \"object.ip\": \"172.16.14.9\",\n    \"port\": 161,\n    \"credentials\":[1]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/discovery/"
+					},
+					"response": []
+				},
+				{
+					"name": "get-all",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/discovery/"
+					},
+					"response": []
+				},
+				{
+					"name": "get/:discProfileId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/discovery/2"
+					},
+					"response": []
+				},
+				{
+					"name": "update/:discProfileId",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"object.ip\": \"0.0.0.0\",\n    \"port\": 163\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/discovery/1"
+					},
+					"response": []
+				},
+				{
+					"name": "delete/:discProfileId",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/discovery/2"
+					},
+					"response": []
+				},
+				{
+					"name": "run",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[2]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/discovery/run"
+					},
+					"response": []
+				},
+				{
+					"name": "get discovery result",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/discovery/result/2"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Provision",
+			"item": [
+				{
+					"name": "Provision device",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/discovery/provision/2"
+					},
+					"response": []
+				},
+				{
+					"name": "get devices",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:8080/discovery/provision/devices"
+					},
+					"response": []
+				},
+				{
+					"name": "unprovision",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "http://localhost:8080/discovery/provision/2"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "metrics/result",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"object.ip\": \"172.16.8.2\",\n    \"interface.name\":\"Vl20\",\n    \"last\":10\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/metrics/result"
+			},
+			"response": []
+		},
+		{
+			"name": "metrics/interface",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"object.ip\": \"172.16.8.2\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/metrics/interface"
+			},
+			"response": []
+		}
+	]
+}
