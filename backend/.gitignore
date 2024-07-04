@@ -37,6 +37,6 @@ build/
 ### Mac OS ###
 .DS_Store
 
-*.log
-Backend.log
-pluginEngine.log
+logs
+metrics-result
+go-engine
